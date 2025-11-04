@@ -141,30 +141,34 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = '/static/'
-# Directorio donde 'collectstatic' reunirá todos los archivos estáticos para producción.
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-# Directorios adicionales donde buscar archivos estáticos (tu carpeta 'static' principal).
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-# Almacenamiento optimizado para WhiteNoise.
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-
 GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME')
 
 if GS_BUCKET_NAME:
-    # Configuración para producción (Google Cloud Storage)
+    # Configuración completa para Google Cloud Storage
     DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-    MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/media/'
-    GS_DEFAULT_ACL = 'publicRead' # Hace que los archivos subidos sean públicamente legibles
+    STATICFILES_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
     
-    # Esta configuración es importante para que los formularios de admin funcionen bien
+    # Configuración de Google Cloud Storage
+    GS_PROJECT_ID = 'imago-edu'
+    GS_BUCKET_NAME = GS_BUCKET_NAME
+    GS_DEFAULT_ACL = 'publicRead'
     GS_FILE_OVERWRITE = False
+    GS_QUERYSTRING_AUTH = False 
+    
+    # URLs para archivos
+    MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/media/'
+    STATIC_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/static/'
+    
+    # Configuración adicional recomendada
+    GS_LOCATION = ''  # Puedes usar 'media' o 'static' si quieres separar
+    GS_CUSTOM_ENDPOINT = None  # Usar el endpoint por defecto de Google
     
 else:
-    # Configuración para desarrollo local (archivos en el disco)
+    # Configuración para desarrollo local
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    STATIC_URL = '/static/'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 # Default primary key field type
