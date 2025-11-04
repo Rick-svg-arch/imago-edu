@@ -40,11 +40,13 @@ else:
         'imago-edu-*.uc.a.run.app',  # Patrón para Cloud Run
         '.uc.a.run.app',  # Dominio base de Cloud Run
         '127.0.0.1', 
-        'localhost'
+        'localhost',
+        'imago-edu-1002890573313.us-central1.run.app'
     ])
     CSRF_TRUSTED_ORIGINS = [
         'https://imago-edu-*.uc.a.run.app',
-        'https://*.uc.a.run.app'
+        'https://*.uc.a.run.app',
+        'imago-edu-1002890573313.us-central1.run.app'
     ]
 
 
