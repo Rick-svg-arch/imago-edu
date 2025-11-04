@@ -27,27 +27,21 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'imago-edu-1002890573313.us-central1.run.app',  # Tu dominio exacto
+    '.us-central1.run.app',  # Todos los servicios en us-central1
+    '.run.app',  # Todos los servicios de Cloud Run
+    '127.0.0.1',
+    'localhost',
+    '[::1]'
+]
 SERVICE_URL = os.getenv('SERVICE_URL')
 
-if SERVICE_URL:
-    hostname = SERVICE_URL.split("://")[1]
-    ALLOWED_HOSTS.append(hostname)
-    CSRF_TRUSTED_ORIGINS = [SERVICE_URL]
-else:
-    # Para Cloud Run, necesitamos permitir el dominio por defecto
-    ALLOWED_HOSTS.extend([
-        'imago-edu-*.uc.a.run.app',  # Patrón para Cloud Run
-        '.uc.a.run.app',  # Dominio base de Cloud Run
-        '127.0.0.1', 
-        'localhost',
-        'imago-edu-1002890573313.us-central1.run.app'
-    ])
-    CSRF_TRUSTED_ORIGINS = [
-        'https://imago-edu-*.uc.a.run.app',
-        'https://*.uc.a.run.app',
-        'imago-edu-1002890573313.us-central1.run.app'
-    ]
+CSRF_TRUSTED_ORIGINS = [
+    'https://imago-edu-1002890573313.us-central1.run.app',
+    'https://*.us-central1.run.app',
+    'https://*.run.app',
+]
 
 
 # Application definition
@@ -102,32 +96,24 @@ WSGI_APPLICATION = 'imago.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+DATABASES = {}
+
+# Usar la variable de entorno DATABASE_URL si existe
 if os.getenv('DATABASE_URL'):
-    # Para Cloud Run con DATABASE_URL
-    DATABASES = {
-        'default': dj_database_url.config(
-            conn_max_age=600,
-            ssl_require=True
-        )
-    }
-elif os.getenv('GAE_APPLICATION'):
-    # Para App Engine
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'imago_prod',
-            'USER': 'postgres',
-            'PASSWORD': os.getenv('DB_PASSWORD'),
-            'HOST': '/cloudsql/IMAGO_EDU:US-CENTRAL1:IMAGO-DB',
-        }
-    }
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=True
+    )
 else:
-    # Desarrollo local
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+    # Configuración directa para Cloud SQL
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'imago_prod',
+        'USER': 'postgres',
+        'PASSWORD': os.getenv('DB_PASSWORD', 'NUEVO_DB_PASSWORD'),
+        'HOST': '/cloudsql/imago-edu:us-central1:imago-db',
+        'PORT': '5432',
     }
 
 
