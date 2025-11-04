@@ -1,0 +1,22 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <h1>Editar Rol para: {{ user_to_edit.username }}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <fieldset>
+            <legend>{{ form.groups.label }}</legend>
+            {% for checkbox in form.groups %}
+                <label>
+                    {{ checkbox.tag }}
+                    {{ checkbox.choice_label }}
+                </label><br>
+            {% endfor %}
+        </fieldset>
+        
+        <button type="submit">Guardar Cambios</button>
+        <a href="{% url 'users:manage_users_list' %}">Cancelar</a>
+    </form>
+{% endblock %}

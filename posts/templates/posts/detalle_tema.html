@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+{% load auth_extras %}
+
+{% block content %}
+<div class="glass-card">
+    <div class="tema-original">
+        <h1>{{ tema.titulo }}</h1>
+        <small>Publicado por {{ tema.autor.username }} el {{ tema.fecha_creacion|date:"d M Y, H:i" }}</small>
+        
+        {% if user == tema.autor or user.is_superuser or user|has_group:"Administrativo" %}
+        <div class="acciones-autor" style="margin: 0.5em 0;">
+            <a href="{% url 'posts:editar_tema' pk=tema.pk %}">Editar Tema</a>
+            |
+            <a href="{% url 'posts:borrar_tema' pk=tema.pk %}" style="color: var(--danger-color);">Borrar Tema</a>
+        </div>
+        {% endif %}
+
+        {% if tema.banner %}
+            <img src="{{ tema.banner.url }}" alt="Banner del tema" style="max-width: 100%; border-radius: 8px; margin-top: 1em;">
+        {% endif %}
+        
+        <div class="contenido-post" style="margin-top: 1em;">
+            {{ tema.contenido|linebreaks }}
+        </div>
+    </div>
+    <hr style="margin: 2em 0;">
+
+    <!-- ======================= FORMULARIO DE RESPUESTA PRINCIPAL ======================= -->
+    <div class="respuesta-principal-form">
+        {% if user.is_authenticated %}
+            <div class="form-container">
+                <h3 style="margin-bottom: 1.5rem; color: var(--text-color); font-weight: 600; font-size: 1.3rem;">
+                    <i class="fas fa-reply" style="margin-right: 0.5rem;"></i>Añadir una respuesta al tema
+                </h3>
+                <form method="post" enctype="multipart/form-data" class="ajax-response-form">
+                    {% csrf_token %}
+                    <!-- Campo oculto para guardar la página actual -->
+                    <input type="hidden" name="current_page" value="{{ request.GET.page|default:'1' }}">
+                    
+                    <div class="form-group">
+                        {{ respuesta_form.contenido.label_tag }}
+                        {{ respuesta_form.contenido }}
+                        <small class="form-help">Escribe tu respuesta aquí. Puedes usar formato básico.</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        {{ respuesta_form.banner.label_tag }}
+                        {{ respuesta_form.banner }}
+                        <small class="form-help">Opcional: Sube una imagen relacionada con tu respuesta (máx. 3MB)</small>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-paper-plane" style="margin-right: 0.5rem;"></i>Enviar Respuesta
+                    </button>
+                </form>
+            </div>
+        {% else %}
+            <div class="login-prompt">
+                <div class="login-message">
+                    <i class="fas fa-sign-in-alt" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.7;"></i>
+                    <h3>Inicia sesión para participar</h3>
+                    <p>Debes tener una cuenta para responder en este tema.</p>
+                    <a href="{% url 'users:login' %}?next={{ request.path }}" class="login-btn">
+                        <i class="fas fa-user" style="margin-right: 0.5rem;"></i>Iniciar Sesión
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ======================= LISTA DE RESPUESTAS (ANIDADAS) ======================= -->
+    <h2>Respuestas</h2>
+    <div id="comments-section">
+        {% for respuesta in respuestas_page %}
+            {% include 'posts/_respuesta_tree.html' with respuesta=respuesta %}
+        {% empty %}
+            <p style="text-align: center; color: var(--text-color); opacity: 0.7; padding: 2rem;">
+            No hay respuestas todavía. ¡Sé el primero en responder!
+            </p>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación-->
+    {% include 'partials/pagination.html' %}
+
+</div>
+{% include 'posts/respuesta_anidada_script.html'%}
+
+{% endblock %}

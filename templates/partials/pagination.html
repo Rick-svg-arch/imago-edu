@@ -1,0 +1,21 @@
+{% if is_paginated %}
+    <div class="pagination">
+        <span class="step-links">
+            {% load auth_extras %}
+
+            {% if page_obj.has_previous %}
+                <a href="?{% query_transform page=1 %}">&laquo; primera</a>
+                <a href="?{% query_transform page=page_obj.previous_page_number %}">anterior</a>
+            {% endif %}
+
+            <span class="current">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?{% query_transform page=page_obj.next_page_number %}">siguiente</a>
+                <a href="?{% query_transform page=page_obj.paginator.num_pages %}">última &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+{% endif %}

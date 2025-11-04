@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Registro de Usuario
+{% endblock %}
+
+{% block content %}
+    <h1>Registrar un nuevo usuario</h1>
+    <p>Completa el siguiente formulario para crear tu cuenta.</p>
+    <p><small>Si tu institución te ha pre-registrado, asegúrate de usar el mismo número de identificación.</small></p>
+
+    <form class="form-with-validation" method="post">
+        {% csrf_token %}
+        
+        <fieldset>
+            <legend>Datos de la Cuenta</legend>
+            {{ form.username.label_tag }}
+            {{ form.username }}
+            {{ form.username.errors }}
+
+            {{ form.email.label_tag }}
+            {{ form.email }}
+            {{ form.email.errors }}
+
+            {{ form.password1.label_tag }}
+            {{ form.password1 }}
+            {{ form.password1.errors }}
+
+            {{ form.password2.label_tag }}
+            {{ form.password2 }}
+            {{ form.password2.errors }}
+        </fieldset>
+
+        <fieldset>
+            <legend>Datos Personales</legend>
+            {{ form.first_name.label_tag }}
+            {{ form.first_name }}
+            {{ form.first_name.errors }}
+            
+            {{ form.last_name.label_tag }}
+            {{ form.last_name }}
+            {{ form.last_name.errors }}
+
+            {{ form.tipo_identificacion.label_tag }}
+            {{ form.tipo_identificacion }}
+            {{ form.tipo_identificacion.errors }}
+            
+            {{ form.numero_identificacion.label_tag }}
+            {{ form.numero_identificacion }}
+            {{ form.numero_identificacion.errors }}
+        </fieldset>
+
+        <input type="hidden" name="next" value="{{ request.GET.next }}">
+        
+        <br>
+        <button class="form-submit" type="submit">Crear Cuenta</button>
+    </form>
+
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<style>
+    .profile-form-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2em;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    }
+    .current-avatar {
+        max-width: 150px;
+        height: auto;
+        border-radius: 50%;
+        margin-bottom: 1em;
+        display: block;
+    }
+</style>
+
+<div class="profile-form-container">
+    <h2>Editar Mi Perfil</h2>
+    <p>Actualiza tu información personal y de contacto.</p>
+    <hr>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <h4>Datos de la Cuenta</h4>
+        <p>{{ form.email.label_tag }}<br>{{ form.email }}</p>
+        <p>{{ form.first_name.label_tag }}<br>{{ form.first_name }}</p>
+        <p>{{ form.last_name.label_tag }}<br>{{ form.last_name }}</p>
+
+        <h4>Datos del Perfil</h4>
+        <p><strong>Avatar Actual:</strong></p>
+        {% if form.instance.profile.avatar %}
+            <img src="{{ form.instance.profile.avatar.url }}" alt="Avatar actual" class="current-avatar">
+        {% endif %}
+        <p>{{ form.avatar.label_tag }}<br>{{ form.avatar }}</p>
+        
+        <h4>Identificación</h4>
+        <p>{{ form.tipo_identificacion.label_tag }}<br>{{ form.tipo_identificacion }}</p>
+        <p>
+            {{ form.numero_identificacion.label_tag }}<br>
+            {{ form.numero_identificacion }}
+            {{ form.numero_identificacion.errors }}
+        </p>
+
+        <h4>Contacto</h4>
+        <p>{{ form.adress.label_tag }}<br>{{ form.adress }}</p>
+        <p>{{ form.telephone.label_tag }}<br>{{ form.telephone }}</p>
+
+        <button type="submit">Guardar Cambios</button>
+        <a href="{% url 'users:dashboard' %}">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

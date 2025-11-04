@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+    <h1>Foro: {{ categoria.nombre }}</h1>
+    <a href="{% url 'posts:crear_tema' slug_categoria=categoria.slug %}">Crear Nuevo Tema</a>
+    <hr>
+    {% for tema in temas_page %}
+        <div class="tema-item">
+            <h3><a href="{% url 'posts:detalle_tema' pk=tema.pk %}">{{ tema.titulo }}</a></h3>
+            <small>por {{ tema.autor.username }} el {{ tema.fecha_creacion|date:"d M Y" }}</small>
+        </div>
+    {% endfor %}
+
+    {% include 'partials/pagination.html' %}
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Subir lecturas
+{% endblock %}
+
+{% block content %}
+    <section>
+        <h1>Nueva Lectura</h1>
+        <form action="{% url 'lecturas:subir_documento' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form_lecturas }}
+            <button class="form-submit">Añadir Lectura</button>
+        </form>
+    </section>
+{% endblock %}

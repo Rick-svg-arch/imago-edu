@@ -1,0 +1,10 @@
+{% extends 'layout.html' %}
+{% block content %}
+    <h2>Confirmar Borrado</h2>
+    <p>¿Estás seguro de que quieres borrar este comentario?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Sí, borrar</button>
+        <a href="{% url 'posts:detalle_tema' pk=object.tema.pk %}">Cancelar</a>
+    </form>
+{% endblock %}

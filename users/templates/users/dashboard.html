@@ -1,0 +1,78 @@
+{% extends 'layout.html' %}
+{% load auth_extras %}
+
+{% block content %}
+<h1>Panel de Control</h1>
+
+<div class="dashboard-container">
+    
+    <div class="widget">
+        <h2>Mi Perfil</h2>
+        <img src="{{ profile.avatar.url }}" alt="Avatar" width="100", style="border-radius: 50%;">
+        <p><strong>Organización:</strong> {{ profile.organizacion.nombre }}</p>
+        <p><strong>Usuario:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Nombre:</strong> {{ user.get_full_name|default:"No especificado" }}</p>
+        <p><strong>Identificación:</strong> {{ profile.get_tipo_identificacion_display|default:"N/A" }} - {{ profile.numero_identificacion|default:"N/A" }}</p>
+        <div class="profile-actions" style="margin-top: 1em;">
+            <a href="{% url 'users:profile_edit' %}">Editar mi perfil</a>
+            <span style="margin: 0 0.5em;">|</span>
+            <a href="{% url 'users:password_change' %}">Cambiar mi contraseña</a>
+        </div>
+    </div>
+
+    {% if user|has_group:"Profesor" or user|has_group:"Administrativo" %}
+        <div class="widget">
+            <h2>Mis Clases</h2>
+            <ul>
+            {% for clase in clases_dirigidas %}
+                <li>
+                    <strong><a href="{% url 'users:clase_detail' pk=clase.pk %}">{{ clase.nombre }}</a></strong>
+                    ({{ clase.estudiantes.count }} estudiantes)
+                    <a href="{% url 'users:class_edit' pk=clase.pk %}">Editar</a>
+                </li>
+            {% empty %}
+                <li>No tienes clases asignadas.</li>
+            {% endfor %}
+            </ul>
+            <a href="{% url 'users:class_create' %}">+ Crear Nueva Clase</a>
+        </div>
+    {% endif %}
+
+    {% if user|has_group:"Administrativo" %}
+        <div class="widget">
+            <h2>Panel Administrativo</h2>
+            <p>Desde aquí puedes gestionar todos los aspectos del sitio.</p>
+            <ul>
+                <li><a href="{% url 'users:manage_users_list' %}">Gestionar Roles de Usuario</a> ({{ todos_los_usuarios.count }} usuarios)</li>
+                <li><a href="{% url 'users:manage_preregistros_list' %}">Gestionar Pre-registro</a></li>
+                <li><strong>Todas las Clases:</strong></li>
+                <ul>
+                    {% for clase in todas_las_clases %}
+                    <li>
+                        <strong><a href="{% url 'users:clase_detail' pk=clase.pk %}">{{ clase.nombre }}</a></strong>
+                        ({{ clase.estudiantes.count }} estudiantes)
+                        <a href="{% url 'users:class_edit' pk=clase.pk %}">Editar</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </ul>
+        </div>
+    {% endif %}
+    {% if user|has_group:"Estudiante" %}
+        <div class="widget">
+            <h2>Mis Clases</h2>
+            <ul>
+            {% for clase in user.clases_inscritas.all %}
+                <li>
+                    <a href="{% url 'users:clase_detail' pk=clase.pk %}">{{ clase.nombre }}</a>
+                    <small>(Prof. {{ clase.profesor.username }})</small>
+                </li>
+            {% empty %}
+                <li>No estás inscrito en ninguna clase.</li>
+            {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,307 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<style>
+    .class-form-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 2em;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+    }
+    .checkbox-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+        border: 1px solid #ccc;
+        padding: 1em;
+        border-radius: 5px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .checkbox-list label {
+        display: block;
+    }
+    .selector-container { display: flex; align-items: center; gap: 1em; }
+    .selector-box { width: 300px; height: 250px; }
+    .selector-buttons { display: flex; flex-direction: column; gap: 0.5em; }
+</style>
+
+<div class="class-form-container">
+    
+    <h2>{% if object %}Editar Clase: {{ object.nombre }}{% else %}Crear Nueva Clase{% endif %}</h2>
+
+    <form method="post" class="class-form" enctype="multipart/form-data">
+        {% csrf_token %}
+        <p>
+            {{ form.nombre.label_tag }}<br>
+            {{ form.nombre }}
+            {{ form.nombre.errors }}
+        </p>
+
+        {% if form.profesor %}
+            <p>
+                {{ form.profesor.label_tag }}<br>
+                {{ form.profesor }}
+                {{ form.profesor.errors }}
+            </p>
+        {% endif %}
+        <p>
+            {{ form.estudiantes_por_id.label_tag }}<br>
+            {{ form.estudiantes_por_id }}
+            <br><small>{{ form.estudiantes_por_id.help_text }}</small><br>
+            <button type="button" id="btn-preview-ids" style="margin-top: 5px;">Buscar y Previsualizar</button>
+        </p>
+        <div id="preview-results" style="margin-bottom: 1em;"></div>
+        <p>
+            {{ form.estudiantes_csv.label_tag }}<br>
+            {{ form.estudiantes_csv }}<br>
+            <small>{{ form.estudiantes_csv.help_text }}</small>
+            {{ form.estudiantes_csv.errors }}<br>
+            <button type="button" id="btn-preview-csv" style="margin-top: 5px;">Previsualizar CSV</button>
+        </p>
+        <div id="csv-preview-results" style="margin-bottom: 1em;"></div>
+
+        <fieldset>
+            <legend>Estudiantes</legend>
+            <p class="help">Selecciona estudiantes de la izquierda y muévelos a la derecha para inscribirlos en la clase.</p>
+            
+            <div class="selector-container">
+                <!-- Caja 1: Estudiantes Disponibles -->
+                <div>
+                    <label for="available-students">Disponibles</label><br>
+                    <select id="available-students" multiple class="selector-box">
+                    </select>
+                </div>
+
+                <div class="selector-buttons">
+                    <button type="button" id="btn-add">&gt;</button>
+                    <button type="button" id="btn-remove">&lt;</button>
+                </div>
+
+                <!-- Caja 2: Estudiantes Inscritos-->
+                <div>
+                    <label for="id_estudiantes">Inscritos</label><br>
+                    {{ form.estudiantes }}
+                </div>
+            </div>
+        </fieldset>
+        
+        <br>
+        <button type="submit">Guardar</button>
+        <a href="{% url 'users:dashboard' %}" style="margin-left: 1em;">Cancelar</a>
+    </form>
+</div>
+
+<script>
+    // --- FUNCIÓN 1: MANEJA EL SELECTOR DE DOS CAJAS ---
+    function setupStudentSelector() {
+        const availableSelect = document.getElementById('available-students');
+        const chosenSelect = document.getElementById('id_estudiantes');
+        const btnAdd = document.getElementById('btn-add');
+        const btnRemove = document.getElementById('btn-remove');
+        const form = document.querySelector('form.class-form');
+
+        if (!availableSelect || !chosenSelect || !btnAdd || !btnRemove || !form) {
+            console.error("Faltan elementos para el selector de estudiantes.");
+            return;
+        }
+
+        // Separa las opciones iniciales
+        const allOptions = Array.from(chosenSelect.options);
+        chosenSelect.innerHTML = '';
+        allOptions.forEach(option => {
+            if (option.selected) {
+                chosenSelect.appendChild(option);
+            } else {
+                availableSelect.appendChild(option);
+            }
+        });
+        chosenSelect.classList.add('selector-box');
+
+        // Mueve opciones entre las cajas
+        function moveOptions(source, destination) {
+            Array.from(source.selectedOptions).forEach(option => {
+                destination.appendChild(option);
+                option.selected = false;
+            });
+        }
+        btnAdd.addEventListener('click', () => moveOptions(availableSelect, chosenSelect));
+        btnRemove.addEventListener('click', () => moveOptions(chosenSelect, availableSelect));
+
+        // Selecciona todo en la caja derecha antes de enviar
+        form.addEventListener('submit', function() {
+            Array.from(chosenSelect.options).forEach(option => {
+                option.selected = true;
+            });
+        });
+    }
+
+    // --- FUNCIÓN 2: MANEJA LA PREVISUALIZACIÓN AJAX CON PAGINACIÓN ---
+    function setupIdPreview() {
+        const btnPreview = document.getElementById('btn-preview-ids');
+        const idsTextarea = document.getElementById('id_estudiantes_por_id');
+        const previewDiv = document.getElementById('preview-results');
+        const chosenSelect = document.getElementById('id_estudiantes');
+
+        if (!btnPreview) return;
+
+        // Variables para almacenar el estado de la búsqueda
+        let todosLosEncontrados = [];
+        let todosLosNoEncontrados = [];
+        const resultadosPorPagina = 10;
+
+        // --- FUNCIÓN PARA RENDERIZAR UNA PÁGINA ESPECÍFICA ---
+        function renderizarPagina(page = 1) {
+            const inicio = (page - 1) * resultadosPorPagina;
+            const fin = inicio + resultadosPorPagina;
+            
+            // Obtenemos solo la "rebanada" de resultados para la página actual
+            const resultadosPagina = todosLosEncontrados.slice(inicio, fin);
+
+            let html = '<h4>Estudiantes Encontrados:</h4>';
+            if (resultadosPagina.length > 0) {
+                html += '<ul>';
+                resultadosPagina.forEach(user => {
+                    html += `<li>${user.full_name} (${user.username}) - ID: ${user.numero_id}</li>`;
+                });
+                html += '</ul>';
+            } else if (todosLosEncontrados.length === 0) {
+                html += '<p>No se encontró ningún estudiante con los IDs proporcionados.</p>';
+            }
+
+            // Los no encontrados se muestran solo si es la primera página
+            if (page === 1 && todosLosNoEncontrados.length > 0) {
+                html += `<p style="color: orange;">IDs no encontrados: ${todosLosNoEncontrados.join(', ')}</p>`;
+            }
+
+            // Renderizamos los controles de paginación
+            const totalPaginas = Math.ceil(todosLosEncontrados.length / resultadosPorPagina);
+            if (totalPaginas > 1) {
+                html += '<div class="pagination-controls" style="margin-top: 1em;">';
+                if (page > 1) {
+                    html += `<button type="button" class="btn-page" data-page="${page - 1}">&laquo; Anterior</button> `;
+                }
+                html += `<span>Página ${page} de ${totalPaginas}</span>`;
+                if (page < totalPaginas) {
+                    html += ` <button type="button" class="btn-page" data-page="${page + 1}">Siguiente &raquo;</button>`;
+                }
+                html += '</div>';
+            }
+            
+            previewDiv.innerHTML = html;
+        }
+
+        // --- FUNCIÓN PARA HACER LA BÚSQUEDA INICIAL ---
+        function buscarEstudiantes() {
+            const ids = idsTextarea.value;
+            const organizacionPk = "{{ object.organizacion.pk|default:request.user.profile.organizacion.pk }}";
+            
+            if (!ids.trim()) { /* ... (manejo de error si el textarea está vacío) ... */ return; }
+            previewDiv.innerHTML = '<p>Buscando...</p>';
+
+            fetch("{% url 'users:find_students_by_id' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ ids: ids, organizacion_pk: organizacionPk })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) { /* ... (manejo de error) ... */ return; }
+                
+                // Guardamos los resultados completos en nuestras variables de estado
+                todosLosEncontrados = data.encontrados;
+                todosLosNoEncontrados = data.no_encontrados;
+
+                // Añadimos automáticamente TODOS los encontrados a la caja de la derecha
+                todosLosEncontrados.forEach(user => {
+                    if (!chosenSelect.querySelector(`option[value="${user.id}"]`)) {
+                        const option = new Option(`${user.full_name} (${user.username}) - ID: ${user.numero_id}`, user.id);
+                        chosenSelect.appendChild(option);
+                    }
+                });
+
+                // Renderizamos la primera página de resultados
+                renderizarPagina(1);
+            })
+            .catch(error => { /* ... (manejo de error de red) ... */ });
+        }
+
+        btnPreview.addEventListener('click', buscarEstudiantes);
+
+        previewDiv.addEventListener('click', function(event) {
+            if (event.target && event.target.classList.contains('btn-page')) {
+                const page = parseInt(event.target.dataset.page, 10);
+                renderizarPagina(page);
+            }
+        });
+    }
+    // --- FUNCIÓN 3: MANEJA LA VISUALIZACION DE CSV ---
+    function setupCsvPreview() {
+        const btnPreview = document.getElementById('btn-preview-csv');
+        const fileInput = document.getElementById('id_estudiantes_csv');
+        const previewDiv = document.getElementById('csv-preview-results');
+        const chosenSelect = document.getElementById('id_estudiantes');
+
+        if (!btnPreview) return;
+
+        function fetchCsvPreview() {
+            if (fileInput.files.length === 0) {
+                previewDiv.innerHTML = '<p style="color: orange;">Por favor, selecciona un archivo CSV primero.</p>';
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const organizacionPk = "{{ object.organizacion.pk|default:request.user.profile.organizacion.pk }}";
+            
+            const formData = new FormData();
+            formData.append('estudiantes_csv', file);
+            formData.append('organizacion_pk', organizacionPk);
+
+            previewDiv.innerHTML = '<p>Procesando archivo...</p>';
+
+            fetch("{% url 'users:preview_students_csv' %}", {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                    // NO AÑADIR 'Content-Type', el navegador lo hace por nosotros con FormData
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) { /* ... manejo de error ... */ return; }
+                
+                let html = '<h4>Estudiantes Encontrados en CSV:</h4>';
+                if (data.encontrados.length > 0) {
+                    html += '<ul>';
+                    data.encontrados.forEach(user => {
+                        html += `<li>${user.full_name} - ID: ${user.numero_id}</li>`;
+                        if (!chosenSelect.querySelector(`option[value="${user.id}"]`)) {
+                            const option = new Option(`${user.full_name} (${user.username}) - ID: ${user.numero_id}`, user.id);
+                            chosenSelect.appendChild(option);
+                        }
+                    });
+                    html += '</ul>';
+                } else { html += '<p>No se encontraron estudiantes.</p>'; }
+
+                if (data.no_encontrados.length > 0) {
+                    html += `<p style="color: orange;">IDs no encontrados en CSV: ${data.no_encontrados.join(', ')}</p>`;
+                }
+                previewDiv.innerHTML = html;
+            })
+            .catch(error => { /* ... manejo de error de red ... */ });
+        }
+
+        btnPreview.addEventListener('click', fetchCsvPreview);
+    }
+
+    window.onload = function() {
+        setupStudentSelector();
+        setupIdPreview();
+        setupCsvPreview();
+    };
+</script>
+
+{% endblock %}

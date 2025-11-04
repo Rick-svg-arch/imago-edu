@@ -1,0 +1,169 @@
+{% extends 'layout.html' %}
+{% load auth_extras %}
+
+{% block title %}{{ documento.titulo }}{% endblock %}
+
+{% block content %}
+
+    <div class="acciones-documento" style="text-align: right; margin-bottom: 1rem;">
+        <button id="btn-enter-focus" class="btn btn-primary">
+            <i class="fas fa-arrows-alt"></i> Modo Concentración
+        </button>
+        <button id="btn-exit-focus" class="btn btn-primary">
+            <i class="fas fa-compress-arrows-alt"></i> Salir
+        </button>
+    </div>
+    <div id="lectura-container" class="lectura-inmersiva">
+        <div class="page-header">
+            <h1>{{ documento.titulo }}</h1>
+            {% if user == documento.author or user.is_superuser or user|has_group:"Administrativo" %}
+                <div class="documento-acciones">
+                    <a href="{% url 'lecturas:editar_documento' pk=documento.pk %}" class="btn-editar">Editar Publicación</a>
+                    <a href="{% url 'lecturas:borrar_documento' pk=documento.pk %}" class="btn-borrar">Borrar Publicación</a>
+                </div>
+            {% endif %}
+        </div>
+
+        <p>
+            <strong>Grado:</strong> {{ documento.get_grado_display }}<br>
+            <strong>Subido por:</strong> {{ documento.author.username }}<br>
+            <strong>Fecha:</strong> {{ documento.date|date:"d M, Y" }}
+        </p>
+
+        <hr>
+        <div class="contenido-lectura">
+            {% if documento.descripcion %}
+                <h2>Descripción</h2>
+                <div>
+                    {{ documento.descripcion|linebreaks }}
+                </div>
+                <hr>
+            {% endif %}
+        </div>
+        {% if documento.imagen %}
+            <div class="documento-imagen">
+                <a href="{{ documento.imagen.url }}" target="_blank">
+                    <img src="{{ documento.imagen.url }}" alt="Imagen del documento" style="max-width: 400px; height: auto; border-radius: 5px;">
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    {% if documento.adjunto %}
+        <h2>Documento Adjunto</h2>
+        <p>
+            <a href="{{ documento.adjunto.url }}" target="_blank" class="btn btn-primary">
+                Descargar {{ documento.adjunto.name }}
+            </a>
+        </p>
+
+        {% with ext=documento.adjunto.name|lower %}
+            {% if '.pdf' in ext %}
+                <h3>Visualizador de PDF</h3>
+                <div style="border: 1px solid #ccc; border-radius: 5px; padding: 10px;">
+                    <iframe src="{% url 'lecturas:serve_file' pk=documento.pk %}" 
+                            width="100%" 
+                            height="600px"
+                            style="border: none;">
+                        <p>Tu navegador no soporta la visualización de PDFs. 
+                           <a href="{% url 'lecturas:serve_file' pk=documento.pk %}">Descargar PDF</a>
+                        </p>
+                    </iframe>
+                </div>
+            
+            {% elif '.txt' in ext %}
+                <h3>Contenido del Archivo de Texto</h3>
+                <div style="border: 1px solid #ccc; border-radius: 5px; padding: 10px; background: #f9f9f9;">
+                    <iframe src="{% url 'lecturas:serve_file' pk=documento.pk %}" 
+                            width="100%" 
+                            height="400px"
+                            style="border: none; background: white;">
+                        <p>Tu navegador no soporta la visualización de texto. 
+                           <a href="{% url 'lecturas:serve_file' pk=documento.pk %}">Descargar archivo de texto</a>
+                        </p>
+                    </iframe>
+                </div>
+            
+            {% elif '.doc' in ext or '.docx' in ext %}
+                <div class="alert alert-info">
+                    <h4>Documento Word</h4>
+                    <p>Los documentos Word no pueden visualizarse directamente en el navegador.</p>
+                    <a href="{% url 'lecturas:serve_file' pk=documento.pk %}" class="btn btn-success">
+                        Descargar Documento Word
+                    </a>
+                </div>
+            
+            {% else %}
+                <div class="alert alert-warning">
+                    <p>Tipo de archivo no reconocido para visualización.</p>
+                    <a href="{% url 'lecturas:serve_file' pk=documento.pk %}" class="btn btn-primary">
+                        Descargar Archivo
+                    </a>
+                </div>
+            {% endif %}
+        {% endwith %}
+    {% endif %}
+
+    {% if not documento.descripcion and not documento.adjunto %}
+        <div class="alert alert-warning">
+            <p>Este registro no tiene descripción ni archivo adjunto.</p>
+        </div>
+    {% endif %}
+    
+    <br>
+    <a href="{% url 'lecturas:lista_documentos_base' %}" class="btn btn-secondary">← Volver al listado</a>
+
+    <hr>
+    <div id="comentarios-container" class="comentarios-section">
+    <h3>Participaciones</h3>
+
+        {% if user.is_authenticated %}
+        <div class="anadir-comentario">
+            <h4>Añade tu participación</h4>
+            <form action="{% url 'lecturas:anadir_comentario' pk=documento.pk %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ comentario_form.as_p }}
+                <button type="submit">Publicar</button>
+            </form>
+        </div>
+        {% else %}
+        <p><a href="{% url 'users:login' %}?next={{ request.path }}">Inicia sesión</a> para participar.</p>
+        {% endif %}
+        <div class="comentarios-list">
+            {% for comentario in comentarios_page %}
+                <div class="comentario">
+                    <strong>{{ comentario.autor.username }}</strong> <small>({{ comentario.fecha_creacion|date:"d/m/Y H:i" }})</small>
+                    <p>{{ comentario.contenido|linebreaks }}</p>
+                    {% if comentario.imagen_comentario %}
+                            <div class="comentario-imagen">
+                                <a href="{{ comentario.imagen_comentario.url }}" target="_blank">
+                                    <img src="{{ comentario.imagen_comentario.url }}" alt="Imagen del comentario" style="max-width: 200px; height: auto; border-radius: 5px;">
+                                </a>
+                            </div>
+                    {% endif %}
+
+                    {% if comentario.adjunto_comentario %}
+                        <div class="comentario-adjunto">
+                            <p><strong>Archivo adjunto:</strong> 
+                                <a href="{{ comentario.adjunto_comentario.url }}" target="_blank">
+                                    Descargar archivo
+                                </a>
+                            </p>
+                        </div>
+                    {% endif %}
+                    {% if user == comentario.autor or user.is_superuser or user|has_group:"Administrativo" %}
+                        <div class="comentario-acciones">
+                            <a href="{% url 'lecturas:editar_comentario' pk=comentario.pk %}">Editar</a>
+                            <a href="{% url 'lecturas:borrar_comentario' pk=comentario.pk %}">Borrar</a>
+                        </div>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p>Aún no hay participaciones. ¡Sé el primero!</p>
+            {% endfor %}
+            {% include 'partials/pagination.html' %}
+        </div>
+    </div>
+    <hr>
+
+{% include 'lecturas/focus_mode_script.html' %}
+{% endblock %}

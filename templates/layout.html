@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+{% load static %}
+{% load auth_extras %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Imago{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="{% static 'js/main.js' %}" defer></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body style="display: flex; flex-direction: column; min-height: 100vh;">
+    <header class="main-header">
+        <nav class="main-nav">
+            <a href="/" class="logo">Imago</a>
+            <div>
+                <a href="/about">About</a> 
+                <a href="{% url 'posts:lista_categorias' %}">Foros</a>
+                <a href="{% url 'lecturas:lista_documentos_base' %}">Lecturas</a>
+                {% if user.is_authenticated %}
+                    </form>
+                    {% if user|has_group:"Profesor" or user|has_group:"Administrativo" or user.is_superuser %}
+                    <a href="{% url 'lecturas:subir_documento' %}?next={{ request.path }}">+ Lectura</a>
+                    {% endif %}
+                    <span>Hola, {{ user.username }}!</span>
+                    <form style="display: inline;" action="{% url 'users:logout' %}?next={{ request.path }}" method="post">
+                        {% csrf_token %}
+                        <button type="submit">Cerrar Sesión</button>
+                    </form>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'users:dashboard' %}">Panel de Control</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'users:register' %}?next={{ request.path }}">
+                        <span aria-label="Formular" title="Registration formular">Registrarse</span>
+                    </a> |
+                    <a href="{% url 'users:login' %}?next={{ request.path }}">
+                        <span aria-label="Login" title="Login">Login</span>
+                    </a>
+                {% endif %}
+                <button class="theme-switch" id="theme-toggle" title="Cambiar tema">
+                    <i class="fas fa-moon"></i> <!-- Icono por defecto (luna) -->
+                </button>
+            </div>
+        </nav>
+    </header>
+    <main class="{% block container_class %}container{% endblock %}" style="flex-grow: 1;">
+        {% block content %}
+        {% endblock %}
+    </main>
+    <footer class="main-footer">
+        <p>&copy; {% now "Y" %} Imago. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+    const themeToggle = document.getElementById('theme-toggle');
+    const icon = themeToggle.querySelector('i');
+    
+    // --- LÓGICA DE INICIALIZACIÓN MEJORADA ---
+    
+    // Función para detectar la preferencia del sistema operativo
+    const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    
+    // Función para obtener el tema actual
+    function getCurrentTheme() {
+        const localTheme = localStorage.getItem('theme');
+        if (localTheme) {
+            return localTheme; // Prioridad 1: Preferencia guardada por el usuario
+        }
+        if (prefersDarkScheme.matches) {
+            return 'dark'; // Prioridad 2: Preferencia del sistema operativo
+        }
+        return 'light'; // Por defecto, es claro
+    }
+
+    // Función para aplicar el tema y actualizar el icono
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        } else {
+            document.body.classList.remove('dark-mode');
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+        }
+    }
+
+    // Al cargar la página, aplicamos el tema determinado
+    const initialTheme = getCurrentTheme();
+    applyTheme(initialTheme);
+    
+    // --- LÓGICA DEL EVENT LISTENER SIMPLIFICADA ---
+    themeToggle.addEventListener('click', () => {
+        // Determinamos el tema actual basado en la clase del body
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        const newTheme = isDarkMode ? 'light' : 'dark';
+        
+        // Guardamos la nueva preferencia en localStorage
+        localStorage.setItem('theme', newTheme);
+        
+        // Aplicamos el nuevo tema
+        applyTheme(newTheme);
+    });
+
+    prefersDarkScheme.addEventListener('change', (e) => {
+        // Solo cambiamos si el usuario no ha guardado una preferencia manual
+        if (!localStorage.getItem('theme')) {
+            const newTheme = e.matches ? 'dark' : 'light';
+            applyTheme(newTheme);
+        }
+    });
+</script>
+</body>
+</html>

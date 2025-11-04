@@ -1,0 +1,10 @@
+{% extends 'layout.html' %}
+{% block content %}
+    <h2>{% if object %}Editar Usuario Pre-registrado{% else %}Añadir Nuevo Usuario a la Whitelist{% endif %}</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Guardar</button>
+        <a href="{% url 'users:manage_preregistros_list' %}">Cancelar</a>
+    </form>
+{% endblock %}

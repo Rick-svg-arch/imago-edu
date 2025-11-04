@@ -1,0 +1,9 @@
+Django
+gunicorn
+whitenoise
+dj-database-url
+psycopg2-binary
+django-storages
+google-cloud-storage
+chardet
+pillow

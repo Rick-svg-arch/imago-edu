@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% load auth_extras %}
+
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>Foros</h1>
+        
+        <!-- BOTÓN VISIBLE SOLO PARA ADMINS Y SUPERUSUARIOS -->
+        {% if user|has_group:"Administrativo" or user|has_group:"Profesor" or user.is_superuser %}
+            <a href="{% url 'posts:crear_categoria' %}" class="btn-primary">+ Crear Categoría</a>
+        {% endif %}
+    </div>
+    <hr>
+    {% for categoria in categorias %}
+        <div class="categoria-item">
+            <h2><a href="{% url 'posts:lista_temas' slug_categoria=categoria.slug %}">{{ categoria.nombre }}</a></h2>
+            <p>{{ categoria.descripcion }}</p>
+        </div>
+    {% endfor %}
+{% endblock %}

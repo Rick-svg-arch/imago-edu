@@ -1,0 +1,57 @@
+{% extends 'layout.html' %}
+{% load auth_extras %}
+
+{% block content %}
+    <h1>Gestión de Usuarios</h1>
+    <form method="get" action="{% url 'users:manage_users_list' %}">
+        <input type="text" name="q" placeholder="Buscar por ID, nombre o email..." value="{{ request.GET.q|default_if_none:'' }}">
+        <button type="submit">Buscar</button>
+    </form>
+
+    {% if request.GET.q %}
+        <p>Resultados de la búsqueda para: "<strong>{{ request.GET.q }}</strong>"</p>
+    {% endif %}
+    <p>Desde aquí puedes modificar el rol de los usuarios del sistema.</p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nombre de Usuario</th>
+                <th>Email</th>
+                <th>Número de ID</th>
+                <th>Roles Actuales</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email|default:"N/A" }}</td>
+                    <td>{{ user.profile.numero_identificacion|default:"N/A" }}</td>
+                    <td>
+                        {% for group in user.groups.all %}
+                            <span class="badge">{{ group.name }}</span>
+                        {% empty %}
+                            <span class="badge secondary">Sin rol</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if request.user|has_group:"Administrativo" %}
+                            <a href="{% url 'users:manage_user_edit' pk=user.pk %}" class="btn btn-sm">Editar Rol</a>
+                            
+                            <form action="{% url 'users:manage_user_reset_password' pk=user.pk %}" method="post" style="display: inline;" onsubmit="return confirm('¿Estás seguro de que quieres enviar un enlace para restablecer la contraseña a este usuario?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-warning">Restablecer Contraseña</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5">No se encontraron usuarios.</td>
+                    </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

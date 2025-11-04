@@ -1,0 +1,50 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<style>
+    .class-detail-container { max-width: 900px; margin: auto; }
+    .professor-card, .students-list { padding: 1.5em; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 2em; }
+    .professor-info { display: flex; align-items: center; gap: 20px; }
+    .professor-info img { width: 80px; height: 80px; border-radius: 50%; }
+    .student-item { display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid #eee; }
+    .student-item img { width: 50px; height: 50px; border-radius: 50%; }
+</style>
+
+<div class="class-detail-container">
+    <h1>Detalles de la Clase: {{ clase.nombre }}</h1>
+
+    <div class="professor-card">
+        <h2>Profesor a Cargo</h2>
+        {% with profesor=clase.profesor %}
+            <div class="professor-info">
+                <img src="{{ profesor.profile.avatar.url }}" alt="Avatar de {{ profesor.username }}">
+                <div>
+                    <h4>{{ profesor.first_name }} {{ profesor.last_name }}</h4>
+                    <h5>{{ profesor.username }}</h5>
+                    <p><strong>Email:</strong> {{ profesor.email|default:"No disponible" }}</p>
+                    <p><strong>Teléfono de contacto:</strong> {{ profesor.profile.telephone|default:"No disponible" }}</p>
+                </div>
+            </div>
+        {% endwith %}
+    </div>
+
+    <!-- SECCIÓN DE COMPAÑEROS -->
+    <div class="students-list">
+        <h2>Compañeros de Clase ({{ clase.estudiantes.count }})</h2>
+        {% for companero in clase.estudiantes.all %}
+            <div class="student-item">
+                <img src="{{ companero.profile.avatar.url }}" alt="Avatar de {{ companero.username }}">
+                <div>
+                    <strong>{{ companero.first_name }} {{ companero.last_name }}</strong><br>
+                    <small>{{ companero.username }}</small><br>
+                    <small>Email: {{ companero.email|default:"No disponible" }}</small>
+                </div>
+            </div>
+        {% empty %}
+            <p>No hay estudiantes inscritos en esta clase.</p>
+        {% endfor %}
+    </div>
+    
+    <a href="{% url 'users:dashboard' %}">← Volver al Panel de Control</a>
+</div>
+{% endblock %}

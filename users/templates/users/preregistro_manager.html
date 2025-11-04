@@ -1,0 +1,90 @@
+{% extends 'layout.html' %}
+
+{% block container_class %}container-fluid{% endblock %}
+
+{% block content %}
+<h1>Gestión de Usuarios Pre-registrados</h1>
+
+<div class="manager-grid">
+    <!-- Columna Izquierda: Lista y Búsqueda -->
+    <div class="list-section glass-card">
+        <h3>Whitelist Actual</h3>
+        <form method="get" style="display: flex; gap: 10px; margin-bottom: 1em;">
+            <input type="text" name="q" placeholder="Buscar..." value="{{ request.GET.q|default_if_none:'' }}">
+            <button type="submit" class="btn btn-primary">Buscar</button>
+        </form>
+        <hr>
+        <div style="overflow-x: auto;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for preregistro in preregistros %}
+                    <tr>
+                        <td>{{ preregistro.numero_identificacion }}</td>
+                        <td>{{ preregistro.nombre_completo|default:"N/A" }}</td>
+                        <td>{{ preregistro.email|default:"N/A" }}</td>
+                        <td>{{ preregistro.get_rol_asignado_display }}</td>
+                        <td>{% if preregistro.registrado %}Registrado{% else %}Pendiente{% endif %}</td>
+                        <td>
+                            <a href="{% url 'users:preregistro_edit' pk=preregistro.pk %}">Editar</a>
+                            <a href="{% url 'users:preregistro_delete' pk=preregistro.pk %}" style="color: red;">Borrar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6">No se encontraron usuarios.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/pagination.html' %}
+    </div>
+
+    <!-- Columna Derecha: Formularios de Adición -->
+    <div class="actions-section">
+        <!-- Formulario para Añadir Manualmente -->
+        <div class="form-section glass-card">
+            <h4>Añadir Manualmente</h4>
+            <form method="post">
+                {% csrf_token %}
+                {{ manual_form.as_p }}
+                <button type="submit" name="submit_manual" class="btn btn-primary">Añadir Usuario</button>
+            </form>
+        </div>
+        <br>
+        <!-- Formulario para Importar por CSV -->
+        <div class="form-section">
+            <h4>Importar por CSV</h4>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ csv_form.as_p }}
+                <small>
+                    El archivo debe tener la columna <strong>numero_identificacion.</strong><br>
+                    Las columnas <strong>email, nombre_completo y rol</strong> son opcionales.<br>
+                    La columna rol acepta los roles de administrativo, profesor y estudiante<br>
+                    La primera fila debe tener los nombres exactos de las columnas.<br>
+                </small>
+                <button type="submit" name="submit_csv" class="btn btn-primary">Importar Archivo</button>
+            </form>
+            {% if success_count is not None %}
+            <div class="results" style="margin-top: 1em;">
+                <p style="color: green;">{{ success_count }} filas procesadas con éxito.</p>
+                {% if errors %}<p style="color: red;">Errores: {{ errors|length }}</p>{% endif %}
+                <!-- Puedes mostrar los errores detallados si quieres -->
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<br>
+<a href="{% url 'users:dashboard' %}">← Volver al Panel de Control</a>
+{% endblock %}

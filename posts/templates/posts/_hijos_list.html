@@ -1,0 +1,5 @@
+<div class="respuesta-item" id="respuesta-{{ respuesta.pk }}">
+    {% for respuesta in respuestas %}
+        {% include 'posts/_respuesta_tree.html' with respuesta=respuesta depth=0 %}
+    {% endfor %}
+</div>

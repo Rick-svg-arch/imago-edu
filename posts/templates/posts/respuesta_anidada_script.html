@@ -1,0 +1,253 @@
+<script>
+// Función para manejar el envío de formularios de respuesta
+function handleResponseFormSubmit(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    
+    // Prevenir envíos duplicados
+    if (form.dataset.submitting === 'true') {
+        return;
+    }
+    form.dataset.submitting = 'true';
+    
+    const formData = new FormData(form);
+    
+    // Agregar la página actual al FormData
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPage = urlParams.get('page') || '1';
+    formData.append('current_page', currentPage);
+    
+    // Mostrar indicador de carga
+    const submitButton = form.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
+    submitButton.textContent = 'Enviando...';
+    submitButton.disabled = true;
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error en la respuesta del servidor');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Éxito: insertar la nueva respuesta en la UI
+            handleSuccessfulResponse(data, form);
+        } else if (data.redirect_url) {
+            // Redirección (para respuestas no-AJAX)
+            window.location.href = data.redirect_url;
+        } else {
+            throw new Error('Respuesta inesperada del servidor');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al enviar la respuesta. Por favor, intenta nuevamente.');
+    })
+    .finally(() => {
+        // Restaurar el botón y permitir nuevos envíos
+        submitButton.textContent = originalText;
+        submitButton.disabled = false;
+        form.dataset.submitting = 'false';
+    });
+}
+
+// Función para manejar respuestas exitosas
+function handleSuccessfulResponse(data, form) {
+    // Ocultar el formulario de respuesta
+    const formContainer = form.closest('.reply-form-container');
+    if (formContainer) {
+        formContainer.style.display = 'none';
+    }
+    
+    // Limpiar el formulario
+    form.reset();
+    
+    if (data.is_nested) {
+        // Para respuestas anidadas
+        handleNestedResponse(data);
+    } else {
+        // Para respuestas de primer nivel
+        handleTopLevelResponse(data);
+    }
+    
+    // Mostrar mensaje de éxito
+    showTempMessage('¡Respuesta enviada correctamente!', 'success');
+}
+
+// Manejar respuestas de primer nivel
+function handleTopLevelResponse(data) {
+    // Recargar la página para mantener la paginación consistente
+    // Esto es más seguro para respuestas de primer nivel
+    setTimeout(() => {
+        window.location.reload();
+    }, 800);
+}
+
+// Manejar respuestas anidadas
+function handleNestedResponse(data) {
+    const parentContainer = document.getElementById(`hijos-container-${data.parent_id}`);
+    if (parentContainer) {
+        // Verificar si ya existe un contenedor de hijos
+        let childrenContent = parentContainer.querySelector('.children-content');
+        const loadBtn = parentContainer.querySelector('.load-hijos-btn');
+        
+        if (childrenContent) {
+            // Si ya existe, agregar la nueva respuesta
+            childrenContent.insertAdjacentHTML('beforeend', data.html);
+        } else if (loadBtn) {
+            // Si no existe, crear el contenedor y agregar la respuesta
+            childrenContent = document.createElement('div');
+            childrenContent.className = 'children-content';
+            childrenContent.innerHTML = data.html;
+            parentContainer.appendChild(childrenContent);
+            
+            // Actualizar el botón
+            loadBtn.innerHTML = `<i class="fas fa-minus-square"></i> Ocultar respuestas`;
+            loadBtn.dataset.loaded = 'true';
+        } else {
+            // Si no hay botón, crear el contenedor directamente
+            childrenContent = document.createElement('div');
+            childrenContent.className = 'children-content';
+            childrenContent.innerHTML = data.html;
+            parentContainer.appendChild(childrenContent);
+        }
+        
+        // Desplazarse a la nueva respuesta
+        setTimeout(() => {
+            const newResponse = document.getElementById(`respuesta-${data.respuesta_id}`);
+            if (newResponse) {
+                newResponse.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                newResponse.style.backgroundColor = 'var(--highlight-bg)';
+                setTimeout(() => {
+                    newResponse.style.backgroundColor = '';
+                }, 2000);
+            }
+        }, 100);
+    }
+}
+
+// Función para mostrar mensajes temporales
+function showTempMessage(message, type) {
+    const messageDiv = document.createElement('div');
+    messageDiv.textContent = message;
+    messageDiv.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        padding: 12px 20px;
+        background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+        color: white;
+        border-radius: 4px;
+        z-index: 10000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        font-family: var(--font-family);
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.parentNode.removeChild(messageDiv);
+        }
+    }, 3000);
+}
+
+// Inicialización - SOLO UNA VEZ
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar delegación de eventos ÚNICA
+    const commentsSection = document.getElementById('comments-section');
+    if (commentsSection) {
+        // Usar event delegation para todos los formularios
+        commentsSection.addEventListener('submit', function(e) {
+            const form = e.target.closest('.ajax-response-form');
+            if (form) {
+                handleResponseFormSubmit(e);
+            }
+        });
+        
+        // Event delegation para botones de responder
+        commentsSection.addEventListener('click', function(e) {
+            const replyBtn = e.target.closest('.reply-btn');
+            if (replyBtn) {
+                e.preventDefault();
+                const formContainer = document.getElementById(`reply-form-${replyBtn.dataset.id}`);
+                if (formContainer) {
+                    // Alterna la visibilidad del formulario
+                    const isHidden = formContainer.style.display === 'none';
+                    formContainer.style.display = isHidden ? 'block' : 'none';
+                    
+                    // Ocultar otros formularios abiertos
+                    document.querySelectorAll('.reply-form-container').forEach(container => {
+                        if (container.id !== formContainer.id) {
+                            container.style.display = 'none';
+                        }
+                    });
+                    
+                    // Si se está mostrando, enfocar el textarea
+                    if (isHidden) {
+                        const textarea = formContainer.querySelector('textarea');
+                        if (textarea) {
+                            setTimeout(() => textarea.focus(), 100);
+                        }
+                    }
+                }
+                return;
+            }
+
+            // Lógica para el botón "VER RESPUESTAS"
+            const loadBtn = e.target.closest('.load-hijos-btn');
+            if (loadBtn) {
+                e.preventDefault();
+                const parentId = loadBtn.dataset.parentId;
+                const isLoaded = loadBtn.dataset.loaded === 'true';
+                const hijosContainer = document.getElementById(`hijos-container-${parentId}`);
+                
+                if (isLoaded) {
+                    const childrenContent = hijosContainer.querySelector('.children-content');
+                    if (childrenContent) {
+                        const isHidden = childrenContent.style.display === 'none';
+                        childrenContent.style.display = isHidden ? 'block' : 'none';
+                        
+                        if (isHidden) {
+                            loadBtn.innerHTML = `<i class="fas fa-minus-square"></i> Ocultar respuestas`;
+                        } else {
+                            loadBtn.innerHTML = `<i class="fas fa-comment-dots"></i> Ver respuestas`;
+                        }
+                    }
+                } else {
+                    const url = loadBtn.href;
+                    const originalHtml = loadBtn.innerHTML;
+                    loadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando...';
+                    
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            loadBtn.innerHTML = `<i class="fas fa-minus-square"></i> Ocultar respuestas`;
+                            loadBtn.dataset.loaded = 'true';
+                            
+                            const newChildrenContent = document.createElement('div');
+                            newChildrenContent.className = 'children-content';
+                            newChildrenContent.innerHTML = data.html;
+                            hijosContainer.appendChild(newChildrenContent);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            loadBtn.innerHTML = originalHtml;
+                            alert('Error al cargar las respuestas');
+                        });
+                }
+            }
+        });
+    }
+});
+</script>

@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <h2>Crear Nueva Categoría de Foro</h2>
+    <p>Las categorías son los subforos principales de tu comunidad.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        {{ form.as_p }}
+        
+        <button type="submit">Crear Categoría</button>
+        <a href="{% url 'posts:lista_categorias' %}" style="margin-left: 1em;">Cancelar</a>
+    </form>
+{% endblock %}
