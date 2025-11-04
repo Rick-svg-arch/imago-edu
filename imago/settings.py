@@ -95,13 +95,33 @@ WSGI_APPLICATION = 'imago.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
-        conn_max_age=600,
-        ssl_require=False # Generalmente seguro para conexiones internas de Google Cloud
-    )
-}
+if os.getenv('DATABASE_URL'):
+    # Para Cloud Run con DATABASE_URL
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+elif os.getenv('GAE_APPLICATION'):
+    # Para App Engine
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'imago_prod',
+            'USER': 'postgres',
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': '/cloudsql/IMAGO_EDU:US-CENTRAL1:IMAGO-DB',
+        }
+    }
+else:
+    # Desarrollo local
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
