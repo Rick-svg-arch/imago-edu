@@ -12,12 +12,3 @@ envVars:
 - name: ALLOWED_HOSTS
   value: "imago-edu-1002890573313.us-central1.run.app,.run.app"
 EOF
-
-# Luego crear el job
-gcloud run jobs create migrate-imago \
-  --region us-central1 \
-  --image us-central1-docker.pkg.dev/imago-edu/containers/imago-edu \
-  --set-cloudsql-instances "imago-edu:us-central1:imago-db" \
-  --env-vars-file env_vars.yaml \
-  --command="python" \
-  --args="manage.py,migrate"

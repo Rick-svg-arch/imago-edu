@@ -115,7 +115,7 @@ def get_database_config():
             'NAME': 'imago_prod',
             'USER': 'postgres',
             'PASSWORD': db_password,
-            'HOST': '/cloudsql/IMAGO_EDU:us-central1:IMAGO-DB',
+            'HOST': '/cloudsql/imago-edu:us-central1:imago-db',
             'PORT': '5432',
         }
     
