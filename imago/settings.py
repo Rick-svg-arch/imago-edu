@@ -18,23 +18,18 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY', 'una-clave-secreta-de-desarrollo-insegura')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-
 ALLOWED_HOSTS = [
-    'imago-edu-1002890573313.us-central1.run.app',  # Tu dominio exacto
-    '.us-central1.run.app',  # Todos los servicios en us-central1
-    '.run.app',  # Todos los servicios de Cloud Run
+    'imago-edu-1002890573313.us-central1.run.app',
+    '.us-central1.run.app',
+    '.run.app',
     '127.0.0.1',
     'localhost',
     '[::1]'
 ]
+
 SERVICE_URL = os.getenv('SERVICE_URL')
 
 CSRF_TRUSTED_ORIGINS = [
@@ -144,24 +139,25 @@ USE_TZ = True
 GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME')
 
 if GS_BUCKET_NAME:
-    # Configuración completa para Google Cloud Storage
-    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-    STATICFILES_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    # Configuración para Google Cloud Storage (Producción)
     
-    # Configuración de Google Cloud Storage
+    # Backend para archivos media (uploads de usuarios)
+    DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
+    
+    # Configuración del bucket
     GS_PROJECT_ID = 'imago-edu'
-    GS_BUCKET_NAME = GS_BUCKET_NAME
+    GS_CREDENTIALS = None  # Usa las credenciales por defecto de Cloud Run
     GS_DEFAULT_ACL = 'publicRead'
     GS_FILE_OVERWRITE = False
-    GS_QUERYSTRING_AUTH = False 
+    GS_QUERYSTRING_AUTH = False
     
-    # URLs para archivos
+    # URLs para archivos media
     MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/media/'
-    STATIC_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/static/'
     
-    # Configuración adicional recomendada
-    GS_LOCATION = ''  # Puedes usar 'media' o 'static' si quieres separar
-    GS_CUSTOM_ENDPOINT = None  # Usar el endpoint por defecto de Google
+    # Archivos estáticos siguen sirviendo localmente con WhiteNoise
+    STATIC_URL = '/static/'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
     
 else:
     # Configuración para desarrollo local
@@ -170,14 +166,9 @@ else:
     STATIC_URL = '/static/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 LOGIN_URL = "users:login"
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024 # 10 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = DATA_UPLOAD_MAX_MEMORY_SIZE

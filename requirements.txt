@@ -1,9 +1,8 @@
-Django
-gunicorn
-whitenoise
-dj-database-url
-psycopg2-binary
-django-storages
-google-cloud-storage
-chardet
-pillow
+Django>=5.2,<5.3
+gunicorn>=21.0
+whitenoise>=6.6
+dj-database-url>=2.1
+psycopg2-binary>=2.9
+django-storages[google]>=1.14
+chardet>=5.2
+Pillow>=10.0
