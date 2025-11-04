@@ -1,21 +1,17 @@
-# cloudbuild.yaml
 steps:
-  # Build the application
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$imago-edu/imago-edu', '.']
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu', '.']
   
-  # Push the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$imago-edu/imago-edu']
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu']
   
-  # Deploy to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
     - 'run'
     - 'deploy'
     - 'imago-edu'
     - '--image'
-    - 'gcr.io/$imago-edu/imago-edu'
+    - 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu'
     - '--region'
     - 'us-central1'
     - '--platform'
@@ -24,7 +20,11 @@ steps:
     - '--add-cloudsql-instances'
     - 'imago-edu:us-central1:imago-db'
     - '--set-env-vars'
-    - 'SECRET_KEY=NUEVA_SECRET_KEY,DEBUG=False,GS_BUCKET_NAME=imago-edu-media-bucket,DATABASE_URL=postgresql://postgres:NUEVO_DB_PASSWORD@localhost/imago_prod'
+    - 'DB_PASSWORD=NUEVO_DB_PASSWORD,DEBUG=False,GS_BUCKET_NAME=imago-edu-media-bucket'
+    - '--set-env-vars'
+    - 'SECRET_KEY=NUEVA_SECRET_KEY'
+    - '--set-env-vars'
+    - 'ALLOWED_HOSTS=imago-edu-1002890573313.us-central1.run.app,.run.app'
 
 images:
-  - 'gcr.io/$imago-edu/imago-edu'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu'
