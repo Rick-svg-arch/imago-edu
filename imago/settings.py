@@ -28,19 +28,24 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 # SECURITY WARNING: don't run with debug turned on in production!
 
 ALLOWED_HOSTS = []
-CSRF_TRUSTED_ORIGINS = []
 SERVICE_URL = os.getenv('SERVICE_URL')
+
 if SERVICE_URL:
-    # La URL de Cloud Run tiene el formato https://<nombre-servicio>-<hash>-<region>.a.run.app
-    # Añadimos la URL a ambas listas para permitir conexiones y proteger contra CSRF.
-    # El hostname se extrae de la URL completa.
     hostname = SERVICE_URL.split("://")[1]
     ALLOWED_HOSTS.append(hostname)
-    CSRF_TRUSTED_ORIGINS.append(SERVICE_URL)
-
-# Para desarrollo local, si la variable no está definida:
-if not SERVICE_URL:
-    ALLOWED_HOSTS.extend(['127.0.0.1', 'localhost'])
+    CSRF_TRUSTED_ORIGINS = [SERVICE_URL]
+else:
+    # Para Cloud Run, necesitamos permitir el dominio por defecto
+    ALLOWED_HOSTS.extend([
+        'imago-edu-*.uc.a.run.app',  # Patrón para Cloud Run
+        '.uc.a.run.app',  # Dominio base de Cloud Run
+        '127.0.0.1', 
+        'localhost'
+    ])
+    CSRF_TRUSTED_ORIGINS = [
+        'https://imago-edu-*.uc.a.run.app',
+        'https://*.uc.a.run.app'
+    ]
 
 
 # Application definition

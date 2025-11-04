@@ -1,0 +1,30 @@
+# cloudbuild.yaml
+steps:
+  # Build the application
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$imago-edu/imago-edu', '.']
+  
+  # Push the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$imago-edu/imago-edu']
+  
+  # Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+    - 'run'
+    - 'deploy'
+    - 'imago-edu'
+    - '--image'
+    - 'gcr.io/$imago-edu/imago-edu'
+    - '--region'
+    - 'us-central1'
+    - '--platform'
+    - 'managed'
+    - '--allow-unauthenticated'
+    - '--add-cloudsql-instances'
+    - 'imago-edu:us-central1:imago-db'
+    - '--set-env-vars'
+    - 'SECRET_KEY=NUEVA_SECRET_KEY,DEBUG=False,GS_BUCKET_NAME=imago-edu-media-bucket,DATABASE_URL=postgresql://postgres:NUEVO_DB_PASSWORD@localhost/imago_prod'
+
+images:
+  - 'gcr.io/$imago-edu/imago-edu'

@@ -1,0 +1,674 @@
+/* --- 1. FUNDAMENTOS: VARIABLES, RESET Y TIPOGRAFÍA ACCESIBLE --- */
+:root {
+    /* MODO CLARO (DEFAULT) */
+    --bg-color: #fdfdfd;       /* Un blanco suave, no puro */
+    --text-color: #222222;       /* Gris muy oscuro, no negro puro */
+    --accent-color: #007aff;     /* Un azul accesible y moderno */
+    --card-bg-color: #ffffff;    /* Fondo de las tarjetas/contenedores */
+    --border-color: #eaeaea;
+
+    --font-family: 'Lexend', 'Segoe UI', 'Roboto', sans-serif; /* Lexend es excelente para la dislexia */
+    --line-height: 1.7; /* Espaciado generoso entre líneas */
+}
+/*
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg-color: #121212;
+        --text-color: #eaeaea;
+        --accent-color: #0A84FF;
+        --card-bg-color: #1c1c1e;
+        --border-color: #38383a;
+    }
+}
+*/
+body.dark-mode {
+    --bg-color: #121212;
+    --text-color: #eaeaea;
+    --accent-color: #0A84FF;
+    --card-bg-color: #1c1c1e;
+    --border-color: #38383a;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: var(--line-height);
+    transition: background-color 0.3s, color 0.3s;
+    padding-top: 80px; /* Espacio para el header fijo */
+}
+
+/* --- 2. LAYOUT GENERAL Y COMPONENTES --- */
+.container {
+    max-width: 80ch; /* Limita el ancho a ~80 caracteres para una lectura óptima */
+    margin: 0 auto;
+    padding: 2rem;
+}
+.container-fluid { /* Para layouts anchos como los paneles de gestión */
+    width: 100%;
+    padding: 1.5rem 2rem;
+}
+
+a { color: var(--accent-color); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1, h2, h3 { line-height: 1.3; margin-bottom: 1rem; }
+
+/* Header Fijo */
+.main-header {
+    position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
+    background-color: var(--card-bg-color);
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.3s;
+}
+.main-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 2rem; height: 80px; max-width: 1400px; margin: 0 auto;
+}
+.main-nav .logo { font-weight: 600; font-size: 1.5rem; }
+
+/* Botones */
+
+/* Tablas */
+table {
+    width: 100%; border-collapse: collapse; background-color: var(--card-bg-color);
+    border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+th, td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); }
+th { background-color: var(--bg-color); }
+
+/* --- 3. LAYOUTS ESPECÍFICOS --- */
+.sidebar-layout, .manager-grid {
+    display: grid; gap: 2em; grid-template-columns: 1fr;
+}
+@media (min-width: 992px) {
+    .sidebar-layout { grid-template-columns: 250px 1fr; }
+    .manager-grid { grid-template-columns: 2.5fr 1fr; }
+}
+
+.sidebar, .main-content, .widget, .list-section, .actions-section {
+    background-color: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* --- 4. INTERRUPTOR DE MODO CLARO/OSCURO --- */
+.theme-switch {
+    background: none; border: none; cursor: pointer; color: var(--text-color); font-size: 1.5rem;
+}
+
+/* --- 5. MODO CONCENTRACIÓN --- */
+.lectura-inmersiva {
+    background-color: var(--bg-color); /* Asegura un fondo sólido */
+    overflow-y: auto; /* Permite hacer scroll dentro de la pantalla completa */
+    padding: 2rem 4rem; /* Más padding para una mejor lectura */
+}
+
+/* Oculta todo lo que NO queremos ver en modo concentración */
+body.focus-mode .main-header,
+body.focus-mode .main-footer,
+body.focus-mode .sidebar,
+body.focus-mode .comentarios-section, /* Oculta la sección de comentarios */
+body.focus-mode .page-header,
+body.focus-mode .acciones-documento {
+    display: none;
+}
+
+/* El botón de 'Entrar' se oculta cuando el modo está activo */
+body.focus-mode #btn-enter-focus {
+    display: none;
+}
+
+/* El botón de 'Salir' solo es visible cuando el modo está activo */
+#btn-exit-focus {
+    display: none; /* Oculto por defecto */
+    position: fixed; /* Lo fijamos en la pantalla */
+    top: 20px;
+    right: 20px;
+    z-index: 9999; /* Por encima de todo */
+    padding: 0.5rem 1rem;
+}
+body.focus-mode #btn-exit-focus {
+    display: inline-block; /* Se muestra cuando el modo está activo */
+}
+/* --- 7. ESTILOS PARA EL FILTRO DE CATEGORÍAS (ACORDEÓN) --- */
+.category-filter ul {
+    list-style: none;
+    padding: 0;
+}
+.category-filter .language-item > a.language-toggle {
+    display: block;
+    padding: 0.75em 1em;
+    background-color: var(--bg-color); /* Usa variables de color */
+    border: 1px solid var(--border-color);
+    margin-top: 0.5em;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.category-filter .language-item > a.language-toggle:hover {
+    background-color: var(--border-color);
+    text-decoration: none;
+}
+.category-filter .grade-list {
+    padding-left: 1.5em;
+    max-height: 0; /* Oculto por defecto */
+    overflow: hidden;
+    transition: max-height 0.3s ease-out; /* Animación suave */
+}
+.category-filter .grade-list.active {
+    max-height: 500px; /* Altura máxima para mostrar la lista */
+}
+.category-filter .grade-list li {
+    padding: 0.5em 0;
+}
+
+/* Sección 8 */
+/* Contenedor principal mejorado */
+.glass-card {
+    background: var(--card-bg-color);
+    border-radius: 16px;
+    padding: 2.5rem;
+    margin: 2rem auto;
+    max-width: 900px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(10px);
+}
+
+/* Tema original - Mejor tipografía para lectura */
+.tema-original h1 {
+    font-size: 2.2rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+    letter-spacing: -0.02em;
+}
+
+.tema-original small {
+    color: var(--text-color);
+    opacity: 0.7;
+    font-size: 0.9rem;
+}
+
+.contenido-post {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--text-color);
+    margin-top: 1.5rem;
+}
+
+.contenido-post p {
+    margin-bottom: 1.5rem;
+}
+
+/* === SISTEMA DE RESPUESTAS ANIDADAS MEJORADO === */
+
+.respuesta-item {
+    position: relative;
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: var(--card-bg-color);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.respuesta-item:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+/* Línea de anidación más sutil */
+.respuesta-item::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 1.5rem;
+    bottom: 1.5rem;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent-color), transparent);
+    border-radius: 1px;
+    opacity: 0.6;
+}
+
+/* Contenido de respuestas */
+.respuesta-contenido {
+    margin: 1rem 0;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-color);
+}
+
+.respuesta-contenido p {
+    margin-bottom: 1rem;
+}
+
+/* Metadatos de respuestas */
+.respuesta-item small {
+    color: var(--text-color);
+    opacity: 0.7;
+    font-size: 0.85rem;
+}
+
+.respuesta-item small strong {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+/* Acciones de respuestas */
+.respuesta-acciones {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.respuesta-acciones a {
+    font-size: 0.9rem;
+    color: var(--accent-color);
+    text-decoration: none;
+    margin-right: 1rem;
+    transition: color 0.2s ease;
+}
+
+.respuesta-acciones a:hover {
+    color: var(--text-color);
+    text-decoration: underline;
+}
+
+/* Botones de carga de hijos */
+.load-hijos-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--accent-color);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    margin-top: 1rem;
+}
+
+.load-hijos-btn:hover {
+    background: var(--text-color);
+    color: var(--bg-color);
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+/* Formularios de respuesta */
+.reply-form-container {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: var(--bg-color);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.reply-form-container textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 1rem;
+    line-height: 1.6;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+
+.reply-form-container textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.reply-form-container button {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.reply-form-container button:hover {
+    background: var(--text-color);
+    transform: translateY(-1px);
+}
+
+/* Contenedor de hijos */
+.children-content {
+    margin-top: 1rem;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Highlight para nuevas respuestas */
+.respuesta-item.highlight {
+    background: var(--highlight-bg);
+    animation: highlightPulse 2s ease;
+}
+
+@keyframes highlightPulse {
+    0% { background: var(--highlight-bg); }
+    100% { background: var(--card-bg-color); }
+}
+
+/* === MEJORAS DE ACCESIBILIDAD Y LECTURA === */
+
+/* Mejor contraste y espaciado */
+.respuesta-contenido p:last-child {
+    margin-bottom: 0;
+}
+
+/* Separadores visuales */
+hr {
+    border: none;
+    height: 1px;
+    background: var(--border-color);
+    margin: 2.5rem 0;
+    opacity: 0.5;
+}
+
+/* Estados de carga */
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* === VARIABLES ADICIONALES === */
+:root {
+    --highlight-bg: rgba(0, 122, 255, 0.05);
+}
+
+body.dark-mode {
+    --highlight-bg: rgba(10, 132, 255, 0.1);
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+    .glass-card {
+        padding: 1.5rem;
+        margin: 1rem;
+        border-radius: 12px;
+    }
+    
+    .tema-original h1 {
+        font-size: 1.8rem;
+    }
+    
+    .respuesta-item {
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .respuesta-item::before {
+        top: 1rem;
+        bottom: 1rem;
+    }
+    
+    .contenido-post {
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+}
+
+/* === MEJORAS DE FOCO Y ACCESIBILIDAD === */
+.reply-btn:focus,
+.load-hijos-btn:focus,
+.reply-form-container textarea:focus,
+.reply-form-container button:focus {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* Reduce motion para preferencias del sistema */
+@media (prefers-reduced-motion: reduce) {
+    .respuesta-item,
+    .load-hijos-btn,
+    .reply-form-container button {
+        transition: none;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+}
+/* === FORMULARIO DE RESPUESTA PRINCIPAL === */
+
+.respuesta-principal-form {
+    margin: 2rem 0;
+}
+
+.form-container {
+    background: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.form-container:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Grupos de formulario */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+
+/* Campos de formulario */
+.form-group textarea,
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 1rem;
+    line-height: 1.6;
+    transition: all 0.2s ease;
+}
+
+.form-group textarea {
+    min-height: 140px;
+    resize: vertical;
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.form-group input[type="file"] {
+    padding: 0.75rem;
+    background: var(--card-bg-color);
+}
+
+.form-group input[type="file"]:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+/* Texto de ayuda */
+.form-help {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-color);
+    opacity: 0.7;
+    line-height: 1.4;
+}
+
+/* Botón de envío */
+.submit-btn {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+}
+
+.submit-btn:hover {
+    background: var(--text-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
+    color: var(--bg-color);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+/* Promocional de login */
+.login-prompt {
+    background: var(--card-bg-color);
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.login-message h3 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.login-message p {
+    color: var(--text-color);
+    opacity: 0.8;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.login-btn {
+    display: inline-flex;
+    align-items: center;
+    background: var(--accent-color);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+}
+
+.login-btn:hover {
+    background: var(--text-color);
+    color: var(--bg-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
+}
+
+/* Estados de carga del formulario */
+.ajax-response-form[data-submitting="true"] {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.ajax-response-form[data-submitting="true"] .submit-btn {
+    background: var(--border-color);
+}
+
+/* Separador visual mejorado */
+.respuesta-principal-form + hr {
+    border: none;
+    height: 1px;
+    background: var(--border-color);
+    margin: 2.5rem 0;
+    opacity: 0.5;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+    .form-container {
+        padding: 1.5rem;
+    }
+    
+    .login-prompt {
+        padding: 2rem 1.5rem;
+    }
+    
+    .submit-btn {
+        width: 100%;
+        justify-content: center;
+        padding: 1rem;
+    }
+    
+    .form-group textarea {
+        min-height: 120px;
+    }
+}
+
+/* === MEJORAS DE ACCESIBILIDAD === */
+.form-group textarea:focus-visible,
+.form-group input[type="file"]:focus-visible,
+.submit-btn:focus-visible,
+.login-btn:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* Estados de validación */
+.form-group textarea:invalid,
+.form-group input[type="file"]:invalid {
+    border-color: #ff4757;
+}
+
+.form-group textarea:valid,
+.form-group input[type="file"]:valid {
+    border-color: #2ed573;
+}
