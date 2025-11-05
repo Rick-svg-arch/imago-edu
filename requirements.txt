@@ -3,6 +3,7 @@ gunicorn>=21.0
 whitenoise>=6.6
 dj-database-url>=2.1
 psycopg2-binary>=2.9
-django-storages[google]>=1.14
+django-storages[google]>=1.14.2  # ← Versión específica
+google-cloud-storage>=2.10.0
 chardet>=5.2
-Pillow==10.1.0
+Pillow>=10.0

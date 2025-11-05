@@ -1,12 +1,12 @@
 steps:
-  # Build the application
+  # Build the application (ahora incluye collectstatic)
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu', '.']
   
   # Push the container image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu']
-  
+
   # Deploy to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
