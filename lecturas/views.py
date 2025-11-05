@@ -1,11 +1,12 @@
 import os
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, FileResponse
 from django.views.generic import ListView, DetailView, UpdateView, DeleteView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.urls import reverse_lazy
+from django.conf import settings
 from .models import Documento, Comentario, ELEGIR_GRADO, ELEGIR_IDIOMA
 from . import forms
 from .decorators import group_required
@@ -14,39 +15,49 @@ from .mixins import UserIsAuthorMixin
 
 def serve_file(request, pk):
     """
-    Vista dedicada a servir el archivo adjunto
+    Vista dedicada a servir el archivo adjunto.
+    Compatible tanto con almacenamiento local como Cloud Storage.
     """
     documento = get_object_or_404(Documento, pk=pk)
     if not documento.adjunto:
         raise Http404("El documento no tiene un archivo adjunto.")
 
-    file_path = documento.adjunto.path
-
-    if os.path.exists(file_path):
-        ext = os.path.splitext(file_path)[1].lower()
+    # Determinar el tipo de contenido basado en la extensión
+    file_name = documento.adjunto.name
+    ext = os.path.splitext(file_name)[1].lower()
+    
+    content_types = {
+        '.pdf': 'application/pdf',
+        '.txt': 'text/plain; charset=utf-8',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.epub': 'application/epub+zip',
+    }
+    
+    content_type = content_types.get(ext, 'application/octet-stream')
+    
+    # Si estamos usando Cloud Storage, simplemente redirigir a la URL del archivo
+    if hasattr(settings, 'GS_BUCKET_NAME') and settings.GS_BUCKET_NAME:
+        # En Cloud Storage, simplemente redirigimos a la URL pública del archivo
+        from django.shortcuts import redirect
+        return redirect(documento.adjunto.url)
+    
+    # Para almacenamiento local (desarrollo)
+    try:
+        file_path = documento.adjunto.path
         
-        content_types = {
-            '.pdf': 'application/pdf',
-            '.txt': 'text/plain; charset=utf-8',
-            '.doc': 'application/msword',
-            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        }
-        
-        content_type = content_types.get(ext, 'application/octet-stream')
+        if not os.path.exists(file_path):
+            raise Http404("El archivo no fue encontrado en el servidor.")
         
         with open(file_path, 'rb') as file:
             response = HttpResponse(file.read(), content_type=content_type)
-
             response['X-Frame-Options'] = 'SAMEORIGIN'
-
-            if ext == '.txt':
-                response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_path)}"'
-            else:
-                response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_path)}"'
-                
+            response['Content-Disposition'] = f'inline; filename="{os.path.basename(file_name)}"'
             return response
-    else:
-        raise Http404("El archivo no fue encontrado en el servidor.")
+            
+    except (ValueError, NotImplementedError):
+        # Si .path no está disponible (ej. en Cloud Storage), redirigir a la URL
+        return redirect(documento.adjunto.url)
 
 
 class DocumentoListView(ListView):
@@ -63,6 +74,7 @@ class DocumentoListView(ListView):
         if 'grado' in self.kwargs:
             queryset = queryset.filter(grado=self.kwargs['grado'])
         return queryset
+    
     def get_context_data(self, **kwargs):
         """
         Añadimos datos extra al contexto para usarlos en la plantilla.
@@ -84,13 +96,13 @@ class DocumentoDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         
         comentarios_list = self.get_object().comentarios.order_by('-fecha_creacion')
-        paginator = Paginator(comentarios_list, 10) #Numero de comentarios por paginación
+        paginator = Paginator(comentarios_list, 10)  # Numero de comentarios por paginación
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
         
         context['comentarios_page'] = page_obj
-        context['is_paginated'] = page_obj.has_other_pages() # Para que el include funcione
-        context['page_obj'] = page_obj # El include necesita 'page_obj'
+        context['is_paginated'] = page_obj.has_other_pages()  # Para que el include funcione
+        context['page_obj'] = page_obj  # El include necesita 'page_obj'
 
         context['comentario_form'] = forms.ComentarioForm()
         return context

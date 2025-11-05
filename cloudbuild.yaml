@@ -1,10 +1,13 @@
 steps:
+  # Build the application
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu', '.']
   
+  # Push the container image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu']
   
+  # Deploy to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
     - 'run'
@@ -20,11 +23,9 @@ steps:
     - '--add-cloudsql-instances'
     - 'imago-edu:us-central1:imago-db'
     - '--set-env-vars'
-    - 'DB_PASSWORD=NUEVO_DB_PASSWORD,DEBUG=False,GS_BUCKET_NAME=imago-edu-media-bucket'
+    - 'DB_PASSWORD=NUEVO_DB_PASSWORD,DEBUG=False,GS_BUCKET_NAME=imago-media'
     - '--set-env-vars'
     - 'SECRET_KEY=NUEVA_SECRET_KEY'
-    - '--set-env-vars'
-    - 'ALLOWED_HOSTS=imago-edu-1002890573313.us-central1.run.app,.run.app'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu'

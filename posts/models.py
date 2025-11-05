@@ -5,19 +5,21 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 def ruta_banner_tema(instance, filename):
+    """
+    Genera ruta para banners de temas del foro.
+    """
     extension = os.path.splitext(filename)[1]
-    #Generar un nombre de archivo único usando un UUID
     nombre_unico = f"{uuid.uuid4()}{extension}"
     return f'forum/{instance.categoria.slug}/{nombre_unico}'
 
 def ruta_banner_respuesta(instance, filename):
+    """
+    Genera ruta para banners de respuestas del foro.
+    """
     tema = instance.tema
     categoria = tema.categoria
-    # 1. Obtener la extensión del archivo original
     extension = os.path.splitext(filename)[1]
-    # 2. Generar un nombre de archivo único con UUID
     nombre_unico = f"{uuid.uuid4()}{extension}"
-    # 3. Construir la ruta completa y organizada
     return f'forum/{categoria.slug}/{tema.pk}/replies/{nombre_unico}'
 
 class Categoria(models.Model):
@@ -33,11 +35,9 @@ class Categoria(models.Model):
         verbose_name_plural = "Categorías"
 
 class Tema(models.Model):
-    # Un tema pertenece a una categoría
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, related_name='temas')
-    
-    titulo = models.CharField(max_length=200) # Título del tema/discusión
-    contenido = models.TextField() # El post original
+    titulo = models.CharField(max_length=200)
+    contenido = models.TextField()
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     banner = models.ImageField(blank=True, upload_to=ruta_banner_tema)
     autor = models.ForeignKey(User, on_delete=models.CASCADE, default=None)
@@ -51,7 +51,6 @@ class Tema(models.Model):
         ordering = ['-fecha_creacion']
 
 class Respuesta(models.Model):
-    # ... (sin cambios)
     tema = models.ForeignKey(Tema, on_delete=models.CASCADE, related_name='respuestas')
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='hijos')
     contenido = models.TextField()

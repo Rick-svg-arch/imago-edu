@@ -136,39 +136,39 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+# CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS (SIEMPRE REQUERIDA)
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# CONFIGURACIÓN DE ARCHIVOS MEDIA
 GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME')
 
-if GS_BUCKET_NAME:
-    # Configuración para Google Cloud Storage (Producción)
-    
-    # Backend para archivos media (uploads de usuarios)
+if GS_BUCKET_NAME:    
+    # Configuración para Google Cloud Storage (SOLO para archivos media)
     DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
     
     # Configuración del bucket
     GS_PROJECT_ID = 'imago-edu'
-    GS_CREDENTIALS = None  # Usa las credenciales por defecto de Cloud Run
+    GS_BUCKET_NAME = GS_BUCKET_NAME
     GS_DEFAULT_ACL = 'publicRead'
     GS_FILE_OVERWRITE = False
     GS_QUERYSTRING_AUTH = False
+    GS_LOCATION = '' 
+    GS_AUTO_CREATE_BUCKET = True
+    # URL para archivos media
+    MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
     
-    # URLs para archivos media
-    MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/media/'
-    
-    # Archivos estáticos siguen sirviendo localmente con WhiteNoise
-    STATIC_URL = '/static/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    GS_CREDENTIALS = None
     
 else:
-    # Configuración para desarrollo local
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    STATIC_URL = '/static/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = "users:login"
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024 # 10 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = DATA_UPLOAD_MAX_MEMORY_SIZE

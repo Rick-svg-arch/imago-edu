@@ -14,7 +14,7 @@ spec:
         - name: DEBUG
           value: "True"
         - name: GS_BUCKET_NAME
-          value: "imago-edu-media-bucket"
+          value: "imago-media"
         - name: SECRET_KEY
           value: "@9=nd*wju3bflkc(=18@fa*zn5=a_*=*fv-i39w4^m4rn@"
         - name: ALLOWED_HOSTS

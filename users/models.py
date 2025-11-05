@@ -38,7 +38,13 @@ class Profile(models.Model):
         default=get_default_organization,
         related_name='miembros'
     )
-    avatar = models.ImageField(default='profiles/default.png', upload_to='users/', null=True, blank=True, verbose_name='Imagen de Perfil')
+    avatar = models.ImageField(
+        default='profiles/default.png', 
+        upload_to='users/', 
+        null=True, 
+        blank=True, 
+        verbose_name='Imagen de Perfil'
+    )
     adress = models.CharField(max_length=150, null=True, blank=True, verbose_name='Dirección')
     telephone = models.CharField(max_length=150, null=True, blank=True, verbose_name='Teléfono')
 
@@ -50,9 +56,9 @@ class Profile(models.Model):
     )
     numero_identificacion = models.CharField(
         max_length=20,
-        unique=True, # ¡CRUCIAL! Asegura que no haya dos usuarios con el mismo número.
+        unique=True,
         blank=True, null=True,
-        db_index=True, # ¡IMPORTANTE! Optimiza las búsquedas por este campo para el futuro.
+        db_index=True,
         verbose_name='Número de Identificación'
     )
 
@@ -116,7 +122,6 @@ class PreRegistro(models.Model):
     )
 
     class Meta:
-        # ¡IMPORTANTE! Un número de identificación solo puede estar pre-registrado una vez por organización.
         unique_together = ('organizacion', 'numero_identificacion')
         verbose_name = "Usuario Pre-registrado"
         verbose_name_plural = "Usuarios Pre-registrados"

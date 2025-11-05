@@ -1,31 +1,57 @@
 from django.db import models
 from django.contrib.auth.models import User
-import datetime
+from django.utils import timezone
 
 # Create your models here.
 def ruta_de_subida(instance, filename):
-    fecha_actual = datetime.date.today()
-    return f'uploads/{instance.idioma}/{instance.grado}/'f'{fecha_actual.year}/{fecha_actual.month}/{filename}'
+    """
+    Genera la ruta de subida para archivos adjuntos de documentos.
+    Usa la fecha actual en lugar de instance.date para evitar errores con auto_now_add.
+    """
+    fecha_actual = timezone.now()
+    return f'uploads/{instance.idioma}/{instance.grado}/{fecha_actual.year}/{fecha_actual.month}/{filename}'
 
 def ruta_imagenes(instance, filename):
-    fecha_actual = datetime.date.today()
-    return f'uploads/{instance.idioma}/{instance.grado}/'f'{fecha_actual.year}/{fecha_actual.month}/images/{filename}'
+    """
+    Genera la ruta de subida para imágenes de documentos.
+    """
+    fecha_actual = timezone.now()
+    return f'uploads/{instance.idioma}/{instance.grado}/{fecha_actual.year}/{fecha_actual.month}/images/{filename}'
 
 def ruta_subida_comentario(instance, filename):
+    """
+    Genera la ruta de subida para archivos adjuntos de comentarios.
+    Usa la fecha del documento o la fecha actual si no está disponible.
+    """
     documento = instance.documento
-    fecha_actual = datetime.date.today()
+    
+    # Usar la fecha del documento si existe, sino usar fecha actual
+    if documento.date:
+        fecha_ref = documento.date
+    else:
+        fecha_ref = timezone.now()
+    
     ruta_base_documento = (
         f'uploads/{documento.idioma}/{documento.grado}/'
-        f'{documento.date.year}/{documento.date.month}'
+        f'{fecha_ref.year}/{fecha_ref.month}'
     )
     return f'{ruta_base_documento}/comentarios/{filename}'
 
 def ruta_imagenes_comentario(instance, filename):
+    """
+    Genera la ruta de subida para imágenes de comentarios.
+    """
     documento = instance.documento
-    fecha_actual = datetime.date.today()
+    
+    # Usar la fecha del documento si existe, sino usar fecha actual
+    if documento.date:
+        fecha_ref = documento.date
+    else:
+        fecha_ref = timezone.now()
+    
     ruta_base_documento = (
         f'uploads/{documento.idioma}/{documento.grado}/'
-        f'{documento.date.year}/{documento.date.month}'
+        f'{fecha_ref.year}/{fecha_ref.month}'
     )
     return f'{ruta_base_documento}/comentarios/images/{filename}'
 
