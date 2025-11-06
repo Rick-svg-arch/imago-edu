@@ -136,11 +136,7 @@ if GS_BUCKET_NAME:
     
     # URL base para archivos media
     MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
-    
-    print(f"  Media Backend: storages.backends.gcloud.GoogleCloudStorage")
-    print(f"  Static Backend: whitenoise.storage.CompressedManifestStaticFilesStorage")
-    print(f"  Project ID: {GS_PROJECT_ID}")
-    print(f"  Media URL: {MEDIA_URL}")
+
     
 else:
     print("✓ Modo: ALMACENAMIENTO LOCAL")
@@ -162,9 +158,6 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-print(f"  Static URL: {STATIC_URL}")
-print(f"  Static Root: {STATIC_ROOT}")
-print("="*60 + "\n")
 
 # Configuración adicional
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

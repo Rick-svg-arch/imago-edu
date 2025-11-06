@@ -46,7 +46,7 @@ class ComentarioForm(forms.ModelForm):
         }
 
     def clean_adjunto_comentario(self):
-        adjunto = self.cleaned_data.get('adjunto')
+        adjunto = self.cleaned_data.get('adjunto_comentario')
         if hasattr(adjunto, 'name'):
             return validate_file(adjunto, ['.pdf', '.doc', '.docx', '.epub'], 8)
         return adjunto

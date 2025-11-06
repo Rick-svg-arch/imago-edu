@@ -51,9 +51,6 @@ class UserGroupForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Medida de seguridad: Excluimos la posibilidad de que un administrativo
-        # se asigne a sí mismo o a otros un rol de superusuario si existiera
-        # o cualquier otro grupo que no queramos que gestionen.
         self.fields['groups'].queryset = Group.objects.filter(
             name__in=['Estudiante', 'Profesor', 'Administrativo']
         )
@@ -92,12 +89,10 @@ class ClassFormForProfessor(forms.ModelForm):
         fields = ['nombre']
 
     def __init__(self, *args, **kwargs):
-        # Recibimos la organización de la vista
         organizacion = kwargs.pop('organizacion', None)
         super().__init__(*args, **kwargs)
         
         if organizacion:
-            # Filtramos el queryset de estudiantes para mostrar solo los de esa organización
             self.fields['estudiantes'].queryset = User.objects.filter(
                 profile__organizacion=organizacion,
                 groups__name='Estudiante'
@@ -143,7 +138,6 @@ class ClassFormForAdmin(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if organizacion:
-            # Los admins también ven solo profesores y estudiantes de la misma organización
             self.fields['profesor'].queryset = User.objects.filter(
                 profile__organizacion=organizacion,
                 groups__name='Profesor'
@@ -157,14 +151,17 @@ class ClassFormForAdmin(forms.ModelForm):
             self.fields['estudiantes'].initial = self.instance.estudiantes.all()
 
 class ProfileUpdateForm(forms.ModelForm):
-    # Declaramos explícitamente los campos del modelo User que queremos editar
+    # Campos del modelo User
     email = forms.EmailField(required=True)
     first_name = forms.CharField(required=False)
     last_name = forms.CharField(required=False)
     
-    # Declaramos explícitamente los campos del modelo Profile
+    # Campos del modelo Profile
     avatar = forms.ImageField(required=False)
-    tipo_identificacion = forms.ChoiceField(choices=Profile._meta.get_field('tipo_identificacion').choices, required=False)
+    tipo_identificacion = forms.ChoiceField(
+        choices=Profile._meta.get_field('tipo_identificacion').choices, 
+        required=False
+    )
     numero_identificacion = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
@@ -183,7 +180,6 @@ class ProfileUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Pre-poblamos los campos del Profile con los datos existentes.
         if self.instance and hasattr(self.instance, 'profile'):
             profile = self.instance.profile
             self.fields['avatar'].initial = profile.avatar
@@ -193,32 +189,40 @@ class ProfileUpdateForm(forms.ModelForm):
             self.fields['telephone'].initial = profile.telephone
     
     def clean_numero_identificacion(self):
-        """
-        Reutilizamos la misma lógica de limpieza y validación aquí.
-        """
         numero = self.cleaned_data.get('numero_identificacion')
         if numero:
             numero_limpio = re.sub(r'\D', '', numero)
             if not numero_limpio:
-                # Puede que el campo sea opcional, así que devolvemos un string vacío
                 return ""
             return numero_limpio
         return numero
     
     def clean_avatar(self):
         avatar = self.cleaned_data.get('avatar', False)
-        # Permite solo imágenes de hasta 2 MB
-        allowed_extensions = ['.jpg', '.jpeg', '.png', '.webp']
-        max_size_mb = 2
-        return validate_file(avatar, allowed_extensions, max_size_mb)
+        
+        # Si el usuario marcó "Clear" (limpiar), Django devuelve False
+        if avatar is False:
+            return None
+        
+        if avatar:
+            allowed_extensions = ['.jpg', '.jpeg', '.png', '.webp']
+            max_size_mb = 2
+            return validate_file(avatar, allowed_extensions, max_size_mb)
+        
+        return avatar
 
     def save(self, commit=True):
-        # Primero, guardamos la parte del User
         user = super().save(commit=commit)
         profile = user.profile
         
-        # Luego, actualizamos los datos del Profile con los datos limpios del formulario
-        profile.avatar = self.cleaned_data['avatar']
+        avatar_data = self.cleaned_data.get('avatar')
+        
+        if avatar_data is None:
+            profile.avatar = 'profiles/default.png'
+        elif avatar_data:
+            profile.avatar = avatar_data
+        
+        # Actualizar otros campos del perfil
         profile.tipo_identificacion = self.cleaned_data['tipo_identificacion']
         profile.numero_identificacion = self.cleaned_data['numero_identificacion']
         profile.adress = self.cleaned_data['adress']
@@ -234,16 +238,19 @@ class CustomUserCreationForm(UserCreationForm):
     first_name = forms.CharField(max_length=150, required=True, label="Nombres")
     last_name = forms.CharField(max_length=150, required=True, label="Apellidos")
 
-    # Campos del modelo Profile
-    tipo_identificacion = forms.ChoiceField(choices=TIPO_IDENTIFICACION, required=True, label="Tipo de Identificación")
+    tipo_identificacion = forms.ChoiceField(
+        choices=TIPO_IDENTIFICACION, 
+        required=True, 
+        label="Tipo de Identificación"
+    )
     numero_identificacion = forms.CharField(
         max_length=20,
         required=True,
         label="Número de Identificación",
         widget=forms.TextInput(attrs={
-            'type': 'text',             # Usamos 'text' para permitir el input de móviles
-            'inputmode': 'numeric',     # Sugiere un teclado numérico en móviles
-            'pattern': '[0-9]*',        # Patrón HTML5 para validación básica
+            'type': 'text',
+            'inputmode': 'numeric',
+            'pattern': '[0-9]*',
             'title': 'Solo se permiten números.'
         })
     )
@@ -253,61 +260,41 @@ class CustomUserCreationForm(UserCreationForm):
         fields = UserCreationForm.Meta.fields + ('first_name', 'last_name', 'email',)
 
     def clean_numero_identificacion(self):
-        """
-        Limpia y valida el número de identificación.
-        """
         numero = self.cleaned_data.get('numero_identificacion')
         
         if numero:
             numero_limpio = re.sub(r'\D', '', numero)
-            # Validar la entrada limpia
             if not numero_limpio:
                 raise forms.ValidationError("Debes introducir un número de identificación válido.")
 
-            if len(numero_limpio) < 5: # Añade una longitud mínima
+            if len(numero_limpio) < 5:
                 raise forms.ValidationError("El número de identificación parece demasiado corto.")
             return numero_limpio
         return numero
 
     def clean(self):
-        """
-        Validación a nivel de formulario para deducir la organización y
-        verificar si el usuario está pre-registrado.
-        """
         cleaned_data = super().clean()
         numero_id_limpio = cleaned_data.get('numero_identificacion')
         
-        # Intentamos encontrar un pre-registro para este número de ID
         preregistro = PreRegistro.objects.filter(numero_identificacion=numero_id_limpio).first()
 
         if preregistro:
-            # Si se encuentra un pre-registro...
             if preregistro.registrado:
-                # ...y ya ha sido usado, lanzamos un error.
                 raise forms.ValidationError("Este número de identificación ya ha sido registrado.")
-            # Si no ha sido usado, guardamos la organización encontrada para usarla en el método save()
             self.organizacion_a_asignar = preregistro.organizacion
         else:
-            # Si no se encuentra ningún pre-registro, es un usuario independiente.
-            # Le asignamos la organización por defecto "Imago".
             imago_org, _ = Organizacion.objects.get_or_create(nombre='Imago')
             self.organizacion_a_asignar = imago_org
 
         return cleaned_data
 
     def save(self, commit=True):
-        """
-        Sobrescribimos el método save para usar la organización y el rol correcto.
-        """
-        # 1. Guardar el objeto User
         user = super().save(commit=True)
         
-        # 2. Actualizar el Profile con la organización deducida y los datos extra
         user.profile.organizacion = self.organizacion_a_asignar
         user.profile.tipo_identificacion = self.cleaned_data['tipo_identificacion']
         user.profile.numero_identificacion = self.cleaned_data['numero_identificacion']
         
-        # 3. Marcar el pre-registro como completado, si existía
         numero_id_limpio = self.cleaned_data.get('numero_identificacion')
         preregistro = PreRegistro.objects.filter(
             organizacion=self.organizacion_a_asignar,
@@ -318,7 +305,6 @@ class CustomUserCreationForm(UserCreationForm):
 
         if preregistro:
             rol_a_asignar = preregistro.rol_asignado
-            # Marcamos el pre-registro como completado
             preregistro.registrado = True
             preregistro.save()
 
@@ -340,9 +326,6 @@ class PreRegistroAdminForm(forms.ModelForm):
         fields = '__all__'
 
     def clean_numero_identificacion(self):
-        """
-        Limpia y valida el número de identificación, eliminando caracteres no numéricos.
-        """
         numero = self.cleaned_data.get('numero_identificacion')
         if numero:
             numero_limpio = re.sub(r'\D', '', numero)
@@ -358,14 +341,10 @@ class ProfileAdminForm(forms.ModelForm):
         fields = '__all__'
 
     def clean_numero_identificacion(self):
-        """
-        Reutilizamos la misma lógica de limpieza aquí.
-        """
         numero = self.cleaned_data.get('numero_identificacion')
         if numero:
             numero_limpio = re.sub(r'\D', '', numero)
             
-            # El campo puede ser opcional, si no queda nada, devolvemos None
             if not numero_limpio:
                 return None
                 
@@ -378,28 +357,15 @@ class CSVImportForm(forms.Form):
         help_text='<a href="/media/ejemplo_usuarios.csv" download>Descargar archivo de ejemplo</a>',
         widget=forms.FileInput(attrs={'accept': '.csv'})
     )
-    # ejemplo = forms.CharField(
-    #     widget=forms.Textarea(attrs={
-    #         'rows': 4,
-    #         'readonly': 'readonly',
-    #         'style': 'font-family: monospace; font-size: 12px; background-color: #f8f9fa;'
-    #     }),
-        
-        # initial="numero_identificacion,email,nombre_completo,rol\n10302040,user1@ejemplo.com,Juan Pérez,administrativo\n15302030,user2@ejemplo.com,María García,estudiante",
-        # label="Ejemplo de formato CSV:",
-        # required=False
-    # )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['csv_file'].help_text = format_html(
             '<a href="{}" download>📥 Descargar archivo de ejemplo</a>',
-            '/static/ejemplo_usuarios.csv'  # O la URL donde tengas el archivo
+            '/static/ejemplo_usuarios.csv'
         )
 
     def clean_csv_file(self):
-        """
-        Valida que el archivo subido tenga la extensión .csv.
-        """
         file = self.cleaned_data.get('csv_file')
         if file:
             extension = os.path.splitext(file.name)[1].lower()
@@ -418,7 +384,6 @@ class PreRegistroForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Reutilizamos la lógica de limpieza para estandarizar el ID
         self.fields['numero_identificacion'].widget.attrs.update({
             'type': 'text',
             'inputmode': 'numeric',

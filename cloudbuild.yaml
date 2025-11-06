@@ -7,7 +7,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu']
 
-  # Deploy to Cloud Run CON SECRETS
+  # Deployment variables
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
     - 'run'

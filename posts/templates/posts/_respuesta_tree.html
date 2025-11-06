@@ -10,7 +10,13 @@
         <div class="respuesta-contenido">
             <p>{{ respuesta.contenido|linebreaks }}</p>
             {% if respuesta.banner %}
-                <!-- ... código del banner ... -->
+                <div class="respuesta-banner" style="margin-top: 1rem;">
+                    <a href="{{ respuesta.banner.url }}" target="_blank">
+                        <img src="{{ respuesta.banner.url }}" 
+                             alt="Imagen adjunta" 
+                             style="max-width: 100%; max-height: 400px; height: auto; border-radius: 8px; cursor: pointer;">
+                    </a>
+                </div>
             {% endif %}
         </div>
         <div class="respuesta-acciones">
@@ -25,7 +31,6 @@
         <div class="reply-form-container" id="reply-form-{{ respuesta.pk }}" style="display:none;">
             <form method="post" action="{% url 'posts:detalle_tema' pk=respuesta.tema.pk %}" enctype="multipart/form-data" class="ajax-response-form">
                 {% csrf_token %}
-                <!-- Campo oculto para la página actual -->
                 <input type="hidden" name="current_page" value="{{ request.GET.page|default:'1' }}">
                 <input type="hidden" name="parent" value="{{ respuesta.pk }}">
                 {{ respuesta_form.contenido }}
