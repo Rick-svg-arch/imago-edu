@@ -1,5 +1,5 @@
 steps:
-  # Build the application (ahora incluye collectstatic)
+  # Build the application
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu', '.']
   
@@ -7,7 +7,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu']
 
-  # Deploy to Cloud Run
+  # Deploy to Cloud Run CON SECRETS
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
     - 'run'
@@ -22,10 +22,14 @@ steps:
     - '--allow-unauthenticated'
     - '--add-cloudsql-instances'
     - 'imago-edu:us-central1:imago-db'
+    - '--set-secrets'
+    - 'SECRET_KEY=imago-secret-key:latest'
+    - '--set-secrets'
+    - 'DB_PASSWORD=imago-db-password:latest'
     - '--set-env-vars'
-    - 'DB_PASSWORD=NUEVO_DB_PASSWORD,DEBUG=False,GS_BUCKET_NAME=imago-media'
+    - 'DEBUG=False'
     - '--set-env-vars'
-    - 'SECRET_KEY=NUEVA_SECRET_KEY'
+    - 'GS_BUCKET_NAME=imago-media'
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu'
