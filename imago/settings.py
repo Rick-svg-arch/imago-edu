@@ -76,17 +76,62 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'imago.wsgi.application'
 
-# Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'imago_prod',
-        'USER': 'postgres',
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': '/cloudsql/imago-edu:us-central1:imago-db',
-        'PORT': '5432',
+# ====================
+# CONFIGURACIÓN DE BASE DE DATOS
+# ====================
+# Detectar si estamos en Cloud Run o en desarrollo local
+USE_CLOUD_SQL_AUTH_PROXY = os.getenv('USE_CLOUD_SQL_AUTH_PROXY', 'False') == 'True'
+CLOUD_RUN_ENVIRONMENT = os.getenv('K_SERVICE') is not None  # Cloud Run establece esta variable
+
+print("\n" + "="*60)
+print("CONFIGURACIÓN DE BASE DE DATOS")
+print("="*60)
+
+if CLOUD_RUN_ENVIRONMENT:
+    # Producción en Cloud Run - usar socket de Cloud SQL
+    print("✓ Modo: CLOUD RUN (Socket de Cloud SQL)")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'imago_prod',
+            'USER': 'postgres',
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': '/cloudsql/imago-edu:us-central1:imago-db',
+            'PORT': '5432',
+        }
     }
-}
+elif USE_CLOUD_SQL_AUTH_PROXY:
+    # Desarrollo local con Cloud SQL Auth Proxy
+    print("✓ Modo: DESARROLLO LOCAL (Cloud SQL Auth Proxy)")
+    print("  Conectando a: localhost:5432")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'imago_prod',
+            'USER': 'postgres',
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': '127.0.0.1',
+            'PORT': '5432',
+        }
+    }
+else:
+    # Desarrollo local con base de datos local
+    print("✓ Modo: DESARROLLO LOCAL (Base de datos local)")
+    print("  Conectando a: localhost:5432 / imago_dev")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('LOCAL_DB_NAME', 'imago_dev'),
+            'USER': os.getenv('LOCAL_DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('LOCAL_DB_PASSWORD', 'postgres'),
+            'HOST': os.getenv('LOCAL_DB_HOST', 'localhost'),
+            'PORT': os.getenv('LOCAL_DB_PORT', '5432'),
+        }
+    }
+
+print(f"  Database: {DATABASES['default']['NAME']}")
+print(f"  Host: {DATABASES['default']['HOST']}")
+print("="*60 + "\n")
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -108,7 +153,7 @@ USE_TZ = True
 
 GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME')
 
-print("\n" + "="*60)
+print("="*60)
 print("CONFIGURACIÓN DE STORAGE")
 print("="*60)
 

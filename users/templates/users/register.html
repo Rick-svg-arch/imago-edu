@@ -5,55 +5,405 @@
 {% endblock %}
 
 {% block content %}
-    <h1>Registrar un nuevo usuario</h1>
-    <p>Completa el siguiente formulario para crear tu cuenta.</p>
-    <p><small>Si tu institución te ha pre-registrado, asegúrate de usar el mismo número de identificación.</small></p>
-
-    <form class="form-with-validation" method="post">
-        {% csrf_token %}
+<div class="container">
+    <div class="glass-card">
+        <h1>Registrar un nuevo usuario</h1>
+        <p style="opacity: 0.8; margin-bottom: 1.5rem;">
+            Completa el siguiente formulario para crear tu cuenta.
+        </p>
         
-        <fieldset>
-            <legend>Datos de la Cuenta</legend>
-            {{ form.username.label_tag }}
-            {{ form.username }}
-            {{ form.username.errors }}
+        <!-- Banner de Pre-registro -->
+        <div class="info-banner">
+            <strong>💡 ¿Tu institución te pre-registró?</strong><br>
+            Ingresa tu número de identificación y presiona <strong>Tab</strong> o haz clic fuera del campo. 
+            Tus datos se completarán automáticamente si estás pre-registrado.
+        </div>
 
-            {{ form.email.label_tag }}
-            {{ form.email }}
-            {{ form.email.errors }}
+        <!-- Mensaje de verificación -->
+        <div id="preregistro-status" style="display: none;"></div>
 
-            {{ form.password1.label_tag }}
-            {{ form.password1 }}
-            {{ form.password1.errors }}
-
-            {{ form.password2.label_tag }}
-            {{ form.password2 }}
-            {{ form.password2.errors }}
-        </fieldset>
-
-        <fieldset>
-            <legend>Datos Personales</legend>
-            {{ form.first_name.label_tag }}
-            {{ form.first_name }}
-            {{ form.first_name.errors }}
+        <form class="form-container" method="post" style="margin-top: 2rem;">
+            {% csrf_token %}
             
-            {{ form.last_name.label_tag }}
-            {{ form.last_name }}
-            {{ form.last_name.errors }}
+            <fieldset style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; background: var(--bg-color);">
+                <legend style="font-weight: 600; font-size: 1.1rem; padding: 0 0.5rem;">Identificación</legend>
+                
+                <div class="form-group">
+                    {{ form.tipo_identificacion.label_tag }}
+                    {{ form.tipo_identificacion }}
+                    {% if form.tipo_identificacion.errors %}
+                        <div class="error-message">{{ form.tipo_identificacion.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.numero_identificacion.label_tag }}
+                    <div style="position: relative;">
+                        {{ form.numero_identificacion }}
+                        <span id="checking-spinner" style="display: none; position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--accent-color);">
+                            <i class="fa fa-spinner fa-spin"></i> Verificando...
+                        </span>
+                    </div>
+                    <small class="form-help">Ingresa tu número de identificación y presiona Tab para verificar.</small>
+                    {% if form.numero_identificacion.errors %}
+                        <div class="error-message">{{ form.numero_identificacion.errors }}</div>
+                    {% endif %}
+                </div>
+            </fieldset>
 
-            {{ form.tipo_identificacion.label_tag }}
-            {{ form.tipo_identificacion }}
-            {{ form.tipo_identificacion.errors }}
+            <fieldset style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; background: var(--bg-color);">
+                <legend style="font-weight: 600; font-size: 1.1rem; padding: 0 0.5rem;">Datos Personales</legend>
+                
+                <div class="form-group">
+                    {{ form.first_name.label_tag }}
+                    {{ form.first_name }}
+                    <small id="first-name-hint" class="form-help success-hint" style="display: none; color: #2ed573;">
+                        ✓ Pre-rellenado desde tu pre-registro
+                    </small>
+                    {% if form.first_name.errors %}
+                        <div class="error-message">{{ form.first_name.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ form.last_name.label_tag }}
+                    {{ form.last_name }}
+                    <small id="last-name-hint" class="form-help success-hint" style="display: none; color: #2ed573;">
+                        ✓ Pre-rellenado desde tu pre-registro
+                    </small>
+                    {% if form.last_name.errors %}
+                        <div class="error-message">{{ form.last_name.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.email.label_tag }}
+                    {{ form.email }}
+                    <small id="email-hint" class="form-help success-hint" style="display: none; color: #2ed573;">
+                        ✓ Pre-rellenado desde tu pre-registro
+                    </small>
+                    {% if form.email.errors %}
+                        <div class="error-message">{{ form.email.errors }}</div>
+                    {% endif %}
+                </div>
+            </fieldset>
+
+            <fieldset style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; background: var(--bg-color);">
+                <legend style="font-weight: 600; font-size: 1.1rem; padding: 0 0.5rem;">Datos de la Cuenta</legend>
+                
+                <div class="form-group">
+                    {{ form.username.label_tag }}
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="error-message">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.password1.label_tag }}
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <div class="error-message">{{ form.password1.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.password2.label_tag }}
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <div class="error-message">{{ form.password2.errors }}</div>
+                    {% endif %}
+                </div>
+            </fieldset>
+
+            <!-- Errores no específicos de campo -->
+            {% if form.non_field_errors %}
+                <div class="error-banner" style="margin-bottom: 1.5rem;">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
             
-            {{ form.numero_identificacion.label_tag }}
-            {{ form.numero_identificacion }}
-            {{ form.numero_identificacion.errors }}
-        </fieldset>
+            <button class="submit-btn" type="submit">
+                <i class="fa fa-user-plus" style="margin-right: 0.5rem;"></i>
+                Crear Cuenta
+            </button>
 
-        <input type="hidden" name="next" value="{{ request.GET.next }}">
-        
-        <br>
-        <button class="form-submit" type="submit">Crear Cuenta</button>
-    </form>
+            <p style="margin-top: 1.5rem; opacity: 0.7;">
+                ¿Ya tienes cuenta? <a href="{% url 'users:login' %}">Inicia sesión aquí</a>
+            </p>
+        </form>
+    </div>
+</div>
 
+<style>
+    /* Estilos específicos para el formulario de registro */
+    .info-banner {
+        background: rgba(0, 122, 255, 0.1);
+        border: 1px solid var(--accent-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+
+    body.dark-mode .info-banner {
+        background: rgba(10, 132, 255, 0.15);
+    }
+
+    #preregistro-status {
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+        animation: fadeIn 0.3s ease;
+    }
+
+    #preregistro-status.status-success {
+        background: rgba(46, 213, 115, 0.1);
+        border: 1px solid #2ed573;
+        color: var(--text-color);
+    }
+
+    #preregistro-status.status-warning {
+        background: rgba(255, 184, 0, 0.1);
+        border: 1px solid #ffb800;
+        color: var(--text-color);
+    }
+
+    #preregistro-status.status-info {
+        background: rgba(0, 122, 255, 0.1);
+        border: 1px solid var(--accent-color);
+        color: var(--text-color);
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--card-bg-color);
+        color: var(--text-color);
+        font-family: var(--font-family);
+        font-size: 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    }
+
+    .form-group input.prefilled {
+        border-color: #2ed573;
+        background: rgba(46, 213, 115, 0.05);
+    }
+
+    body.dark-mode .form-group input.prefilled {
+        background: rgba(46, 213, 115, 0.1);
+    }
+
+    .error-message {
+        color: #ff4757;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+        display: block;
+    }
+
+    .error-banner {
+        background: rgba(255, 71, 87, 0.1);
+        border: 1px solid #ff4757;
+        border-radius: 8px;
+        padding: 1rem;
+        color: var(--text-color);
+    }
+
+    fieldset {
+        position: relative;
+    }
+
+    legend {
+        color: var(--text-color);
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    #checking-spinner {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .glass-card {
+            padding: 1.5rem;
+        }
+
+        fieldset {
+            padding: 1rem !important;
+        }
+
+        .submit-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const numeroIdField = document.getElementById('{{ form.numero_identificacion.id_for_label }}');
+        const firstNameField = document.getElementById('{{ form.first_name.id_for_label }}');
+        const lastNameField = document.getElementById('{{ form.last_name.id_for_label }}');
+        const emailField = document.getElementById('{{ form.email.id_for_label }}');
+        const statusDiv = document.getElementById('preregistro-status');
+        const spinner = document.getElementById('checking-spinner');
+
+        let checkTimeout;
+        let lastCheckedId = '';
+
+        function checkPreregistro() {
+            const numeroId = numeroIdField.value.trim();
+            
+            // Limpiar solo números
+            const cleanId = numeroId.replace(/\D/g, '');
+            
+            // Evitar llamadas duplicadas
+            if (cleanId === lastCheckedId || cleanId.length < 5) {
+                return;
+            }
+
+            lastCheckedId = cleanId;
+
+            // Mostrar spinner
+            spinner.style.display = 'inline';
+            statusDiv.style.display = 'none';
+
+            // Hacer petición AJAX
+            fetch('{% url "users:check_preregistro" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    numero_identificacion: cleanId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                spinner.style.display = 'none';
+
+                if (data.encontrado) {
+                    // Usuario pre-registrado encontrado
+                    statusDiv.className = 'status-success';
+                    statusDiv.innerHTML = `
+                        <strong>✓ ¡Estás pre-registrado!</strong><br>
+                        Organización: <strong>${data.organizacion}</strong><br>
+                        Rol asignado: <strong>${data.rol}</strong>
+                    `;
+                    statusDiv.style.display = 'block';
+
+                    // Auto-completar campos si están disponibles
+                    if (data.nombre_completo) {
+                        const nombres = data.nombre_completo.split(' ');
+                        if (nombres.length >= 2) {
+                            const mitad = Math.ceil(nombres.length / 2);
+                            firstNameField.value = nombres.slice(0, mitad).join(' ');
+                            lastNameField.value = nombres.slice(mitad).join(' ');
+                            
+                            firstNameField.classList.add('prefilled');
+                            lastNameField.classList.add('prefilled');
+                            document.getElementById('first-name-hint').style.display = 'block';
+                            document.getElementById('last-name-hint').style.display = 'block';
+                        }
+                    }
+
+                    if (data.email) {
+                        emailField.value = data.email;
+                        emailField.classList.add('prefilled');
+                        document.getElementById('email-hint').style.display = 'block';
+                    }
+
+                } else if (data.ya_registrado) {
+                    // Usuario ya registrado
+                    statusDiv.className = 'status-warning';
+                    statusDiv.innerHTML = `
+                        <strong>⚠ Este número de identificación ya está registrado.</strong><br>
+                        Si eres tú, intenta <a href="{% url 'users:login' %}" style="color: var(--accent-color); font-weight: 600;">iniciar sesión</a>.
+                    `;
+                    statusDiv.style.display = 'block';
+
+                } else {
+                    // No encontrado - usuario puede registrarse normalmente
+                    statusDiv.className = 'status-info';
+                    statusDiv.innerHTML = `
+                        <strong>ℹ No estás pre-registrado</strong><br>
+                        No hay problema, puedes registrarte normalmente completando todos los campos.
+                    `;
+                    statusDiv.style.display = 'block';
+
+                    // Limpiar estilos de campos pre-llenados
+                    [firstNameField, lastNameField, emailField].forEach(field => {
+                        field.classList.remove('prefilled');
+                    });
+                    document.querySelectorAll('.success-hint').forEach(hint => {
+                        hint.style.display = 'none';
+                    });
+                }
+            })
+            .catch(error => {
+                spinner.style.display = 'none';
+                console.error('Error al verificar pre-registro:', error);
+                
+                statusDiv.className = 'status-warning';
+                statusDiv.innerHTML = `
+                    <strong>⚠ Error de conexión</strong><br>
+                    No se pudo verificar el pre-registro. Puedes continuar con el registro normal.
+                `;
+                statusDiv.style.display = 'block';
+            });
+        }
+
+        // Verificar cuando el usuario salga del campo (blur)
+        numeroIdField.addEventListener('blur', function() {
+            clearTimeout(checkTimeout);
+            checkTimeout = setTimeout(checkPreregistro, 300);
+        });
+
+        // Verificar también cuando presione Tab o Enter
+        numeroIdField.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab' || e.key === 'Enter') {
+                clearTimeout(checkTimeout);
+                checkTimeout = setTimeout(checkPreregistro, 100);
+            }
+        });
+
+        // Limpiar estado cuando el usuario borre el campo
+        numeroIdField.addEventListener('input', function() {
+            const cleanId = this.value.replace(/\D/g, '');
+            if (cleanId.length < 5) {
+                lastCheckedId = '';
+                statusDiv.style.display = 'none';
+                [firstNameField, lastNameField, emailField].forEach(field => {
+                    field.classList.remove('prefilled');
+                });
+                document.querySelectorAll('.success-hint').forEach(hint => {
+                    hint.style.display = 'none';
+                });
+            }
+        });
+    });
+</script>
 {% endblock %}

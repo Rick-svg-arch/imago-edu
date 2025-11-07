@@ -1,0 +1,57 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Historial de Importaciones de Pre-Registros</h2>
+    <p>Aquí puedes ver todos los lotes de usuarios que han sido importados mediante archivos CSV y deshacer importaciones si es necesario.</p>
+    <div>
+        <a href="{% url 'users:manage_preregistros_list' %}" class="btn btn-primary">Regresar</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Fecha de Importación</th>
+                    <th>Importado por</th>
+                    <th>Archivo</th>
+                    <th>Creados</th>
+                    <th>Actualizados</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lote in lotes %}
+                <tr>
+                    <td>{{ lote.fecha_importacion|date:"Y-m-d H:i" }}</td>
+                    <td>{{ lote.importado_por.username }}</td>
+                    <td>{{ lote.archivo_nombre|default:"N/A" }}</td>
+                    <td>{{ lote.registros_creados }}</td>
+                    <td>{{ lote.registros_actualizados }}</td>
+                    <td>
+                        <span class="badge {% if lote.estado == 'COMPLETADO' %}bg-success{% else %}bg-warning{% endif %}">
+                            {{ lote.get_estado_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if lote.estado == 'COMPLETADO' %}
+                            <form action="{% url 'users:deshacer_importacion' lote.pk %}" method="post" onsubmit="return confirm('¿Estás seguro de que quieres deshacer esta importación? Todos los pre-registros asociados serán eliminados permanentemente.');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Deshacer</button>
+                            </form>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">No hay registros de importaciones.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'partials/pagination.html' %}
+</div>
+{% endblock %}

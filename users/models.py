@@ -19,6 +19,45 @@ TIPO_IDENTIFICACION = [
     ('OT', 'Otro'), 
 ]
 
+class ImportacionLote(models.Model):
+    """Representa una única sesión de importación de usuarios desde un archivo CSV."""
+    importado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Usuario que importó"
+    )
+    fecha_importacion = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Fecha de Importación"
+    )
+    archivo_nombre = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Nombre del Archivo Original"
+    )
+    registros_creados = models.PositiveIntegerField(default=0)
+    registros_actualizados = models.PositiveIntegerField(default=0)
+    
+    ESTADO_CHOICES = [
+        ('COMPLETADO', 'Completado'),
+        ('DESHECHO', 'Deshecho'),
+    ]
+    estado = models.CharField(
+        max_length=15,
+        choices=ESTADO_CHOICES,
+        default='COMPLETADO'
+    )
+
+    class Meta:
+        ordering = ['-fecha_importacion']
+        verbose_name = "Lote de Importación"
+        verbose_name_plural = "Lotes de Importación"
+
+    def __str__(self):
+        return f"Importación de {self.fecha_importacion.strftime('%Y-%m-%d %H:%M')} por {self.importado_por}"
+
 class Organizacion(models.Model):
     nombre = models.CharField(max_length=200, unique=True, verbose_name="Nombre de la Organización")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
@@ -119,6 +158,21 @@ class PreRegistro(models.Model):
         choices=ROL_CHOICES,
         default='Estudiante',
         verbose_name="Rol Asignado"
+    )
+
+    importado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='preregistros_importados'
+    )
+    lote_importacion = models.ForeignKey(
+        ImportacionLote,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='preregistros'
     )
 
     class Meta:

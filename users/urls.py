@@ -22,4 +22,7 @@ urlpatterns = [
     path('panel/manage-roles/<int:pk>/reset-password/', views.PasswordResetByAdminView.as_view(), name='manage_user_reset_password'),
     path('panel/change-password/', views.CustomPasswordChangeView.as_view(), name='password_change'),
     path('panel/change-password/done/', views.CustomPasswordChangeDoneView.as_view(), name='password_change_done'),
+    path('panel/preregistros/importaciones/', views.HistorialImportacionesView.as_view(), name='historial_importaciones'),
+    path('panel/preregistros/importaciones/<int:pk>/deshacer/', views.DeshacerImportacionView.as_view(), name='deshacer_importacion'),
+    path('check-preregistro/', views.CheckPreregistroView.as_view(), name='check_preregistro'),
 ]

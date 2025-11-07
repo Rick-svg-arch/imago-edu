@@ -19,22 +19,11 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Q
 
-from .models import Profile, Clase, PreRegistro
+from .models import Profile, Clase, PreRegistro, ImportacionLote
 from .mixins import GroupRequiredMixin
 from . import forms
 
 # Create your views here.
-
-def process_student_ids(clase, ids_texto):
-    """Función de ayuda para no repetir código."""
-    if ids_texto:
-        ids_limpios = [id.strip() for id in re.split(r'[,\s\n]+', ids_texto) if id.strip()]
-        perfiles = Profile.objects.filter(
-            numero_identificacion__in=ids_limpios,
-            organizacion=clase.organizacion
-        )
-        usuarios_a_anadir = [perfil.user for perfil in perfiles]
-        clase.estudiantes.add(*usuarios_a_anadir)
 
 def register_view(request):
     if request.method == "POST":
@@ -348,20 +337,23 @@ class FindStudentsByIdView(GroupRequiredMixin, View):
             return JsonResponse({'error': str(e)}, status=500)
 
         
-class PreRegistroManagerView(GroupRequiredMixin, ListView): # Renombramos la vista
+class PreRegistroManagerView(GroupRequiredMixin, ListView):
     groups_required = ['Administrativo']
     model = PreRegistro
-    template_name = 'users/preregistro_manager.html' # Usaremos una nueva plantilla
+    template_name = 'users/preregistro_manager.html'
     context_object_name = 'preregistros'
     paginate_by = 25
 
     def get_queryset(self):
-        # ... (la lógica de get_queryset para filtrar y buscar no cambia) ...
         organizacion_actual = self.request.user.profile.organizacion
         queryset = PreRegistro.objects.filter(organizacion=organizacion_actual).order_by('nombre_completo')
         query = self.request.GET.get('q')
         if query:
-            queryset = queryset.filter(Q(...) | Q(...))
+            queryset = queryset.filter(
+                Q(numero_identificacion__icontains=query) |
+                Q(nombre_completo__icontains=query) |
+                Q(email__icontains=query)
+            )
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -374,14 +366,87 @@ class PreRegistroManagerView(GroupRequiredMixin, ListView): # Renombramos la vis
             context['csv_form'] = forms.CSVImportForm()
         return context
 
+    def process_csv(self, csv_file, request):
+        """
+        Procesa el CSV de preregistros, ahora incluyendo email y rol.
+        Utiliza update_or_create para evitar duplicados y permitir actualizaciones.
+        """
+        lote = ImportacionLote.objects.create(
+            importado_por=request.user,
+            archivo_nombre=csv_file.name
+        )
+
+        creados_count = 0
+        actualizados_count = 0
+        errors = []
+        valid_roles = [choice[0] for choice in PreRegistro.ROL_CHOICES]
+        
+        # Obtenemos los roles válidos directamente desde el modelo para una validación robusta
+        valid_roles = [choice[0] for choice in PreRegistro.ROL_CHOICES]
+        try:
+            raw_data = csv_file.read()
+            encoding = chardet.detect(raw_data)['encoding'] or 'utf-8'
+            data_set = raw_data.decode(encoding)
+            io_string = io.StringIO(data_set)
+            dialect = csv.Sniffer().sniff(io_string.readline(), delimiters=',;')
+            io_string.seek(0)
+
+            reader = csv.DictReader(io_string, dialect=dialect)
+            organizacion = request.user.profile.organizacion
+
+            for idx, row in enumerate(reader, start=2):
+                try:
+                    # 1. Obtener todos los campos del CSV, incluyendo los nuevos
+                    numero_identificacion = row.get('numero_identificacion', '').strip()
+                    nombre_completo = row.get('nombre_completo', '').strip()
+                    email = row.get('email', '').strip()
+                    rol_asignado_raw = row.get('rol', '').strip()
+
+                    if not numero_identificacion:
+                        errors.append(f"Fila {idx}: El campo 'numero_identificacion' no puede estar vacío.")
+                        continue
+
+                    # 2. Limpiar y validar el rol asignado
+                    # Usamos .capitalize() para asegurar el formato "Estudiante", "Profesor", etc.
+                    rol_limpio = rol_asignado_raw.capitalize() if rol_asignado_raw else 'Estudiante'
+                    
+                    if rol_limpio not in valid_roles:
+                        errors.append(f"Fila {idx}: El rol '{rol_asignado_raw}' no es válido. Opciones: {', '.join(valid_roles)}.")
+                        continue
+
+                    obj, created = PreRegistro.objects.update_or_create(
+                        organizacion=organizacion,
+                        numero_identificacion=numero_identificacion,
+                        defaults={
+                            'nombre_completo': row.get('nombre_completo', '').strip(),
+                            'email': email if email else None,
+                            'rol_asignado': rol_limpio,
+                            'importado_por': request.user,  # Auditoría
+                            'lote_importacion': lote,       # Vinculación al lote
+                        }
+                    )
+                    
+                    if created:
+                        creados_count += 1
+                    else:
+                        actualizados_count += 1
+
+                except Exception as e:
+                    errors.append(f"Fila {idx}: Error inesperado -> {str(e)}")
+
+        except Exception as e:
+            errors.append(f"Error general al procesar el archivo: {str(e)}")
+
+        lote.registros_creados = creados_count
+        lote.registros_actualizados = actualizados_count
+        lote.save()
+
+        return creados_count, actualizados_count, errors
+
     def post(self, request, *args, **kwargs):
-        """Maneja los envíos de los dos formularios."""
-        # Necesitamos volver a obtener el queryset y los objetos de la lista
-        # para re-renderizar la página en caso de éxito o error.
         self.object_list = self.get_queryset()
         context = self.get_context_data()
 
-        # Determinamos qué formulario se envió
         if 'submit_manual' in request.POST:
             manual_form = forms.PreRegistroForm(request.POST)
             if manual_form.is_valid():
@@ -391,16 +456,21 @@ class PreRegistroManagerView(GroupRequiredMixin, ListView): # Renombramos la vis
                 messages.success(request, f"Usuario '{preregistro.numero_identificacion}' añadido a la whitelist.")
                 return redirect('users:manage_preregistros_list')
             else:
-                context['manual_form'] = manual_form # Pasa el formulario con errores
+                context['manual_form'] = manual_form
         
         elif 'submit_csv' in request.POST:
             csv_form = forms.CSVImportForm(request.POST, request.FILES)
             if csv_form.is_valid():
-                success_count, errors = self.process_csv(...)
-                context['success_count'] = success_count
-                context['errors'] = errors
+                creados, actualizados, errors = self.process_csv(request.FILES['csv_file'], request)
+                
+                msg = f"Importación completada. Creados: {creados}, Actualizados (duplicados): {actualizados}."
+                messages.success(request, msg)
+
+                if errors:
+                    context['csv_errors'] = errors
+                    messages.error(request, f"Se encontraron {len(errors)} errores. Revisa los detalles.")
             else:
-                context['csv_form'] = csv_form 
+                context['csv_form'] = csv_form
 
         return self.render_to_response(context)
     
@@ -418,7 +488,7 @@ class PreRegistroUpdateView(GroupRequiredMixin, UpdateView):
 class PreRegistroDeleteView(GroupRequiredMixin, DeleteView):
     groups_required = ['Administrativo']
     model = PreRegistro
-    template_name = 'users/preregistro_confirm_delete.html'
+    template_name = 'users/preregistro_delete.html'
     success_url = reverse_lazy('users:manage_preregistros_list')
 
     def get_queryset(self):
@@ -481,3 +551,100 @@ class PreviewStudentsFromCSVView(GroupRequiredMixin, View):
             })
         except Exception as e:
             return JsonResponse({'error': f"Error al procesar el archivo: {e}"}, status=500)
+
+class HistorialImportacionesView(GroupRequiredMixin, ListView):
+    groups_required = ['Administrativo']
+    model = ImportacionLote
+    template_name = 'users/historial_importaciones.html'
+    context_object_name = 'lotes'
+    paginate_by = 20
+
+    def get_queryset(self):
+        organizacion_actual = self.request.user.profile.organizacion
+        # Obtener IDs de lotes que tienen al menos un preregistro de esta org
+        lotes_ids = PreRegistro.objects.filter(
+            organizacion=organizacion_actual
+        ).values_list('lote_importacion_id', flat=True).distinct()
+        
+        return ImportacionLote.objects.filter(
+            id__in=lotes_ids
+        ).order_by('-fecha_importacion')
+
+class DeshacerImportacionView(GroupRequiredMixin, View):
+    groups_required = ['Administrativo']
+
+    def post(self, request, pk):
+        organizacion_actual = request.user.profile.organizacion
+        
+        # Seguridad: Asegurarse de que el lote pertenezca a la organización del admin
+        lote = get_object_or_404(ImportacionLote, pk=pk, estado='COMPLETADO')
+        
+        # Verificar que al menos un registro del lote esté en la organización correcta
+        if not lote.preregistros.filter(organizacion=organizacion_actual).exists():
+            raise PermissionDenied("No tienes permiso para deshacer este lote.")
+
+        # Borrar todos los PreRegistros asociados a este lote
+        registros_a_borrar_count = lote.preregistros.count()
+        lote.preregistros.all().delete()
+        
+        # Actualizar el estado del lote
+        lote.estado = 'DESHECHO'
+        lote.save()
+        
+        messages.success(request, f"Se deshizo la importación y se eliminaron {registros_a_borrar_count} registros.")
+        return redirect('users:historial_importaciones')
+
+class CheckPreregistroView(View):
+    """
+    Vista AJAX para verificar si un número de identificación está pre-registrado.
+    Devuelve información del pre-registro para auto-completar el formulario.
+    """
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            numero_id = data.get('numero_identificacion', '').strip()
+            
+            if not numero_id:
+                return JsonResponse({'error': 'Número de identificación vacío'}, status=400)
+            
+            # Limpiar el número de identificación
+            numero_limpio = re.sub(r'\D', '', numero_id)
+            
+            if len(numero_limpio) < 5:
+                return JsonResponse({'encontrado': False}, status=200)
+            
+            # Buscar en pre-registros
+            try:
+                preregistro = PreRegistro.objects.get(numero_identificacion=numero_limpio)
+                
+                # Verificar si ya se registró
+                if preregistro.registrado:
+                    return JsonResponse({
+                        'encontrado': False,
+                        'ya_registrado': True,
+                        'mensaje': 'Este usuario ya completó su registro.'
+                    })
+                
+                # Usuario pre-registrado encontrado
+                return JsonResponse({
+                    'encontrado': True,
+                    'numero_identificacion': preregistro.numero_identificacion,
+                    'nombre_completo': preregistro.nombre_completo or '',
+                    'email': preregistro.email or '',
+                    'rol': preregistro.get_rol_asignado_display(),
+                    'organizacion': preregistro.organizacion.nombre,
+                    'ya_registrado': False
+                })
+                
+            except PreRegistro.DoesNotExist:
+                # No está pre-registrado, puede registrarse normalmente
+                return JsonResponse({
+                    'encontrado': False,
+                    'ya_registrado': False,
+                    'mensaje': 'No está pre-registrado, puede registrarse normalmente.'
+                })
+                
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'JSON inválido'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)

@@ -1,10 +1,12 @@
 steps:
   # Build the application
   - name: 'gcr.io/cloud-builders/docker'
+    id: Build
     args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu', '.']
   
   # Push the container image
   - name: 'gcr.io/cloud-builders/docker'
+    id: Push
     args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu']
 
   # Deployment variables
