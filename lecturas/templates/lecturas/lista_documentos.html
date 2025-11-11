@@ -6,83 +6,83 @@
 {% block title %}Lista de lecturas{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Listado de Lecturas</h1>
-    {% if user|has_group:"Profesor" or user|has_group:"Administrativo" %}
-        <a href="{% url 'lecturas:subir_documento' %}" class="btn btn-primary">+ Subir Lectura</a>
-    {% endif %}
-</div>
-
-<!-- Usamos el layout de barra lateral que ya definimos en el CSS -->
-<div class="sidebar-layout">
-    
-    <!-- ===== COLUMNA DE LA BARRA LATERAL (SIDEBAR) ===== -->
-    <aside class="sidebar category-filter">
-        <h3>Categorías</h3>
-        <a href="{% url 'lecturas:lista_documentos_base' %}"><strong>Mostrar Todos los Recursos</strong></a>
-        
-        <ul>
-            {% for code, name in lista_idiomas %}
-            <li class="language-item">
-                <a class="language-toggle">{{ name }}</a>
-                
-                <ul class="grade-list">
-                    {% for grado_code, grado_name in lista_grados %}
-                    <li>
-                        <a href="{% url 'lecturas:lista_documentos_filtrada' idioma=code grado=grado_code %}">
-                            {{ grado_name }}
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </li>
-            {% endfor %}
-        </ul>
-    </aside>
-
-    <!-- ===== COLUMNA DEL CONTENIDO PRINCIPAL ===== -->
-    <main class="main-content">
-        <h3>
-        {% if current_idioma %}
-            Mostrando: <strong>{{ current_idioma|capfirst }}</strong>
-            {% if current_grado %} - <strong>{{ current_grado|capfirst }}</strong>{% endif %}
-        {% else %}
-            Mostrando todos los documentos
+    <div class="page-header">
+        <h1>Listado de Lecturas</h1>
+        {% if user|has_group:"Profesor" or user|has_group:"Administrativo" %}
+            <a href="{% url 'lecturas:subir_documento' %}" class="btn btn-primary">+ Subir Lectura</a>
         {% endif %}
-        </h3>
+    </div>
 
-        {% if documentos %}
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Título</th>
-                            <th>Idioma</th>
-                            <th>Grado</th>
-                            <th>Autor</th>
-                            <th>Fecha de Subida</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for doc in documentos %}
-                        <tr>
-                            <td><a href="{% url 'lecturas:detalle_documento' pk=doc.pk %}">{{ doc.titulo }}</a></td>
-                            <td>{{ doc.get_idioma_display }}</td>
-                            <td>{{ doc.get_grado_display }}</td>
-                            <td>{{ doc.author.username }}</td>
-                            <td>{{ doc.date|date:"d M, Y" }}</td> <!-- Corregido aquí también -->
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <p>No se encontraron documentos para esta categoría.</p>
-        {% endif %}
+    <!-- Usamos el layout de barra lateral que ya definimos en el CSS -->
+    <div class="sidebar-layout">
         
-        {% include 'partials/pagination.html' %}
-    </main>
-</div>
+        <!-- ===== COLUMNA DE LA BARRA LATERAL (SIDEBAR) ===== -->
+        <aside class="sidebar category-filter">
+            <h3>Categorías</h3>
+            <a href="{% url 'lecturas:lista_documentos_base' %}"><strong>Mostrar Todos los Recursos</strong></a>
+            
+            <ul>
+                {% for code, name in lista_idiomas %}
+                <li class="language-item">
+                    <a class="language-toggle">{{ name }}</a>
+                    
+                    <ul class="grade-list">
+                        {% for grado_code, grado_name in lista_grados %}
+                        <li>
+                            <a href="{% url 'lecturas:lista_documentos_filtrada' idioma=code grado=grado_code %}">
+                                {{ grado_name }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                {% endfor %}
+            </ul>
+        </aside>
+
+        <!-- ===== COLUMNA DEL CONTENIDO PRINCIPAL ===== -->
+        <main class="main-content">
+            <h3>
+            {% if current_idioma %}
+                Mostrando: <strong>{{ current_idioma|capfirst }}</strong>
+                {% if current_grado %} - <strong>{{ current_grado|capfirst }}</strong>{% endif %}
+            {% else %}
+                Mostrando todos los documentos
+            {% endif %}
+            </h3>
+
+            {% if documentos %}
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Idioma</th>
+                                <th>Grado</th>
+                                <th>Autor</th>
+                                <th>Fecha de Subida</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for doc in documentos %}
+                            <tr>
+                                <td><a href="{% url 'lecturas:detalle_documento' pk=doc.pk %}">{{ doc.titulo }}</a></td>
+                                <td>{{ doc.get_idioma_display }}</td>
+                                <td>{{ doc.get_grado_display }}</td>
+                                <td>{{ doc.author.username }}</td>
+                                <td>{{ doc.date|date:"d M, Y" }}</td> <!-- Corregido aquí también -->
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No se encontraron documentos para esta categoría.</p>
+            {% endif %}
+            
+            {% include 'partials/pagination.html' %}
+        </main>
+    </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

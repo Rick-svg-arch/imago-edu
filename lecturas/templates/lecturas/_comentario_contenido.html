@@ -1,0 +1,34 @@
+{% load auth_extras %}
+<strong>{{ comentario.autor.username }}</strong> 
+<small>({{ comentario.fecha_creacion|date:"d/m/Y H:i" }})</small>
+
+<div class="respuesta-contenido respuesta-contenido-compacto">
+    {{ comentario.contenido|safe }}
+</div>
+
+<!-- IMÁGENES VISUALIZADAS DIRECTAMENTE - SIN ENLACE -->
+{% if comentario.imagen_comentario %}
+    <div class="comentario-imagen" style="margin-top: 0.75rem;">
+        <img src="{{ comentario.imagen_comentario.url }}" 
+             alt="Imagen en comentario de {{ comentario.autor.username }}"
+             title="Imagen adjunta por {{ comentario.autor.username }}"
+             style="max-width: min(300px, 100%); height: auto; border-radius: 8px; border: 1px solid var(--border-color);">
+    </div>
+{% endif %}
+
+<!-- ARCHIVOS COMO ENLACES (solo los archivos, no las imágenes) -->
+{% if comentario.adjunto_comentario %}
+    <div class="comentario-adjunto" style="margin-top: 0.5rem;">
+        <a href="{{ comentario.adjunto_comentario.url }}" target="_blank" class="btn-adjunto">
+            📎 {{ comentario.adjunto_comentario.name|slice:"-20:" }}
+        </a>
+    </div>
+{% endif %}
+
+{% if user == comentario.autor or user.is_superuser or user|has_group:"Administrativo" %}
+    <div class="respuesta-acciones-compactas">
+        <a href="#" class="reply-btn" data-id="{{ comentario.pk }}">Responder</a>
+        <a href="#" class="edit-comment-btn" data-url="{% url 'lecturas:editar_comentario_ajax' pk=comentario.pk %}">Editar</a>
+        <a href="#" class="delete-comment-btn" data-url="{% url 'lecturas:borrar_comentario_ajax' pk=comentario.pk %}">Borrar</a>
+    </div>
+{% endif %}

@@ -1,0 +1,117 @@
+{% load auth_extras %}
+
+<div class="respuesta-item respuesta-item-compacta" id="comentario-{{ comentario.pk }}">
+    <div class="comment-content-wrapper">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 0.5rem;">
+            <div>
+                <strong>
+                    <i class="fas fa-user-circle"></i>
+                    {{ comentario.autor.username }}
+                </strong>
+                <small>
+                    <i class="far fa-clock"></i>
+                    {{ comentario.fecha_creacion|date:"d/m/Y H:i" }}
+                </small>
+            </div>
+        </div>
+        
+        <div class="respuesta-contenido respuesta-contenido-compacto">
+            {{ comentario.contenido|safe }}
+        </div>
+
+        <!-- IMÁGENES -->
+        {% if comentario.imagen_comentario %}
+            <div class="comentario-imagen">
+                <img src="{{ comentario.imagen_comentario.url }}" 
+                     alt="Imagen en comentario de {{ comentario.autor.username }}"
+                     loading="lazy">
+            </div>
+        {% endif %}
+
+        <!-- ARCHIVOS ADJUNTOS -->
+        {% if comentario.adjunto_comentario %}
+            <div style="margin-top: 1rem;">
+                <a href="{{ comentario.adjunto_comentario.url }}" target="_blank" class="btn-adjunto">
+                    <i class="fas fa-paperclip"></i>
+                    {{ comentario.adjunto_comentario.name|slice:"-30:" }}
+                </a>
+            </div>
+        {% endif %}
+
+        {% if user == comentario.autor or user.is_superuser or user|has_group:"Administrativo" %}
+            <div class="respuesta-acciones-compactas">
+                <a href="#" class="reply-btn" data-id="{{ comentario.pk }}">
+                    <i class="fas fa-reply"></i> Responder
+                </a>
+                <a href="#" class="edit-comment-btn" data-url="{% url 'lecturas:editar_comentario_ajax' pk=comentario.pk %}">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+                <a href="#" class="delete-comment-btn" data-url="{% url 'lecturas:borrar_comentario_ajax' pk=comentario.pk %}">
+                    <i class="fas fa-trash"></i> Borrar
+                </a>
+            </div>
+        {% else %}
+            <div class="respuesta-acciones-compactas">
+                <a href="#" class="reply-btn" data-id="{{ comentario.pk }}">
+                    <i class="fas fa-reply"></i> Responder
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Formulario de respuesta -->
+    {% if user.is_authenticated %}
+    <div class="reply-form-container" id="reply-form-{{ comentario.pk }}" style="display:none;">
+        <form method="post" action="{% url 'lecturas:anadir_comentario' pk=comentario.documento.pk %}" class="ajax-reply-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="parent" value="{{ comentario.pk }}">
+
+            <!-- Textarea simple para respuestas rápidas -->
+            <div class="form-group">
+                <textarea name="contenido" placeholder="Escribe tu respuesta..." class="reply-textarea" style="width: 100%; min-height: 100px; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; resize: vertical;"></textarea>
+            </div>
+                
+            <div class="acciones-comentario">
+                <div>
+                    <label class="btn-adjunto">
+                        <i class="fas fa-paperclip"></i>
+                        Archivo
+                        <input type="file" name="adjunto_comentario" accept=".pdf,.doc,.docx,.epub" style="display: none;">
+                    </label>
+                    <label class="btn-adjunto">
+                        <i class="fas fa-image"></i>
+                        Imagen
+                        <input type="file" name="imagen_comentario" accept=".jpg,.jpeg,.png,.webp" style="display: none;">
+                    </label>
+                </div>
+                <div>
+                    <button type="submit" class="btn-envio-compacto">
+                        <i class="fas fa-paper-plane"></i>
+                        Responder
+                    </button>
+                    <button type="button" class="cancel-reply-btn btn-adjunto">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Contenedor para los hijos con botón de colapsar/expandir -->
+    <div class="hijos-container" id="hijos-{{ comentario.pk }}">
+        {% if comentario.hijos.all %}
+            <button class="toggle-hijos-btn" type="button">
+                <i class="fas fa-plus-square"></i>
+                Ver {{ comentario.hijos.count }} respuesta{{ comentario.hijos.count|pluralize:"s" }}
+            </button>
+            
+            <div class="hijos-content">
+                {% for hijo in comentario.hijos.all %}
+                    {% include "lecturas/_comentario_item.html" with comentario=hijo %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>

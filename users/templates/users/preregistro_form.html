@@ -1,10 +1,39 @@
 {% extends 'layout.html' %}
+
 {% block content %}
-    <h2>{% if object %}Editar Usuario Pre-registrado{% else %}Añadir Nuevo Usuario a la Whitelist{% endif %}</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar</button>
-        <a href="{% url 'users:manage_preregistros_list' %}">Cancelar</a>
-    </form>
+<div class="container-large" style="max-width: 600px;">
+    <div class="glass-card" style="padding: 2.5rem;">
+        <h1><i class="fas fa-edit"></i> {% if object %}Editar Pre-registro{% else %}Añadir a Whitelist{% endif %}</h1>
+        
+        <form method="post" class="form-container" style="padding:0; border:none; box-shadow:none; margin-top:1.5rem;">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.numero_identificacion.id_for_label }}">{{ form.numero_identificacion.label }}</label>
+                {{ form.numero_identificacion }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</top>
+                {{ form.email }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.nombres.id_for_label }}">{{ form.nombres.label }}</label>
+                {{ form.nombres }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.apellidos.id_for_label }}">{{ form.apellidos.label }}</label>
+                {{ form.apellidos }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.rol_asignado.id_for_label }}">{{ form.rol_asignado.label }}</label>
+                {{ form.rol_asignado }}
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                <button type="submit" class="submit-btn"><i class="fas fa-save"></i> Guardar</button>
+                <a href="{% url 'users:manage_preregistros_list' %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

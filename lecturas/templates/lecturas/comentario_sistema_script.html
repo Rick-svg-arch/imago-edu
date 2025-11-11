@@ -1,0 +1,329 @@
+<script>
+// Sistema de comentarios mejorado - Versión simplificada y robusta
+class CommentSystem {
+    constructor() {
+        this.csrfToken = this.getCSRFToken();
+        this.init();
+    }
+
+    getCSRFToken() {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        return token ? token.value : '';
+    }
+
+    init() {
+        console.log('🚀 Inicializando sistema de comentarios...');
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        // Delegación de eventos para mejor performance
+        document.body.addEventListener('submit', (e) => this.handleFormSubmit(e));
+        document.body.addEventListener('click', (e) => this.handleClick(e));
+        
+        // Prevenir envío de formularios no manejados por nosotros
+        document.addEventListener('submit', (e) => {
+            const form = e.target;
+            if (form.matches('#main-comment-form, .ajax-reply-form, .ajax-edit-form')) {
+                e.preventDefault();
+            }
+        });
+    }
+
+    handleFormSubmit(e) {
+        const form = e.target.closest('#main-comment-form, .ajax-reply-form, .ajax-edit-form');
+        if (!form) return;
+
+        e.preventDefault();
+        this.submitForm(form);
+    }
+
+    async submitForm(form) {
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        // Guardar estado original del botón
+        const originalBtnText = submitBtn.innerHTML;
+        const originalBtnState = submitBtn.disabled;
+        
+        // Mostrar estado de carga
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+        submitBtn.disabled = true;
+
+        try {
+            // Validar contenido
+            const contenido = formData.get('contenido');
+            if (!contenido || contenido.trim() === '') {
+                throw new Error('Por favor, escribe algo antes de enviar.');
+            }
+
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': this.csrfToken
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                await this.handleSuccess(form, data);
+                this.showMessage('Comentario enviado correctamente', 'success');
+            } else {
+                throw new Error(data.errors ? JSON.stringify(data.errors) : data.error || 'Error desconocido');
+            }
+
+        } catch (error) {
+            console.error('Error al enviar comentario:', error);
+            this.showMessage(error.message, 'error');
+        } finally {
+            // Restaurar estado del botón
+            submitBtn.innerHTML = originalBtnText;
+            submitBtn.disabled = originalBtnState;
+        }
+    }
+
+    async handleSuccess(form, data) {
+        // Limpiar formulario
+        this.clearForm(form);
+
+        if (form.matches('.ajax-edit-form')) {
+            // Edición de comentario
+            form.closest('.comment-content-wrapper').innerHTML = data.html;
+        } else if (form.matches('.ajax-reply-form')) {
+            // Respuesta a comentario
+            const parentId = data.parent_id;
+            if (parentId) {
+                const hijosContainer = document.getElementById(`hijos-${parentId}`);
+                if (hijosContainer) {
+                    // Mostrar el contenedor de hijos si estaba oculto
+                    const hijosContent = hijosContainer.querySelector('.hijos-content');
+                    if (hijosContent) {
+                        hijosContent.classList.add('visible');
+                        hijosContent.style.display = 'block';
+                    }
+                    
+                    // Actualizar el botón toggle
+                    const toggleBtn = hijosContainer.querySelector('.toggle-hijos-btn');
+                    if (toggleBtn) {
+                        const newCount = data.new_count || (parseInt(toggleBtn.textContent.match(/\d+/)) + 1);
+                        toggleBtn.innerHTML = `<i class="fas fa-minus-square"></i> Ocultar ${newCount} respuesta${newCount > 1 ? 's' : ''}`;
+                    }
+                    
+                    // Añadir el nuevo comentario
+                    hijosContainer.insertAdjacentHTML('beforeend', data.html);
+                }
+            }
+            
+            // Ocultar formulario de respuesta
+            form.closest('.reply-form-container').style.display = 'none';
+        } else {
+            // Comentario principal
+            document.getElementById('comments-list').insertAdjacentHTML('afterbegin', data.html);
+        }
+    }
+
+    clearForm(form) {
+        // Limpiar textarea
+        const textarea = form.querySelector('textarea[name="contenido"]');
+        if (textarea) {
+            textarea.value = '';
+        }
+
+        // Limpiar inputs de archivo
+        const fileInputs = form.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            input.value = '';
+        });
+
+        // Limpiar previews si existen
+        const previews = form.querySelectorAll('.file-preview');
+        previews.forEach(preview => preview.remove());
+    }
+
+    handleClick(e) {
+        const target = e.target;
+        
+        if (target.closest('.reply-btn')) {
+            this.handleReplyClick(e);
+        } else if (target.closest('.cancel-reply-btn')) {
+            this.handleCancelReply(e);
+        } else if (target.closest('.edit-comment-btn')) {
+            this.handleEditClick(e);
+        } else if (target.closest('.cancel-edit-btn')) {
+            this.handleCancelEdit(e);
+        } else if (target.closest('.delete-comment-btn')) {
+            this.handleDeleteClick(e);
+        }
+    }
+
+    handleReplyClick(e) {
+        e.preventDefault();
+        const replyBtn = e.target.closest('.reply-btn');
+        const commentId = replyBtn.dataset.id;
+        const formContainer = document.getElementById(`reply-form-${commentId}`);
+        
+        if (!formContainer) return;
+
+        // Ocultar todos los formularios de respuesta
+        document.querySelectorAll('.reply-form-container').forEach(container => {
+            container.style.display = 'none';
+        });
+
+        // Mostrar el formulario actual
+        const isHidden = formContainer.style.display === 'none';
+        formContainer.style.display = isHidden ? 'block' : 'none';
+
+        if (isHidden) {
+            // Enfocar el textarea
+            const textarea = formContainer.querySelector('textarea');
+            if (textarea) {
+                setTimeout(() => textarea.focus(), 100);
+            }
+            
+            // Scroll suave
+            formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    handleCancelReply(e) {
+        e.preventDefault();
+        const formContainer = e.target.closest('.reply-form-container');
+        this.clearForm(formContainer.querySelector('form'));
+        formContainer.style.display = 'none';
+    }
+
+    async handleEditClick(e) {
+        e.preventDefault();
+        const editBtn = e.target.closest('.edit-comment-btn');
+        const url = editBtn.dataset.url;
+        const contentDiv = editBtn.closest('.comment-content-wrapper');
+
+        try {
+            contentDiv.dataset.originalHtml = contentDiv.innerHTML;
+            contentDiv.innerHTML = '<p style="text-align: center; padding: 2rem;"><i class="fas fa-spinner fa-spin"></i> Cargando editor...</p>';
+
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            contentDiv.innerHTML = data.html;
+        } catch (error) {
+            console.error('Error al cargar editor:', error);
+            this.showMessage('Error al cargar el editor', 'error');
+            contentDiv.innerHTML = contentDiv.dataset.originalHtml;
+        }
+    }
+
+    handleCancelEdit(e) {
+        e.preventDefault();
+        const contentDiv = e.target.closest('.comment-content-wrapper');
+        if (contentDiv.dataset.originalHtml) {
+            contentDiv.innerHTML = contentDiv.dataset.originalHtml;
+        }
+    }
+
+    handleDeleteClick(e) {
+        e.preventDefault();
+        const deleteBtn = e.target.closest('.delete-comment-btn');
+        
+        if (!confirm('¿Estás seguro de que quieres borrar este comentario? Esta acción no se puede deshacer.')) {
+            return;
+        }
+
+        const url = deleteBtn.dataset.url;
+        const commentDiv = deleteBtn.closest('.respuesta-item');
+
+        commentDiv.style.opacity = '0.5';
+        commentDiv.style.pointerEvents = 'none';
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': this.csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                commentDiv.style.transition = 'all 0.5s ease';
+                commentDiv.style.opacity = '0';
+                commentDiv.style.transform = 'scale(0.95)';
+                setTimeout(() => commentDiv.remove(), 500);
+                this.showMessage('Comentario eliminado', 'success');
+            } else {
+                throw new Error('Error al borrar el comentario');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            this.showMessage('Error al borrar el comentario', 'error');
+            commentDiv.style.opacity = '1';
+            commentDiv.style.pointerEvents = 'auto';
+        });
+    }
+
+    showMessage(message, type = 'info') {
+        const styles = {
+            success: 'background: #10b981;',
+            error: 'background: #ef4444;',
+            info: 'background: #3b82f6;'
+        };
+
+        const messageDiv = document.createElement('div');
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            ${styles[type] || styles.info}
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        messageDiv.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}"></i>
+            <strong>${message}</strong>
+        `;
+
+        document.body.appendChild(messageDiv);
+
+        setTimeout(() => {
+            messageDiv.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => messageDiv.remove(), 300);
+        }, 3000);
+    }
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    new CommentSystem();
+    
+    // Añadir estilos de animación
+    const styles = `
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+        .hijos-content { display: none; }
+        .hijos-content.visible { display: block; }
+    `;
+    
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = styles;
+    document.head.appendChild(styleSheet);
+});
+</script>

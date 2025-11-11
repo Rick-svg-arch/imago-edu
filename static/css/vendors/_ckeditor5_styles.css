@@ -1,0 +1,130 @@
+/* ===== ESTILOS PARA CKEDITOR 5 - MODO CLARO Y OSCURO ===== */
+
+/* MODO CLARO (por defecto) */
+.ck.ck-editor__main > .ck-editor__editable {
+    background-color: #ffffff;
+    color: #222222;
+    border-color: #eaeaea;
+}
+
+.ck.ck-toolbar {
+    background-color: #f8f8f8;
+    border-color: #eaeaea;
+}
+
+.ck.ck-button:not(.ck-disabled):hover {
+    background-color: #e8e8e8;
+}
+
+/* MODO OSCURO - Aplicado cuando body tiene la clase 'dark-mode' */
+body.dark-mode .ck.ck-editor__main > .ck-editor__editable {
+    background-color: #1c1c1e !important;
+    color: #eaeaea !important;
+    border-color: #38383a !important;
+}
+
+body.dark-mode .ck.ck-editor__editable:not(.ck-editor__nested-editable).ck-focused {
+    background-color: #1c1c1e !important;
+    border-color: #13a7ac !important;
+    box-shadow: 0 0 0 2px rgba(19, 167, 172, 0.2) !important;
+}
+
+body.dark-mode .ck.ck-toolbar {
+    background-color: #2c2c2e !important;
+    border-color: #38383a !important;
+}
+
+body.dark-mode .ck.ck-button {
+    color: #eaeaea !important;
+}
+
+body.dark-mode .ck.ck-button:not(.ck-disabled):hover {
+    background-color: #38383a !important;
+}
+
+body.dark-mode .ck.ck-button.ck-on {
+    background-color: #13a7ac !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .ck.ck-dropdown__panel {
+    background-color: #2c2c2e !important;
+    border-color: #38383a !important;
+}
+
+body.dark-mode .ck.ck-list__item:hover {
+    background-color: #38383a !important;
+}
+
+body.dark-mode .ck.ck-list__item .ck-button:hover {
+    background-color: transparent !important;
+}
+
+/* Tooltips en modo oscuro */
+body.dark-mode .ck.ck-tooltip__text {
+    background-color: #2c2c2e !important;
+    color: #eaeaea !important;
+    border-color: #38383a !important;
+}
+
+/* Íconos en modo oscuro */
+body.dark-mode .ck.ck-icon {
+    color: #eaeaea !important;
+}
+
+/* Paneles desplegables */
+body.dark-mode .ck.ck-balloon-panel {
+    background-color: #2c2c2e !important;
+    border-color: #38383a !important;
+}
+
+/* Contenido dentro del editor */
+body.dark-mode .ck-content {
+    background-color: #1c1c1e !important;
+    color: #eaeaea !important;
+}
+
+body.dark-mode .ck-content p,
+body.dark-mode .ck-content h1,
+body.dark-mode .ck-content h2,
+body.dark-mode .ck-content h3,
+body.dark-mode .ck-content h4,
+body.dark-mode .ck-content h5,
+body.dark-mode .ck-content h6,
+body.dark-mode .ck-content li,
+body.dark-mode .ck-content blockquote {
+    color: #eaeaea !important;
+}
+
+body.dark-mode .ck-content a {
+    color: #13a7ac !important;
+}
+
+/* Placeholder en modo oscuro */
+body.dark-mode .ck.ck-editor__editable > .ck-placeholder::before {
+    color: #666666 !important;
+}
+
+/* Separadores en la toolbar */
+body.dark-mode .ck.ck-toolbar__separator {
+    background-color: #38383a !important;
+}
+
+/* Estilos generales para mejorar la legibilidad */
+.ck.ck-editor__main > .ck-editor__editable {
+    min-height: 200px;
+    padding: 1rem;
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+/* Ajustes para el formulario compacto de comentarios */
+.form-comentario-compacto .ck.ck-editor__main > .ck-editor__editable {
+    min-height: 120px;
+}
+
+/* Ajustes para formularios de respuesta */
+.ajax-reply-form .ck.ck-editor__main > .ck-editor__editable,
+.ajax-edit-form .ck.ck-editor__main > .ck-editor__editable {
+    min-height: 100px;
+}

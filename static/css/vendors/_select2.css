@@ -1,0 +1,109 @@
+/* --- WIDGET DE SELECCIÓN ÚNICA (COMO EL DE AUTOR) --- */
+.select2-container--default .select2-selection--single {
+    background-color: var(--bg-color) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    height: 45px !important;
+    padding: 0.5rem !important;
+}
+.select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 0 3px rgba(12, 145, 150, 0.15) !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: var(--text-color) !important;
+    line-height: 35px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: var(--text-color) transparent transparent transparent !important;
+}
+
+/* --- WIDGET DE SELECCIÓN MÚLTIPLE (GÉNEROS) - CORRECCIÓN CLAVE --- */
+.select2-container--default .select2-selection--multiple {
+    background-color: var(--bg-color) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    padding: 0.5rem !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem;
+}
+.select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 0 3px rgba(12, 145, 150, 0.15) !important;
+}
+
+/* Las etiquetas (chips) */
+.select2-container--default .select2-selection__choice {
+    background-color: var(--accent-color) !important;
+    border: none !important;
+    color: white !important;
+    border-radius: 5px !important;
+    padding: 5px 10px !important;
+    font-size: 0.9rem;
+    margin: 0 !important; /* Quitamos márgenes extra */
+}
+.select2-container--default .select2-selection__choice__remove {
+    color: white !important;
+    opacity: 0.7;
+    margin-left: 5px !important;
+}
+
+/* El campo de texto donde se escribe (el cursor) */
+.select2-search--inline {
+    flex: 1; /* Permite que el campo crezca */
+}
+.select2-search__field {
+    color: var(--text-color) !important;
+    width: 100% !important;
+    min-width: 150px; /* Ancho mínimo para que no se colapse */
+    margin-top: 0 !important;
+}
+
+/* El menú desplegable de sugerencias y mensajes */
+.select2-dropdown {
+    background-color: var(--card-bg-color) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.select2-results__option {
+    color: var(--text-color) !important;
+}
+.select2-results__option--highlighted {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+}
+.select2-results__message { /* Mensaje de "Please enter X characters" */
+    color: var(--text-color) !important;
+    opacity: 0.7;
+}
+
+/* El menú desplegable de sugerencias */
+body.dark-mode .select2-dropdown {
+    background-color: var(--card-bg-color) !important; /* Fondo de tarjeta oscuro */
+    border-color: var(--border-color) !important; /* Borde oscuro */
+}
+
+/* El campo de búsqueda DENTRO del desplegable */
+body.dark-mode .select2-search--dropdown .select2-search__field {
+    background-color: var(--bg-color) !important; /* Fondo principal oscuro */
+    color: var(--text-color) !important; /* Texto claro */
+}
+
+/* Las opciones en el desplegable */
+body.dark-mode .select2-results__option {
+    color: var(--text-color) !important; /* Texto claro */
+}
+
+/* La opción resaltada (con el ratón o el teclado) */
+body.dark-mode .select2-results__option--highlighted {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+}
+
+/* Mensajes como "Please enter 2 or more characters" */
+body.dark-mode .select2-results__message {
+    color: var(--text-color) !important;
+    opacity: 0.7;
+}

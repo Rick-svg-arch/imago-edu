@@ -1,8 +1,8 @@
-﻿numero_identificacion;email;nombre_completo;rol;
-1023456789;juan.perez@email.com;Juan Pérez;Administrativo;
-1098765432;;María García;profesor;
-1012345678;ana.gomez@email.com;Ana Gómez;;
-1055566677;luis.martinez@email.com;;estudiante;
-1099887766;;;;
-1011223344;carlos.rodriguez@email.com;Carlos Rodríguez;estudiante;
-1033445566;sofia.lopez@email.com;Sofía López;Profesor;
+﻿numero_identificacion;email;nombres;apellidos;rol
+1023456789;juan.perez@email.com;Juan;Pérez;Administrativo
+1098765432;;Maria Antonia;García;profesor
+1012345678;ana.gomez@email.com;Ana;Gómez Arenas;profesor
+1055566677;luis.martinez@email.com;;;estudiante
+1099887766;;Armando;;
+1011223344;carlos.rodriguez@email.com;Carlos;Rodríguez;
+1033445566;sofia.lopez@email.com;Sofía;López Betancur;Profesor

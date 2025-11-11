@@ -1,9 +1,160 @@
 {% extends 'layout.html' %}
+{% load static %}
+
+{% block title %}
+    {% if object %}Editar Lectura{% else %}Subir Nueva Lectura{% endif %}
+{% endblock %}
+
 {% block content %}
-    <h2>{% if object %}Editar{% else %}Subir{% endif %} Documento</h2>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar Cambios</button>
-    </form>
+<div class="container-large">
+    <div class="glass-card formulario-grande">
+        <h1>
+            {% if object %}<i class="fas fa-edit"></i> Editar "{{ object.titulo }}"
+            {% else %}<i class="fas fa-plus-circle"></i> Añadir Nueva Lectura{% endif %}
+        </h1>
+        <p>Completa los campos para compartir un nuevo recurso.</p>
+        <hr>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Título, Idioma, Grado -->
+            <div class="form-group">{{ form.titulo.label_tag }}{{ form.titulo }}</div>
+            <div class="form-grid-2">
+                <div class="form-group">{{ form.idioma.label_tag }}{{ form.idioma }}</div>
+                <div class="form-group">{{ form.grado.label_tag }}{{ form.grado }}</div>
+            </div>
+
+            <hr>
+            <h4><i class="fas fa-book"></i> Detalles de la Obra</h4>
+            
+            <!-- Autor y Géneros (Renderizados con Select2) -->
+            <div class="form-group">
+                <label for="{{ form.autor_principal.id_for_label }}"><i class="fas fa-user-edit"></i> {{ form.autor_principal.label }}</label>
+                {{ form.autor_principal }}
+                <small class="form-help">Escribe para buscar o crear un nuevo autor.</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.generos.id_for_label }}"><i class="fas fa-tags"></i> {{ form.generos.label }}</label>
+                {{ form.generos }}
+                <small class="form-help">Selecciona géneros o escribe nuevos y presiona Enter.</small>
+            </div>
+
+            <div class="form-group">{{ form.nivel_dificultad.label_tag }}{{ form.nivel_dificultad }}</div>
+            
+            <hr>
+            <h4><i class="fas fa-align-left"></i> Contenido</h4>
+
+            <!-- Descripción (CKEditor 5) -->
+            <div class="form-group">{{ form.descripcion }}</div>
+
+            <!-- SECCIÓN DE ADJUNTOS CORREGIDA -->
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label><i class="fas fa-file-pdf"></i> Adjuntar Documento</label>
+                    <div class="custom-file-wrapper" data-field-id="{{ form.adjunto.id_for_label }}">
+                        {{ form.adjunto }}
+                        <div class="file-preview-container"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-image"></i> Adjuntar Imagen</label>
+                    <div class="custom-file-wrapper" data-field-id="{{ form.imagen.id_for_label }}">
+                        {{ form.imagen }}
+                        <div class="file-preview-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Errores y Botones (sin cambios) -->
+            {% if form.non_field_errors %}
+            <div class="error-box">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                <button type="submit" class="submit-btn">Guardar</button>
+                <a href="{% url 'lecturas:detalle_documento' pk=object.pk %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- === SCRIPT FINAL, LIMPIO Y CORRECTO === -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // 1. SCRIPT PARA PERSONALIZAR WIDGETS DE ARCHIVO
+    document.querySelectorAll('.custom-file-wrapper').forEach(wrapper => {
+        const fieldId = wrapper.dataset.fieldId;
+        const djangoInput = document.getElementById(fieldId);
+        if (!djangoInput) return;
+
+        djangoInput.style.display = 'none';
+        const isImage = djangoInput.accept.includes('image');
+        const previewContainer = wrapper.querySelector('.file-preview-container');
+        
+        const triggerButton = document.createElement('button');
+        triggerButton.type = 'button';
+        triggerButton.className = 'custom-file-trigger';
+        triggerButton.innerHTML = `<i class="fas fa-upload"></i> <span>Seleccionar Archivo</span>`;
+        
+        wrapper.appendChild(triggerButton);
+        wrapper.appendChild(previewContainer);
+
+        triggerButton.addEventListener('click', () => djangoInput.click());
+
+        djangoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                previewContainer.innerHTML = '';
+                return;
+            }
+            triggerButton.querySelector('span').textContent = 'Cambiar Archivo';
+            previewContainer.innerHTML = '';
+            if (isImage) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    previewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                const p = document.createElement('p');
+                p.textContent = `Seleccionado: ${file.name}`;
+                previewContainer.appendChild(p);
+            }
+        });
+
+        const currentFileInfo = wrapper.querySelector('a');
+        const clearCheckbox = wrapper.querySelector('input[type="checkbox"]');
+        if (currentFileInfo && clearCheckbox) {
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'current-file-info';
+            
+            if (isImage) {
+                const img = document.createElement('img');
+                img.src = currentFileInfo.href;
+                infoDiv.appendChild(img);
+            } else {
+                infoDiv.innerHTML = `Actualmente: `;
+                infoDiv.appendChild(currentFileInfo);
+            }
+            
+            const clearLabel = document.createElement('label');
+            clearLabel.className = 'clear-file-checkbox';
+            clearLabel.appendChild(clearCheckbox);
+            clearLabel.append(' Limpiar selección');
+            infoDiv.appendChild(clearLabel);
+            
+            wrapper.prepend(infoDiv);
+            triggerButton.querySelector('span').textContent = 'Cambiar Archivo';
+        }
+    });
+});
+</script>
 {% endblock %}

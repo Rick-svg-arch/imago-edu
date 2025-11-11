@@ -1,0 +1,146 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🌟 Sistema de calificaciones inicializado');
+    const wrapper = document.querySelector('.rating-dropdown-wrapper');
+    if (!wrapper) return;
+
+    const trigger = wrapper.querySelector('.rating-trigger');
+    const panel = wrapper.querySelector('.rating-dropdown-panel');
+
+     // --- LÓGICA PARA ABRIR Y CERRAR EL DESPLEGABLE ---
+    trigger.addEventListener('click', function(e) {
+        // Evita que el clic en el trigger se propague al documento y cierre el panel inmediatamente
+        e.stopPropagation();
+        panel.classList.toggle('active');
+    });
+
+    // Cierra el panel si se hace clic en cualquier otro lugar de la página
+    document.addEventListener('click', function(e) {
+        if (!wrapper.contains(e.target)) {
+            panel.classList.remove('active');
+        }
+    });
+    
+    const avgScoreText = document.getElementById('average-score-text');
+    const totalRatingsText = document.getElementById('total-ratings-text');
+    const avgStarsContainer = document.querySelector('.star-rating-display');
+    
+    // Función para dibujar las estrellas de promedio (SIEMPRE visible)
+    function drawAverageStars(average) {
+        if (!avgStarsContainer) return;
+        
+        let starsHtml = '';
+        const fullStars = Math.floor(average);
+        const halfStar = average % 1 >= 0.5;
+        
+        for (let i = 0; i < 5; i++) {
+            if (i < fullStars) {
+                starsHtml += '<i class="fa-solid fa-star"></i>';
+            } else if (i === fullStars && halfStar) {
+                starsHtml += '<i class="fa-solid fa-star-half-stroke"></i>';
+            } else {
+                starsHtml += '<i class="fa-regular fa-star"></i>';
+            }
+        }
+        avgStarsContainer.innerHTML = starsHtml;
+    }
+    
+    // Dibujar estrellas de promedio inicial
+    if (avgScoreText) {
+        const initialAverage = parseFloat(avgScoreText.textContent) || 0;
+        drawAverageStars(initialAverage);
+        console.log('✅ Promedio dibujado:', initialAverage);
+    }
+    
+    // === SOLO PARA USUARIOS AUTENTICADOS ===
+    const inputStarsContainer = document.querySelector('.star-rating-input');
+    
+    if (!inputStarsContainer) {
+        console.log('ℹ️ Usuario no autenticado - solo mostrando promedio');
+        return; // Salir si no hay contenedor de input (usuario no logueado)
+    }
+    
+    let currentUserRating = {{ user_rating|default:'0' }};
+    const csrfToken = '{{ csrf_token }}';
+    const postUrl = inputStarsContainer.dataset.url;
+    const feedbackText = document.getElementById('user-rating-feedback');
+    const inputStars = Array.from(inputStarsContainer.querySelectorAll('.star'));
+    
+    console.log('👤 Usuario autenticado - calificación actual:', currentUserRating);
+    
+    // Función para actualizar la visualización de la calificación del usuario
+    function updateUserInputStars(rating) {
+        inputStars.forEach(star => {
+            if (parseInt(star.dataset.value) <= rating) {
+                star.classList.add('selected');
+            } else {
+                star.classList.remove('selected');
+            }
+        });
+    }
+    
+    // Aplicar calificación inicial del usuario si existe
+    if (currentUserRating > 0) {
+        updateUserInputStars(currentUserRating);
+        console.log('⭐ Calificación del usuario aplicada:', currentUserRating);
+    }
+    
+    // Manejar clic en estrellas
+    inputStarsContainer.addEventListener('click', function(e) {
+        if (e.target.matches('.star')) {
+            const puntuacion = parseInt(e.target.dataset.value);
+            console.log('🖱️ Estrella clickeada:', puntuacion);
+            
+            // Actualización visual inmediata
+            currentUserRating = puntuacion;
+            updateUserInputStars(currentUserRating);
+            
+            // Envío al backend
+            const formData = new FormData();
+            formData.append('puntuacion', puntuacion);
+            
+            fetch(postUrl, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('📥 Respuesta del servidor:', data);
+                
+                if (data.success) {
+                    // Actualizar promedio
+                    avgScoreText.textContent = data.nuevo_promedio;
+                    totalRatingsText.textContent = data.num_calificaciones;
+                    drawAverageStars(data.nuevo_promedio);
+                    
+                    // Mostrar feedback temporal
+                    if (feedbackText) {
+                        feedbackText.style.display = 'block';
+                        setTimeout(() => {
+                            feedbackText.style.display = 'none';
+                        }, 3000);
+                    }
+                    
+                    console.log('✅ Calificación guardada exitosamente');
+                } else {
+                    console.error('❌ Error del servidor:', data.error);
+                    alert('Error al enviar la calificación: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error de red:', error);
+                alert('Error de conexión. Por favor, intenta de nuevo.');
+            });
+        }
+    });
+    
+    // Restaurar visualización al quitar el mouse
+    inputStarsContainer.addEventListener('mouseleave', function() {
+        updateUserInputStars(currentUserRating);
+    });
+});
+</script>

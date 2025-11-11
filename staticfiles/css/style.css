@@ -1,0 +1,29 @@
+/*
+ * ARCHIVO PRINCIPAL DE ESTILOS
+ * Este archivo solo importa los parciales en el orden correcto.
+ * ¡No añadas estilos directamente aquí!
+*/
+
+/* 1. BASE: Variables, resets y estilos base de etiquetas. */
+@import url("base/_variables.css");
+@import url("base/_typography.css");
+
+/* 2. LAYOUT: Estructura principal de la página. */
+@import url("layout/_layout.css");
+@import url("layout/_header.css");
+@import url("layout/_sidebar.css");
+@import url("layout/_responsive.css");
+
+/* 3. COMPONENTS: Bloques de UI reutilizables. */
+@import url("components/_buttons.css");
+@import url("components/_cards.css");
+@import url("components/_ckeditor_lecturas.css");
+@import url("components/_forms.css");
+@import url("components/_iframe.css");
+@import url("components/_images.css");
+@import url("components/_tables.css");
+@import url("components/_rating.css");
+
+/* 4. VENDORS: Estilos de librerías de terceros. */
+@import url("vendors/_select2.css");
+/* CKEDITOR ESTÁ DENTRO DE STATIC/JS/CKEDITOR_INIT.JS */

@@ -1,11 +1,27 @@
 {% extends 'layout.html' %}
+
+{% block title %}Confirmar Borrado{% endblock %}
+
 {% block content %}
-    <h2>Confirmar Borrado</h2>
-    <p>¿Estás seguro de que quieres borrar la publicación "<strong>{{ object.titulo }}</strong>"?</p>
-    <p>Esta acción no se puede deshacer.</p>
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Sí, borrar</button>
-        <a href="{% url 'lecturas:detalle_documento' pk=object.pk %}">Cancelar</a>
-    </form>
+<div class="container-large">
+    <div class="glass-card" style="text-align: center;">
+        <h1 style="color: #ff4757;">Confirmar Acción Irreversible</h1>
+        <p>¿Estás completamente seguro de que quieres borrar la publicación?</p>
+        <h2 style="margin: 1rem 0; background-color: var(--bg-color); padding: 1rem; border-radius: 8px;">"{{ object.titulo }}"</h2>
+        <p>Todos los comentarios y archivos asociados a esta publicación también serán eliminados permanentemente. <strong>Esta acción no se puede deshacer.</strong></p>
+        <hr>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="submit-btn" style="background: #ff4757; box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);">
+                    Sí, Borrar Permanentemente
+                </button>
+                <a href="{% url 'lecturas:detalle_documento' pk=object.pk %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color); box-shadow: none;">
+                    No, Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

@@ -11,9 +11,9 @@ admin.site.register(Organizacion)
 @admin.register(PreRegistro)
 class PreRegistroAdmin(admin.ModelAdmin):
     form = PreRegistroAdminForm
-    list_display = ('numero_identificacion', 'organizacion', 'registrado', 'nombre_completo', 'email')
+    list_display = ('numero_identificacion', 'organizacion', 'registrado', 'nombres', 'apellidos', 'email')
     list_filter = ('organizacion', 'registrado')
-    search_fields = ('numero_identificacion', 'email', 'nombre_completo')
+    search_fields = ('numero_identificacion', 'email', 'nombres', 'apellidos')
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

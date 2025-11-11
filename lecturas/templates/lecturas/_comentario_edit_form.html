@@ -1,0 +1,53 @@
+<!-- lecturas/_comentario_edit_form.html (VERSIÓN FINAL) -->
+<form method="post" action="{% url 'lecturas:editar_comentario_ajax' pk=comentario.pk %}" class="ajax-edit-form" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <div class="form-group">
+        {{ form.contenido }}
+    </div>
+    
+    <!-- Archivos actuales (opcional, buena UX) -->
+    {% if comentario.adjunto_comentario or comentario.imagen_comentario %}
+        <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-color); border-radius: 6px;">
+            {% if comentario.adjunto_comentario %}
+                <div><i class="fas fa-paperclip"></i> <strong>Adjunto actual:</strong> <a href="{{ comentario.adjunto_comentario.url }}" target="_blank">{{ comentario.adjunto_comentario.name|slice:"-30:" }}</a></div>
+            {% endif %}
+            {% if comentario.imagen_comentario %}
+                <div style="margin-top: 0.5rem;"><i class="fas fa-image"></i> <strong>Imagen actual:</strong> <a href="{{ comentario.imagen_comentario.url }}" target="_blank">Ver imagen</a></div>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    <!-- Contenedor de acciones unificado -->
+    <div class="acciones-comentario">
+        <!-- Grupo de botones de adjuntos -->
+        <div>
+            <label class="btn-adjunto">
+                <i class="fas fa-paperclip"></i> Archivo
+                {{ form.adjunto_comentario }}
+            </label>
+            <label class="btn-adjunto">
+                <i class="fas fa-image"></i> Imagen
+                {{ form.imagen_comentario }}
+            </label>
+        </div>
+        
+        <!-- Grupo de botones de acción -->
+        <div>
+            <button type="submit" class="btn-envio-compacto">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+            <button type="button" class="cancel-edit-btn btn-adjunto">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+        </div>
+    </div>
+
+    <!-- Manejo de errores -->
+    {% if form.errors %}
+        <div class="error-box" style="margin-top: 1rem;">
+            <p><strong>Por favor, corrige los siguientes errores:</strong></p>
+            {{ form.errors }}
+        </div>
+    {% endif %}
+</form>

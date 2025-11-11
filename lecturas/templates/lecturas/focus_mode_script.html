@@ -1,60 +1,237 @@
+<!-- lecturas/focus_mode_script.html -->
+<style>
+    /* === MODO CONCENTRACIÓN - VERSIÓN ULTRA SIMPLIFICADA === */
+    
+    /* Botón de salir - oculto por defecto */
+    #btn-exit-focus {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 999999;
+        padding: 0.75rem 1.5rem;
+        background-color: #0c9196;
+        color: white;
+        border: 2px solid white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        display: none;
+    }
+
+    /* CLASE PARA MODO CONCENTRACIÓN */
+    .focus-mode-active {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 80px 40px 40px 40px !important;
+        overflow-y: auto !important;
+        background-color: #fdfdfd !important;
+        z-index: 999998 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* Modo oscuro */
+    body.dark-mode .focus-mode-active {
+        background-color: #121212 !important;
+    }
+
+    /* Cuando está activo el modo */
+    body.focus-mode {
+        overflow: hidden !important;
+    }
+
+    body.focus-mode #btn-exit-focus {
+        display: block !important;
+    }
+
+    body.focus-mode #btn-enter-focus {
+        display: none !important;
+    }
+
+    body.focus-mode .main-header,
+    body.focus-mode .acciones-documento,
+    body.focus-mode #comentarios-container,
+    body.focus-mode hr {
+        display: none !important;
+    }
+
+    /* Centrar contenido */
+    .focus-mode-active > * {
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Mejorar legibilidad */
+    .focus-mode-active {
+        font-size: 1.15em;
+        line-height: 1.9;
+    }
+
+    .focus-mode-active .page-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #eaeaea;
+    }
+
+    body.dark-mode .focus-mode-active .page-header {
+        border-bottom-color: #38383a;
+    }
+
+    .focus-mode-active .contenido-post {
+        margin-top: 2rem;
+    }
+
+    /* Scrollbar */
+    .focus-mode-active::-webkit-scrollbar {
+        width: 12px;
+    }
+
+    .focus-mode-active::-webkit-scrollbar-track {
+        background: #eaeaea;
+    }
+
+    body.dark-mode .focus-mode-active::-webkit-scrollbar-track {
+        background: #38383a;
+    }
+
+    .focus-mode-active::-webkit-scrollbar-thumb {
+        background: #0c9196;
+        border-radius: 6px;
+    }
+
+    .focus-mode-active::-webkit-scrollbar-thumb:hover {
+        background: #222222;
+    }
+
+    body.dark-mode .focus-mode-active::-webkit-scrollbar-thumb:hover {
+        background: #eaeaea;
+    }
+
+    @media (max-width: 768px) {
+        .focus-mode-active {
+            padding: 60px 20px 20px 20px !important;
+            font-size: 1.05em;
+        }
+        
+        #btn-exit-focus {
+            top: 10px;
+            right: 10px;
+            padding: 0.6rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const enterButton = document.getElementById('btn-enter-focus');
-        const exitButton = document.getElementById('btn-exit-focus');
-        const lecturaContainer = document.getElementById('lectura-container');
-        const body = document.body;
+document.addEventListener('DOMContentLoaded', function() {
+    const btnEnter = document.getElementById('btn-enter-focus');
+    const btnExit = document.getElementById('btn-exit-focus');
+    const lecturaContainer = document.getElementById('lectura-container');
+    
+    console.log('🎯 Modo concentración inicializado');
+    console.log('Botón entrar:', btnEnter);
+    console.log('Botón salir:', btnExit);
+    console.log('Contenedor:', lecturaContainer);
+    
+    if (!btnEnter || !btnExit || !lecturaContainer) {
+        console.error('❌ Faltan elementos necesarios');
+        return;
+    }
 
-        // Verificamos si la API de Pantalla Completa es compatible
-        const isFullscreenEnabled = document.fullscreenEnabled || document.webkitFullscreenEnabled || document.mozFullScreenEnabled || document.msFullscreenEnabled;
+    // Función para entrar
+    function enterFocusMode() {
+        console.log('🚀 Entrando en modo concentración...');
+        
+        // Agregar clases PRIMERO (esto siempre funciona)
+        document.body.classList.add('focus-mode');
+        lecturaContainer.classList.add('focus-mode-active');
+        
+        // Verificar que se aplicó
+        console.log('✓ Clase focus-mode en body:', document.body.classList.contains('focus-mode'));
+        console.log('✓ Clase focus-mode-active en container:', lecturaContainer.classList.contains('focus-mode-active'));
+        
+        // Verificar color de fondo
+        const bgColor = window.getComputedStyle(lecturaContainer).backgroundColor;
+        console.log('✓ Color de fondo aplicado:', bgColor);
+        
+        // Intentar pantalla completa (opcional, no crítico)
+        requestFullscreen();
+        
+        // Scroll al inicio
+        setTimeout(() => {
+            lecturaContainer.scrollTop = 0;
+        }, 100);
+        
+        console.log('✅ Modo concentración activado');
+    }
 
-        if (!enterButton || !exitButton || !lecturaContainer || !isFullscreenEnabled) {
-            if (enterButton) enterButton.style.display = 'none'; // Oculta el botón si no es compatible
-            console.error("Modo Concentración no es compatible o faltan elementos.");
+    // Función para solicitar pantalla completa (opcional)
+    function requestFullscreen() {
+        // Verificar si el navegador soporta pantalla completa
+        if (!document.fullscreenEnabled && 
+            !document.webkitFullscreenEnabled && 
+            !document.mozFullScreenEnabled) {
+            console.log('ℹ️ Pantalla completa no disponible en este navegador');
             return;
         }
 
-        function enterFocusMode() {
-            body.classList.add('focus-mode');
-            
-            // Petición para entrar en pantalla completa
-            if (lecturaContainer.requestFullscreen) {
-                lecturaContainer.requestFullscreen();
-            } else if (lecturaContainer.webkitRequestFullscreen) { /* Safari */
-                lecturaContainer.webkitRequestFullscreen();
-            } else if (lecturaContainer.msRequestFullscreen) { /* IE11 */
-                lecturaContainer.msRequestFullscreen();
-            }
+        // Intentar activar pantalla completa en el contenedor
+        const requestFS = lecturaContainer.requestFullscreen || 
+                         lecturaContainer.webkitRequestFullscreen || 
+                         lecturaContainer.mozRequestFullScreen || 
+                         lecturaContainer.msRequestFullscreen;
+
+        if (requestFS) {
+            requestFS.call(lecturaContainer)
+                .then(() => {
+                    console.log('✅ Pantalla completa activada');
+                })
+                .catch(err => {
+                    console.log('ℹ️ Pantalla completa no pudo activarse:', err.message);
+                    console.log('ℹ️ El modo concentración sigue funcionando sin pantalla completa');
+                });
         }
+    }
 
-        function exitFocusMode() {
-            body.classList.remove('focus-mode');
+    // Función para salir
+    function exitFocusMode() {
+        console.log('👋 Saliendo del modo concentración...');
+        
+        document.body.classList.remove('focus-mode');
+        lecturaContainer.classList.remove('focus-mode-active');
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        console.log('✅ Modo normal restaurado');
+    }
 
-            // Petición para salir de pantalla completa
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) { /* Safari */
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) { /* IE11 */
-                document.msExitFullscreen();
-            }
-        }
+    // Event listeners
+    btnEnter.addEventListener('click', function(e) {
+        e.preventDefault();
+        enterFocusMode();
+    });
 
-        // --- Event Listeners ---
-        enterButton.addEventListener('click', enterFocusMode);
-        exitButton.addEventListener('click', exitFocusMode);
+    btnExit.addEventListener('click', function(e) {
+        e.preventDefault();
+        exitFocusMode();
+    });
 
-        // Listener para detectar cuando se sale de pantalla completa (ej. con la tecla ESC)
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-
-        function handleFullscreenChange() {
-            // Si no hay ningún elemento en pantalla completa, salimos del modo foco.
-            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
-                body.classList.remove('focus-mode');
-            }
+    // Salir con ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.body.classList.contains('focus-mode')) {
+            exitFocusMode();
         }
     });
+
+    console.log('✅ Event listeners configurados');
+});
 </script>

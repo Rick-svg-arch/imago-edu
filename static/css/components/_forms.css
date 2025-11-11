@@ -1,0 +1,333 @@
+/* Formularios de respuesta */
+.reply-form-container {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: var(--bg-color);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.reply-form-container textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 1rem;
+    line-height: 1.6;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+
+.reply-form-container textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+/* === FORMULARIO DE RESPUESTA PRINCIPAL === */
+
+.respuesta-principal-form {
+    margin: 2rem 0;
+}
+
+.form-container {
+    background: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.form-container:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Grupos de formulario */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+
+/* Campos de formulario */
+.form-group textarea,
+.form-group input[type="file"] {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 1rem;
+    line-height: 1.6;
+    transition: all 0.2s ease;
+}
+
+.form-group textarea {
+    min-height: 140px;
+    resize: vertical;
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.form-group input[type="file"] {
+    padding: 0.75rem;
+    background: var(--card-bg-color);
+}
+
+.form-group input[type="file"]:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+/* Texto de ayuda */
+.form-help {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-color);
+    opacity: 0.7;
+    line-height: 1.4;
+}
+
+.form-help small {
+    color: var(--text-color);
+    opacity: 0.7;
+    font-size: 0.85rem;
+}
+/* Estados de carga del formulario */
+.ajax-response-form[data-submitting="true"] {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.ajax-response-form[data-submitting="true"] .submit-btn {
+    background: var(--border-color);
+}
+
+/* Separador visual mejorado */
+.respuesta-principal-form + hr {
+    border: none;
+    height: 1px;
+    background: var(--border-color);
+    margin: 2.5rem 0;
+    opacity: 0.5;
+}
+
+/* === MEJORAS DE ACCESIBILIDAD === */
+.form-group textarea:focus-visible,
+.form-group input[type="file"]:focus-visible,
+.submit-btn:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+/* Estados de validación */
+.form-group textarea:invalid,
+.form-group input[type="file"]:invalid {
+    border-color: #ff4757;
+}
+
+.form-group textarea:valid,
+.form-group input[type="file"]:valid {
+    border-color: #2ed573;
+}
+
+/* Estilos para campos de texto y selectores */
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group select {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-color); /* Un fondo ligeramente distinto para destacar */
+    color: var(--text-color);
+    font-family: var(--font-family);
+    font-size: 1rem;
+    line-height: 1.5;
+    transition: all 0.2s ease;
+    -webkit-appearance: none; /* Quita estilos por defecto en Safari/Chrome */
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Estilo específico para el selector (flecha personalizada) */
+.form-group select {
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23222222%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22/%3E%3C/svg%3E');
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: .65em auto;
+    padding-right: 2.5rem; /* Espacio para la flecha */
+}
+
+
+.form-group input[type="text"]:focus,
+.form-group input[type="email"]:focus,
+.form-group input[type="password"],
+.form-group select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(12, 145, 150, 0.15);
+}
+
+/* Contenedor para la cuadrícula del formulario */
+.form-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+/* FORMULARIO DE DOCUMENTO MÁS GRANDE Y MEJOR ORGANIZADO */
+.formulario-grande {
+    max-width: min(1000px, 95vw) !important;
+    width: 100% !important;
+    margin: 2rem auto !important;
+    padding: 3rem !important;
+}
+/* FORM COMENTARIOS */
+
+.form-comentario-compacto {
+    background: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+.respuesta-acciones-compactas {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.respuesta-acciones-compactas a {
+    font-size: 0.85rem;
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.respuesta-acciones-compactas a:hover {
+    color: var(--text-color);
+    text-decoration: underline;
+}
+
+/* === ITEMS DE COMENTARIOS COMPACTOS === */
+.respuesta-item-compacta {
+    position: relative;
+    margin: 1rem 0;
+    padding: 1.25rem;
+    background: var(--card-bg-color);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.respuesta-item-compacta:hover {
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+}
+
+.respuesta-contenido-compacto {
+    margin: 0.75rem 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-color);
+}
+.acciones-comentario {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.acciones-comentario > div {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.inline-form-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: flex-end;
+}
+
+.inline-form-group .form-group {
+    flex: 1;
+    min-width: 150px; 
+    margin-bottom: 0;
+}
+
+.inline-form-group .submit-btn {
+    flex-shrink: 0;
+}
+/* Contenedor para la cuadrícula del formulario */
+.form-grid-responsive {
+    display: grid;
+    grid-template-columns: 1fr; /* Una columna por defecto en móvil */
+    gap: 1.5rem;
+}
+
+/* En pantallas más grandes, dos columnas */
+@media (min-width: 768px) {
+    .form-grid-responsive {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Banners de información dentro de los formularios */
+.form-info-banner {
+    background: rgba(12, 145, 150, 0.1);
+    border: 1px solid var(--accent-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+body.dark-mode .form-info-banner {
+    background: rgba(19, 167, 172, 0.15);
+}
+
+/* Mensajes de estado del pre-registro */
+#preregistro-status {
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    line-height: 1.6;
+    animation: fadeIn 0.3s ease;
+}
+#preregistro-status.status-success { background: rgba(46, 213, 115, 0.1); border: 1px solid #2ed573; }
+#preregistro-status.status-warning { background: rgba(255, 184, 0, 0.1); border: 1px solid #ffb800; }
+#preregistro-status.status-info { background: rgba(0, 122, 255, 0.1); border: 1px solid var(--accent-color); }
+
+#main-comment-form .ck-editor__editable_inline {
+    min-height: 120px; /* Altura mínima */
+    max-height: 250px; /* Altura máxima antes de que aparezca el scroll */
+}

@@ -13,6 +13,7 @@ urlpatterns = [
     path('<str:idioma>/', views.DocumentoListView.as_view(), name='lista_por_idioma'),
     path('detalle/<int:pk>/editar/', views.DocumentoUpdateView.as_view(), name='editar_documento'),
     path('detalle/<int:pk>/borrar/', views.DocumentoDeleteView.as_view(), name='borrar_documento'),
-    path('comentario/<int:pk>/editar/', views.ComentarioUpdateView.as_view(), name='editar_comentario'),
-    path('comentario/<int:pk>/borrar/', views.ComentarioDeleteView.as_view(), name='borrar_comentario'),
+    path('ajax/comentario/<int:pk>/editar/', views.editar_comentario_ajax, name='editar_comentario_ajax'),
+    path('ajax/comentario/<int:pk>/borrar/', views.borrar_comentario_ajax, name='borrar_comentario_ajax'),
+    path('ajax/documento/<int:pk>/calificar/', views.calificar_documento_ajax, name='calificar_documento_ajax'),
 ]

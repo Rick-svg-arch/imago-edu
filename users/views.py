@@ -18,6 +18,8 @@ from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Q
+from functools import reduce # <-- AÑADE ESTO
+import operator
 
 from .models import Profile, Clase, PreRegistro, ImportacionLote
 from .mixins import GroupRequiredMixin
@@ -346,14 +348,23 @@ class PreRegistroManagerView(GroupRequiredMixin, ListView):
 
     def get_queryset(self):
         organizacion_actual = self.request.user.profile.organizacion
-        queryset = PreRegistro.objects.filter(organizacion=organizacion_actual).order_by('nombre_completo')
+        queryset = PreRegistro.objects.filter(organizacion=organizacion_actual).order_by('nombres')
         query = self.request.GET.get('q')
+
         if query:
-            queryset = queryset.filter(
-                Q(numero_identificacion__icontains=query) |
-                Q(nombre_completo__icontains=query) |
-                Q(email__icontains=query)
-            )
+            # --- LÓGICA DE BÚSQUEDA ---
+            search_terms = query.split()
+            conditions = []
+            for term in search_terms:
+                conditions.append(
+                    Q(numero_identificacion__icontains=term) |
+                    Q(email__icontains=term) |
+                    Q(nombres__icontains=term) |
+                    Q(apellidos__icontains=term)
+                )
+            
+            if conditions:
+                queryset = queryset.filter(reduce(operator.and_, conditions))
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -398,7 +409,8 @@ class PreRegistroManagerView(GroupRequiredMixin, ListView):
                 try:
                     # 1. Obtener todos los campos del CSV, incluyendo los nuevos
                     numero_identificacion = row.get('numero_identificacion', '').strip()
-                    nombre_completo = row.get('nombre_completo', '').strip()
+                    nombres = row.get('nombres', '').strip()
+                    apellidos = row.get('apellidos', '').strip()
                     email = row.get('email', '').strip()
                     rol_asignado_raw = row.get('rol', '').strip()
 
@@ -418,7 +430,8 @@ class PreRegistroManagerView(GroupRequiredMixin, ListView):
                         organizacion=organizacion,
                         numero_identificacion=numero_identificacion,
                         defaults={
-                            'nombre_completo': row.get('nombre_completo', '').strip(),
+                            'nombres': nombres,
+                            'apellidos': apellidos,
                             'email': email if email else None,
                             'rol_asignado': rol_limpio,
                             'importado_por': request.user,  # Auditoría
@@ -629,7 +642,8 @@ class CheckPreregistroView(View):
                 return JsonResponse({
                     'encontrado': True,
                     'numero_identificacion': preregistro.numero_identificacion,
-                    'nombre_completo': preregistro.nombre_completo or '',
+                    'nombres': preregistro.nombres or '',
+                    'apellidos': preregistro.apellidos or '',
                     'email': preregistro.email or '',
                     'rol': preregistro.get_rol_asignado_display(),
                     'organizacion': preregistro.organizacion.nombre,

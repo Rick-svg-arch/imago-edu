@@ -1,163 +1,258 @@
 {% extends 'layout.html' %}
-
 {% block content %}
-<style>
-    .class-form-container {
-        max-width: 700px;
-        margin: 0 auto;
-        padding: 2em;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background-color: #f9f9f9;
-    }
-    .checkbox-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 10px;
-        border: 1px solid #ccc;
-        padding: 1em;
-        border-radius: 5px;
-        max-height: 300px;
-        overflow-y: auto;
-    }
-    .checkbox-list label {
-        display: block;
-    }
-    .selector-container { display: flex; align-items: center; gap: 1em; }
-    .selector-box { width: 300px; height: 250px; }
-    .selector-buttons { display: flex; flex-direction: column; gap: 0.5em; }
-</style>
-
-<div class="class-form-container">
-    
-    <h2>{% if object %}Editar Clase: {{ object.nombre }}{% else %}Crear Nueva Clase{% endif %}</h2>
-
-    <form method="post" class="class-form" enctype="multipart/form-data">
-        {% csrf_token %}
-        <p>
-            {{ form.nombre.label_tag }}<br>
-            {{ form.nombre }}
-            {{ form.nombre.errors }}
-        </p>
-
-        {% if form.profesor %}
-            <p>
-                {{ form.profesor.label_tag }}<br>
-                {{ form.profesor }}
-                {{ form.profesor.errors }}
-            </p>
-        {% endif %}
-        <p>
-            {{ form.estudiantes_por_id.label_tag }}<br>
-            {{ form.estudiantes_por_id }}
-            <br><small>{{ form.estudiantes_por_id.help_text }}</small><br>
-            <button type="button" id="btn-preview-ids" style="margin-top: 5px;">Buscar y Previsualizar</button>
-        </p>
-        <div id="preview-results" style="margin-bottom: 1em;"></div>
-        <p>
-            {{ form.estudiantes_csv.label_tag }}<br>
-            {{ form.estudiantes_csv }}<br>
-            <small>{{ form.estudiantes_csv.help_text }}</small>
-            {{ form.estudiantes_csv.errors }}<br>
-            <button type="button" id="btn-preview-csv" style="margin-top: 5px;">Previsualizar CSV</button>
-        </p>
-        <div id="csv-preview-results" style="margin-bottom: 1em;"></div>
-
-        <fieldset>
-            <legend>Estudiantes</legend>
-            <p class="help">Selecciona estudiantes de la izquierda y muévelos a la derecha para inscribirlos en la clase.</p>
-            
-            <div class="selector-container">
-                <!-- Caja 1: Estudiantes Disponibles -->
-                <div>
-                    <label for="available-students">Disponibles</label><br>
-                    <select id="available-students" multiple class="selector-box">
-                    </select>
-                </div>
-
-                <div class="selector-buttons">
-                    <button type="button" id="btn-add">&gt;</button>
-                    <button type="button" id="btn-remove">&lt;</button>
-                </div>
-
-                <!-- Caja 2: Estudiantes Inscritos-->
-                <div>
-                    <label for="id_estudiantes">Inscritos</label><br>
-                    {{ form.estudiantes }}
-                </div>
+<div class="container-large">
+    <div class="glass-card formulario-grande">
+        <h1>{% if object %}Editar Clase: {{ object.nombre }}{% else %}Crear Nueva Clase{% endif %}</h1>
+        <form method="post" enctype="multipart/form-data" class="form-container" style="padding:0; border:none; box-shadow:none;">
+            {% csrf_token %}
+            <div class="form-grid-2">
+                <div class="form-group">{{ form.nombre.label_tag }}{{ form.nombre }}</div>
+                {% if form.profesor %}<div class="form-group">{{ form.profesor.label_tag }}{{ form.profesor }}</div>{% endif %}
             </div>
-        </fieldset>
-        
-        <br>
-        <button type="submit">Guardar</button>
-        <a href="{% url 'users:dashboard' %}" style="margin-left: 1em;">Cancelar</a>
-    </form>
-</div>
+            <div class="form-group">
+                {{ form.estudiantes_por_id.label_tag }}
+                <small class="help-text">
+                    Ingresa los números de identificación separados por comas o espacios. Ejemplo: 12345678, 87654321, 11223344
+                </small>
+                {{ form.estudiantes_por_id }}
+                <button type="button" id="btn-preview-ids" class="submit-btn" style="margin-top:0.5rem;">Buscar y Añadir</button>
+            </div>
+            <div id="preview-results"></div>
+            <div class="form-group">{{ form.estudiantes_csv.label_tag }}{{ form.estudiantes_csv }}<button type="button" id="btn-preview-csv" class="submit-btn" style="margin-top:0.5rem;">Previsualizar</button></div>
+            <div id="csv-preview-results"></div>
+            <fieldset class="dual-selector-fieldset">
+                <legend>Selección de Estudiantes</legend>
+                
+                <div class="selector-container">
+                    <!-- Columna Izquierda: Estudiantes Disponibles con Búsqueda -->
+                    <div class="selector-column">
+                        <label for="student-search">Filtrar Disponibles</label>
+                        <input type="search" id="student-search" class="selector-search" placeholder="Buscar por nombre, usuario o ID...">
+                        <select id="available-students" multiple></select>
+                    </div>
 
+                    <!-- Columna Central: Botones de Acción -->
+                    <div class="selector-buttons">
+                        <button type="button" id="btn-add" title="Inscribir seleccionados"><i class="fas fa-arrow-right"></i></button>
+                        <button type="button" id="btn-remove" title="Quitar seleccionados"><i class="fas fa-arrow-left"></i></button>
+                    </div>
+
+                    <!-- Columna Derecha: Estudiantes Inscritos -->
+                    <div class="selector-column">
+                        <label for="id_estudiantes">Inscritos</label>
+                        {{ form.estudiantes }}
+                    </div>
+                </div>
+            </fieldset>
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                <button type="submit" class="submit-btn">Guardar</button>
+                <a href="{% url 'users:dashboard' %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
 <script>
-    // --- FUNCIÓN 1: MANEJA EL SELECTOR DE DOS CAJAS ---
+document.addEventListener('DOMContentLoaded', function() {
+    // Variable global para mantener TODAS las opciones disponibles
+    let todasLasOpcionesDisponibles = [];
+    let chosenSelectGlobal = null;
+
+    // FUNCIÓN GLOBAL: Mantener siempre seleccionadas todas las opciones en chosenSelect
+    function mantenerSeleccionadas() {
+        if (chosenSelectGlobal) {
+            Array.from(chosenSelectGlobal.options).forEach(option => {
+                option.selected = true;
+            });
+        }
+    }
+
+    // --- FUNCIÓN 1: MANEJA EL SELECTOR DE DOS CAJAS (CORREGIDA) ---
     function setupStudentSelector() {
         const availableSelect = document.getElementById('available-students');
         const chosenSelect = document.getElementById('id_estudiantes');
         const btnAdd = document.getElementById('btn-add');
         const btnRemove = document.getElementById('btn-remove');
-        const form = document.querySelector('form.class-form');
+        const form = document.querySelector('form');
 
-        if (!availableSelect || !chosenSelect || !btnAdd || !btnRemove || !form) {
+        if (!availableSelect || !chosenSelect || !btnAdd || !btnRemove) {
             console.error("Faltan elementos para el selector de estudiantes.");
             return;
         }
 
-        // Separa las opciones iniciales
+        // Guardar referencia global
+        chosenSelectGlobal = chosenSelect;
+
+        chosenSelect.classList.add('selector-box');
+        
+        // Guardamos todas las opciones originales
         const allOptions = Array.from(chosenSelect.options);
         chosenSelect.innerHTML = '';
+
+        // Separamos entre disponibles e inscritos
         allOptions.forEach(option => {
+            const optionClone = option.cloneNode(true);
             if (option.selected) {
                 chosenSelect.appendChild(option);
             } else {
                 availableSelect.appendChild(option);
+                // Guardamos una copia para el filtro
+                todasLasOpcionesDisponibles.push(optionClone);
             }
         });
-        chosenSelect.classList.add('selector-box');
 
-        // Mueve opciones entre las cajas
-        function moveOptions(source, destination) {
-            Array.from(source.selectedOptions).forEach(option => {
-                destination.appendChild(option);
-                option.selected = false;
-            });
-        }
-        btnAdd.addEventListener('click', () => moveOptions(availableSelect, chosenSelect));
-        btnRemove.addEventListener('click', () => moveOptions(chosenSelect, availableSelect));
-
-        // Selecciona todo en la caja derecha antes de enviar
-        form.addEventListener('submit', function() {
+        // SOLUCIÓN: Mantener siempre seleccionadas todas las opciones en chosenSelect
+        function mantenerSeleccionadas() {
             Array.from(chosenSelect.options).forEach(option => {
                 option.selected = true;
+            });
+        }
+
+        // Ejecutar cada vez que cambie el contenido
+        const observer = new MutationObserver(mantenerSeleccionadas);
+        observer.observe(chosenSelect, { childList: true, subtree: true });
+        
+        // Ejecutar inicialmente
+        mantenerSeleccionadas();
+
+        function moveOptions(source, destination) {
+            const selectedOptions = Array.from(source.selectedOptions);
+            selectedOptions.forEach(option => {
+                const optionClone = option.cloneNode(true);
+                // IMPORTANTE: Al mover a inscritos, clonar sin la propiedad selected
+                const optionToMove = option.cloneNode(true);
+                destination.appendChild(optionToMove);
+                
+                // Remover del origen
+                option.remove();
+                
+                // Actualizar el array de disponibles
+                if (source === chosenSelect) {
+                    // Si se mueve de inscritos a disponibles, agregarlo al array
+                    todasLasOpcionesDisponibles.push(optionClone);
+                } else {
+                    // Si se mueve de disponibles a inscritos, quitarlo del array
+                    todasLasOpcionesDisponibles = todasLasOpcionesDisponibles.filter(
+                        opt => opt.value !== optionToMove.value
+                    );
+                }
+            });
+            
+            // Reordenar alfabéticamente
+            sortSelectOptions(destination);
+            if (source === chosenSelect) {
+                sortSelectOptions(availableSelect);
+            }
+            
+            // CRÍTICO: Después de mover, mantener seleccionadas las del lado derecho
+            mantenerSeleccionadas();
+        }
+
+        function sortSelectOptions(selectElement) {
+            const options = Array.from(selectElement.options);
+            options.sort((a, b) => a.text.localeCompare(b.text));
+            selectElement.innerHTML = '';
+            options.forEach(opt => selectElement.appendChild(opt));
+        }
+
+        btnAdd.addEventListener('click', () => moveOptions(availableSelect, chosenSelect));
+        btnRemove.addEventListener('click', () => moveOptions(chosenSelect, availableSelect));
+        
+        // Mantener seleccionadas al hacer clic en cualquier parte
+        chosenSelect.addEventListener('click', mantenerSeleccionadas);
+        
+        // CRÍTICO: Seleccionar todo antes de enviar el formulario
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                console.log('📤 Enviando formulario...');
+                mantenerSeleccionadas();
+                const total = chosenSelect.options.length;
+                const seleccionadas = chosenSelect.selectedOptions.length;
+                console.log(`✓ Total inscritos: ${total} | Seleccionados: ${seleccionadas}`);
+                
+                // Mostrar brevemente feedback visual
+                if (total > 0) {
+                    chosenSelect.style.border = '2px solid #4CAF50';
+                    setTimeout(() => {
+                        chosenSelect.style.border = '';
+                    }, 300);
+                }
+            });
+        }
+    }
+
+    // --- FUNCIÓN 2: FILTRO DE BÚSQUEDA (VERSIÓN CORREGIDA) ---
+    function setupFilter() {
+        const searchInput = document.getElementById('student-search');
+        const availableSelect = document.getElementById('available-students');
+        if (!searchInput || !availableSelect) return;
+
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            // Limpiar el select
+            availableSelect.innerHTML = '';
+            
+            // Filtrar y agregar las opciones que coincidan
+            todasLasOpcionesDisponibles.forEach(option => {
+                const optionText = option.textContent.toLowerCase();
+                if (searchTerm === '' || optionText.includes(searchTerm)) {
+                    // Clonar la opción para evitar problemas de referencia
+                    const optionClone = option.cloneNode(true);
+                    availableSelect.appendChild(optionClone);
+                }
             });
         });
     }
 
-    // --- FUNCIÓN 2: MANEJA LA PREVISUALIZACIÓN AJAX CON PAGINACIÓN ---
+    // --- ESTILIZAR EL INPUT DE CSV ---
+    function setupStyledFileInput() {
+        const fileInput = document.getElementById('id_estudiantes_csv');
+        if (!fileInput) return;
+
+        const fakeButton = document.createElement('label');
+        fakeButton.className = 'btn-adjunto';
+        fakeButton.innerHTML = '<i class="fas fa-file-csv"></i> <span>Seleccionar archivo CSV</span>';
+        
+        const fileNameSpan = document.createElement('span');
+        fileNameSpan.style.marginLeft = '1rem';
+        fileNameSpan.style.fontStyle = 'italic';
+        fileNameSpan.style.opacity = '0.7';
+
+        fileInput.parentElement.insertBefore(fakeButton, fileInput);
+        fakeButton.appendChild(fileInput);
+        fakeButton.parentElement.insertBefore(fileNameSpan, fakeButton.nextSibling);
+
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                fileNameSpan.textContent = this.files[0].name;
+                fakeButton.querySelector('span').textContent = 'Cambiar archivo';
+            } else {
+                fileNameSpan.textContent = '';
+                fakeButton.querySelector('span').textContent = 'Seleccionar archivo CSV';
+            }
+        });
+    }
+
+    // --- MANEJA LA PREVISUALIZACIÓN AJAX CON PAGINACIÓN ---
     function setupIdPreview() {
         const btnPreview = document.getElementById('btn-preview-ids');
         const idsTextarea = document.getElementById('id_estudiantes_por_id');
         const previewDiv = document.getElementById('preview-results');
         const chosenSelect = document.getElementById('id_estudiantes');
+        const availableSelect = document.getElementById('available-students');
 
         if (!btnPreview) return;
 
-        // Variables para almacenar el estado de la búsqueda
         let todosLosEncontrados = [];
         let todosLosNoEncontrados = [];
         const resultadosPorPagina = 10;
 
-        // --- FUNCIÓN PARA RENDERIZAR UNA PÁGINA ESPECÍFICA ---
         function renderizarPagina(page = 1) {
             const inicio = (page - 1) * resultadosPorPagina;
             const fin = inicio + resultadosPorPagina;
             
-            // Obtenemos solo la "rebanada" de resultados para la página actual
             const resultadosPagina = todosLosEncontrados.slice(inicio, fin);
 
             let html = '<h4>Estudiantes Encontrados:</h4>';
@@ -171,12 +266,10 @@
                 html += '<p>No se encontró ningún estudiante con los IDs proporcionados.</p>';
             }
 
-            // Los no encontrados se muestran solo si es la primera página
             if (page === 1 && todosLosNoEncontrados.length > 0) {
                 html += `<p style="color: orange;">IDs no encontrados: ${todosLosNoEncontrados.join(', ')}</p>`;
             }
 
-            // Renderizamos los controles de paginación
             const totalPaginas = Math.ceil(todosLosEncontrados.length / resultadosPorPagina);
             if (totalPaginas > 1) {
                 html += '<div class="pagination-controls" style="margin-top: 1em;">';
@@ -193,12 +286,14 @@
             previewDiv.innerHTML = html;
         }
 
-        // --- FUNCIÓN PARA HACER LA BÚSQUEDA INICIAL ---
         function buscarEstudiantes() {
             const ids = idsTextarea.value;
             const organizacionPk = "{{ object.organizacion.pk|default:request.user.profile.organizacion.pk }}";
             
-            if (!ids.trim()) { /* ... (manejo de error si el textarea está vacío) ... */ return; }
+            if (!ids.trim()) {
+                previewDiv.innerHTML = '<p style="color: orange;">Por favor, introduce al menos un ID.</p>';
+                return;
+            }
             previewDiv.innerHTML = '<p>Buscando...</p>';
 
             fetch("{% url 'users:find_students_by_id' %}", {
@@ -208,24 +303,40 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.error) { /* ... (manejo de error) ... */ return; }
+                if (data.error) {
+                    previewDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                    return;
+                }
                 
-                // Guardamos los resultados completos en nuestras variables de estado
                 todosLosEncontrados = data.encontrados;
                 todosLosNoEncontrados = data.no_encontrados;
 
-                // Añadimos automáticamente TODOS los encontrados a la caja de la derecha
+                // Añadir automáticamente TODOS los encontrados a la caja de inscritos
                 todosLosEncontrados.forEach(user => {
                     if (!chosenSelect.querySelector(`option[value="${user.id}"]`)) {
                         const option = new Option(`${user.full_name} (${user.username}) - ID: ${user.numero_id}`, user.id);
                         chosenSelect.appendChild(option);
+                        
+                        // Remover de disponibles si existe
+                        const availableOption = availableSelect.querySelector(`option[value="${user.id}"]`);
+                        if (availableOption) {
+                            availableOption.remove();
+                            // Actualizar el array de disponibles
+                            todasLasOpcionesDisponibles = todasLasOpcionesDisponibles.filter(
+                                opt => opt.value !== user.id.toString()
+                            );
+                        }
                     }
                 });
 
-                // Renderizamos la primera página de resultados
+                // IMPORTANTE: Mantener todas las opciones seleccionadas
+                mantenerSeleccionadas();
+
                 renderizarPagina(1);
             })
-            .catch(error => { /* ... (manejo de error de red) ... */ });
+            .catch(error => {
+                previewDiv.innerHTML = `<p style="color: red;">Error de red: ${error.message}</p>`;
+            });
         }
 
         btnPreview.addEventListener('click', buscarEstudiantes);
@@ -237,12 +348,14 @@
             }
         });
     }
+
     // --- FUNCIÓN 3: MANEJA LA VISUALIZACION DE CSV ---
     function setupCsvPreview() {
         const btnPreview = document.getElementById('btn-preview-csv');
         const fileInput = document.getElementById('id_estudiantes_csv');
         const previewDiv = document.getElementById('csv-preview-results');
         const chosenSelect = document.getElementById('id_estudiantes');
+        const availableSelect = document.getElementById('available-students');
 
         if (!btnPreview) return;
 
@@ -265,13 +378,15 @@
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}'
-                    // NO AÑADIR 'Content-Type', el navegador lo hace por nosotros con FormData
                 },
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
-                if (data.error) { /* ... manejo de error ... */ return; }
+                if (data.error) {
+                    previewDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                    return;
+                }
                 
                 let html = '<h4>Estudiantes Encontrados en CSV:</h4>';
                 if (data.encontrados.length > 0) {
@@ -281,27 +396,45 @@
                         if (!chosenSelect.querySelector(`option[value="${user.id}"]`)) {
                             const option = new Option(`${user.full_name} (${user.username}) - ID: ${user.numero_id}`, user.id);
                             chosenSelect.appendChild(option);
+                            
+                            // Remover de disponibles si existe
+                            const availableOption = availableSelect.querySelector(`option[value="${user.id}"]`);
+                            if (availableOption) {
+                                availableOption.remove();
+                                todasLasOpcionesDisponibles = todasLasOpcionesDisponibles.filter(
+                                    opt => opt.value !== user.id.toString()
+                                );
+                            }
                         }
                     });
                     html += '</ul>';
-                } else { html += '<p>No se encontraron estudiantes.</p>'; }
+                    
+                    // IMPORTANTE: Mantener todas las opciones seleccionadas
+                    mantenerSeleccionadas();
+                } else {
+                    html += '<p>No se encontraron estudiantes.</p>';
+                }
 
                 if (data.no_encontrados.length > 0) {
                     html += `<p style="color: orange;">IDs no encontrados en CSV: ${data.no_encontrados.join(', ')}</p>`;
                 }
                 previewDiv.innerHTML = html;
             })
-            .catch(error => { /* ... manejo de error de red ... */ });
+            .catch(error => {
+                previewDiv.innerHTML = `<p style="color: red;">Error de red: ${error.message}</p>`;
+            });
         }
 
         btnPreview.addEventListener('click', fetchCsvPreview);
     }
 
-    window.onload = function() {
-        setupStudentSelector();
-        setupIdPreview();
-        setupCsvPreview();
-    };
+    // INICIALIZAR TODAS LAS FUNCIONES EN EL ORDEN CORRECTO
+    setupStudentSelector();
+    setupFilter();
+    setupStyledFileInput();
+    setupIdPreview();
+    setupCsvPreview();
+});
 </script>
 
 {% endblock %}

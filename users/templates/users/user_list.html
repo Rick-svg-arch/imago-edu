@@ -1,57 +1,73 @@
 {% extends 'layout.html' %}
 {% load auth_extras %}
 
+{% block container_class %}container-fluid{% endblock %}
+
 {% block content %}
-    <h1>Gestión de Usuarios</h1>
-    <form method="get" action="{% url 'users:manage_users_list' %}">
-        <input type="text" name="q" placeholder="Buscar por ID, nombre o email..." value="{{ request.GET.q|default_if_none:'' }}">
-        <button type="submit">Buscar</button>
-    </form>
+<div class="dashboard-widget">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+            <h1><i class="fas fa-users-cog"></i> Gestión de Usuarios</h1>
+            <p style="opacity: 0.8;">Modifica roles de usuario y restablece contraseñas.</p>
+        </div>
+        <form method="get" style="display: flex; gap: 0.5rem; min-width: 300px;">
+            <input type="search" name="q" placeholder="Buscar por ID, usuario o email..." value="{{ request.GET.q|default_if_none:'' }}" style="flex-grow: 1;">
+            <button type="submit" class="submit-btn"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
 
     {% if request.GET.q %}
-        <p>Resultados de la búsqueda para: "<strong>{{ request.GET.q }}</strong>"</p>
+        <p>Resultados para: "<strong>{{ request.GET.q }}</strong>"</p>
     {% endif %}
-    <p>Desde aquí puedes modificar el rol de los usuarios del sistema.</p>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Nombre de Usuario</th>
-                <th>Email</th>
-                <th>Número de ID</th>
-                <th>Roles Actuales</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users %}
+    <div style="overflow-x: auto;">
+        <table class="table student-list-table">
+            <thead>
                 <tr>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.email|default:"N/A" }}</td>
-                    <td>{{ user.profile.numero_identificacion|default:"N/A" }}</td>
-                    <td>
-                        {% for group in user.groups.all %}
-                            <span class="badge">{{ group.name }}</span>
-                        {% empty %}
-                            <span class="badge secondary">Sin rol</span>
-                        {% endfor %}
-                    </td>
-                    <td>
-                        {% if request.user|has_group:"Administrativo" %}
-                            <a href="{% url 'users:manage_user_edit' pk=user.pk %}" class="btn btn-sm">Editar Rol</a>
-                            
-                            <form action="{% url 'users:manage_user_reset_password' pk=user.pk %}" method="post" style="display: inline;" onsubmit="return confirm('¿Estás seguro de que quieres enviar un enlace para restablecer la contraseña a este usuario?');">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-warning">Restablecer Contraseña</button>
-                            </form>
-                        {% endif %}
-                    </td>
+                    <th style="width: 60px;">Avatar</th>
+                    <th>Nombre de Usuario</th>
+                    <th>Email</th>
+                    <th>Número de ID</th>
+                    <th>Roles</th>
+                    <th style="min-width: 250px;">Acciones</th> <!-- Ancho mínimo para los botones -->
                 </tr>
-                {% empty %}
+            </thead>
+            <tbody>
+                {% for user_obj in users %}
                     <tr>
-                        <td colspan="5">No se encontraron usuarios.</td>
+                        <td class="avatar-cell">
+                            <img src="{{ user_obj.profile.avatar.url }}" alt="Avatar de {{ user_obj.username }}">
+                        </td>
+                        <td><strong>{{ user_obj.username }}</strong><br><small>{{ user_obj.get_full_name }}</small></td>
+                        <td>{{ user_obj.email|default:"N/A" }}</td>
+                        <td>{{ user_obj.profile.numero_identificacion|default:"N/A" }}</td>
+                        <td>
+                            {% for group in user_obj.groups.all %}
+                                <span class="genero-tag">{{ group.name }}</span>
+                            {% endfor %}
+                        </td>
+                        <td style="white-space: nowrap;">
+                            <div class="form-grid-2">
+                                <a href="{% url 'users:manage_user_edit' pk=user_obj.pk %}" class="submit-btn" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                                    <i class="fas fa-edit"></i> Editar Rol
+                                </a>
+                                <form action="{% url 'users:manage_user_reset_password' pk=user_obj.pk %}" method="post" style="display: inline;" onsubmit="return confirm('¿Enviar enlace de reseteo de contraseña a este usuario?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="submit-btn" style="height: 40px; padding: 0.5rem 1rem; font-size: 0.85rem; background: #f39c12;">
+                                        <i class="fas fa-key"></i> Restablecer
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                {% empty %}
+                    <tr><td colspan="6" style="text-align: center; padding: 2rem;">No se encontraron usuarios.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<br>
+<a href="{% url 'users:dashboard' %}">← Volver al Panel de Control</a>
 {% endblock %}

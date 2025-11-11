@@ -1,0 +1,75 @@
+.custom-file-wrapper {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    background: var(--bg-color);
+}
+
+/* Ocultamos el input de archivo por defecto, pero lo mantenemos accesible */
+.custom-file-wrapper input[type="file"] {
+    display: none;
+}
+
+/* Estilo para el botón falso que activará el input real */
+.custom-file-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    background: var(--card-bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+.custom-file-trigger:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+/* Información del archivo actual (cuando se edita) */
+.current-file-info {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    background: var(--card-bg-color);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+.current-file-info a {
+    color: var(--accent-color);
+    word-break: break-all;
+}
+.current-file-info img {
+    max-width: 150px;
+    height: auto;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+    display: block;
+}
+
+/* El checkbox de "Limpiar" */
+.clear-file-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Contenedor para la previsualización del nuevo archivo seleccionado */
+.file-preview-container {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+.file-preview-container img {
+    max-width: 200px;
+    height: auto;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+}

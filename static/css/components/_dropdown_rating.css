@@ -1,0 +1,118 @@
+/* Contenedor principal que posiciona todo */
+.rating-dropdown-wrapper {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 10;
+}
+
+/* El botón pequeño que se ve siempre */
+.rating-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--card-bg-color) !important; /* Cambiado para coherencia */
+    border: 1px solid var(--border-color) !important;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.rating-trigger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    border-color: var(--accent-color);
+}
+.rating-trigger .fa-star {
+    color: #f39c12 !important; /* Estrella del trigger siempre dorada */
+}
+
+/* El panel desplegable (oculto por defecto) */
+.rating-dropdown-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 280px;
+    background-color: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    padding: 1.25rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.95);
+    transform-origin: top right;
+    transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+}
+
+.rating-dropdown-panel.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+/* --- ESTILOS DE COLOR PARA LAS ESTRELLAS (LA PARTE QUE FALTABA) --- */
+
+/* Estrellas de solo lectura para mostrar el promedio */
+.star-rating-display .fa-solid {
+    color: #f39c12 !important; /* Color dorado para estrellas llenas/medias */
+}
+.star-rating-display .fa-regular {
+    color: var(--border-color) !important; /* Color para estrellas vacías */
+}
+
+.star-rating-input {
+    display: flex;
+    flex-direction: row-reverse; /* <-- ¡ESTA ES LA LÍNEA CRUCIAL! */
+    justify-content: center;     /* Cambiado de flex-end a center para el panel */
+    gap: 0.3rem;
+}
+/* Estrellas interactivas para que el usuario califique */
+.star-rating-input .star {
+    font-size: 1.8rem;
+    color: var(--border-color) !important; /* Color por defecto */
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+.star-rating-input .star.selected,
+.star-rating-input .star.selected ~ .star {
+    color: var(--accent-color) !important;
+}
+.star-rating-input .star:hover,
+.star-rating-input .star:hover ~ .star {
+    color: var(--accent-color) !important;
+    transform: scale(1.1);
+}
+.star-rating-input:not(:hover) .star:not(.selected) {
+    color: var(--border-color) !important;
+}
+
+
+/* Estilos internos del panel (tamaños y espaciado) */
+.rating-dropdown-panel .average-rating h4 { font-size: 0.95rem; }
+.rating-dropdown-panel .star-rating-display { font-size: 1.3rem; }
+.rating-dropdown-panel #average-score-text { font-size: 1.5rem; }
+.rating-dropdown-panel .user-rating-input h5 { font-size: 0.9rem; }
+
+/* Responsive: en móvil, el dropdown ocupa más espacio */
+@media (max-width: 768px) {
+    .rating-dropdown-wrapper {
+        position: static; /* Quita el posicionamiento absoluto */
+        margin: 1.5rem 0; /* Lo convierte en un bloque normal */
+    }
+    .rating-trigger {
+        width: 100%;
+        justify-content: center;
+        padding: 0.75rem;
+    }
+    .rating-dropdown-panel {
+        position: static;
+        width: 100%;
+        transform: none;
+        margin-top: 1rem;
+    }
+}

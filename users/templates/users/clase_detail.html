@@ -1,50 +1,74 @@
 {% extends 'layout.html' %}
-
 {% block content %}
-<style>
-    .class-detail-container { max-width: 900px; margin: auto; }
-    .professor-card, .students-list { padding: 1.5em; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 2em; }
-    .professor-info { display: flex; align-items: center; gap: 20px; }
-    .professor-info img { width: 80px; height: 80px; border-radius: 50%; }
-    .student-item { display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid #eee; }
-    .student-item img { width: 50px; height: 50px; border-radius: 50%; }
-</style>
+<div class="container-large">
+    <div class="glass-card" style="padding: 2.5rem;">
 
-<div class="class-detail-container">
-    <h1>Detalles de la Clase: {{ clase.nombre }}</h1>
+        <!-- Encabezado de la clase -->
+        <div style="text-align:center; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 2rem;">
+            <h1><i class="fas fa-chalkboard"></i> {{ clase.nombre }}</h1>
+            <p style="opacity: 0.8;">Organización: {{ clase.organizacion.nombre }}</p>
+        </div>
 
-    <div class="professor-card">
-        <h2>Profesor a Cargo</h2>
-        {% with profesor=clase.profesor %}
-            <div class="professor-info">
-                <img src="{{ profesor.profile.avatar.url }}" alt="Avatar de {{ profesor.username }}">
-                <div>
-                    <h4>{{ profesor.first_name }} {{ profesor.last_name }}</h4>
-                    <h5>{{ profesor.username }}</h5>
-                    <p><strong>Email:</strong> {{ profesor.email|default:"No disponible" }}</p>
-                    <p><strong>Teléfono de contacto:</strong> {{ profesor.profile.telephone|default:"No disponible" }}</p>
+        <div class="dashboard-grid">
+            <!-- Widget del Profesor -->
+            <div class="dashboard-widget">
+                <h2><i class="fas fa-user-tie"></i> Profesor a Cargo</h2>
+                <div style="display:flex; align-items:center; gap:1.5rem;">
+                    <img src="{{ clase.profesor.profile.avatar.url }}" alt="Avatar" width="80" style="border-radius:50%;">
+                    <div>
+                        <h4>{{ clase.profesor.get_full_name }}</h4>
+                        <p style="opacity:0.7;">{{ clase.profesor.email }}</p>
+                    </div>
                 </div>
             </div>
-        {% endwith %}
-    </div>
 
-    <!-- SECCIÓN DE COMPAÑEROS -->
-    <div class="students-list">
-        <h2>Compañeros de Clase ({{ clase.estudiantes.count }})</h2>
-        {% for companero in clase.estudiantes.all %}
-            <div class="student-item">
-                <img src="{{ companero.profile.avatar.url }}" alt="Avatar de {{ companero.username }}">
-                <div>
-                    <strong>{{ companero.first_name }} {{ companero.last_name }}</strong><br>
-                    <small>{{ companero.username }}</small><br>
-                    <small>Email: {{ companero.email|default:"No disponible" }}</small>
+            <!-- Widget de Acciones -->
+            <div class="dashboard-widget">
+                <h2><i class="fas fa-cogs"></i> Acciones</h2>
+                <div class="respuesta-acciones" style="border: none; padding: 0; margin: 0;">
+                    <a href="{% url 'users:dashboard' %}"><i class="fas fa-arrow-left"></i> Volver al Panel</a>
+                    <a href="{% url 'users:class_edit' pk=clase.pk %}"><i class="fas fa-edit"></i> Editar Clase</a>
                 </div>
             </div>
-        {% empty %}
-            <p>No hay estudiantes inscritos en esta clase.</p>
-        {% endfor %}
+        </div>
+
+        <!-- ============================================= -->
+        <!-- SECCIÓN DE ESTUDIANTES - TABLA -->
+        <!-- ============================================= -->
+        <div class="dashboard-widget" style="margin-top: 2rem;">
+            <h2><i class="fas fa-users"></i> Estudiantes Inscritos ({{ clase.estudiantes.count }})</h2>
+            
+            <div style="overflow-x: auto;"> <!-- Para responsividad en móviles -->
+                <table class="table student-list-table">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 80px;">Avatar</th>
+                            <th scope="col">Nombre Completo</th>
+                            <th scope="col">Nombre de Usuario</th>
+                            <th scope="col">Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for estudiante in clase.estudiantes.all %}
+                        <tr>
+                            <td class="avatar-cell">
+                                <img src="{{ estudiante.profile.avatar.url }}" alt="Avatar de {{ estudiante.username }}">
+                            </td>
+                            <td><strong>{{ estudiante.get_full_name }}</strong></td>
+                            <td>{{ estudiante.username }}</td>
+                            <td>{{ estudiante.email }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; padding: 2rem; opacity: 0.7;">
+                                No hay estudiantes inscritos en esta clase.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-    
-    <a href="{% url 'users:dashboard' %}">← Volver al Panel de Control</a>
 </div>
 {% endblock %}

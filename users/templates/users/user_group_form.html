@@ -1,22 +1,62 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-    <h1>Editar Rol para: {{ user_to_edit.username }}</h1>
+<div class="container-large" style="max-width: 600px;">
+    <div class="glass-card" style="padding: 2.5rem;">
+        <h1><i class="fas fa-user-tag"></i> Editar Rol</h1>
+        <p style="opacity: 0.8; margin-bottom: 1.5rem;">
+            Para el usuario: <strong>{{ user_to_edit.username }}</strong>
+        </p>
+        
+        <form method="post" class="form-container" style="padding:0; border:none; box-shadow:none;">
+            {% csrf_token %}
+            
+            <fieldset class="form-group">
+                <legend>{{ form.groups.label }}</legend>
+                <div class="checkbox-list">
+                {% for checkbox in form.groups %}
+                    <label class="checkbox-label">
+                        {{ checkbox.tag }}
+                        <span>{{ checkbox.choice_label }}</span>
+                    </label>
+                {% endfor %}
+                </div>
+            </fieldset>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                <button type="submit" class="submit-btn"><i class="fas fa-save"></i> Guardar Cambios</button>
+                <a href="{% url 'users:manage_users_list' %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
 
-    <form method="post">
-        {% csrf_token %}
-        
-        <fieldset>
-            <legend>{{ form.groups.label }}</legend>
-            {% for checkbox in form.groups %}
-                <label>
-                    {{ checkbox.tag }}
-                    {{ checkbox.choice_label }}
-                </label><br>
-            {% endfor %}
-        </fieldset>
-        
-        <button type="submit">Guardar Cambios</button>
-        <a href="{% url 'users:manage_users_list' %}">Cancelar</a>
-    </form>
+<style>
+    .checkbox-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        background-color: var(--bg-color);
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        padding: 0.75rem;
+        border-radius: 6px;
+        transition: background-color 0.2s;
+    }
+    .checkbox-label:hover {
+        background-color: var(--border-color);
+    }
+    .checkbox-label input[type="checkbox"] {
+        width: 1.2em;
+        height: 1.2em;
+        accent-color: var(--accent-color);
+    }
+</style>
 {% endblock %}

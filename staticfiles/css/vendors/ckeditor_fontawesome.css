@@ -1,0 +1,96 @@
+a.cke_button {
+    position: relative !important;
+    /* Un tamaño consistente para todos los botones, incluidos los de texto como "Fuente HTML" */
+    width: 30px !important;
+    height: 30px !important;
+    display: inline-flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.cke_button_icon,
+.cke_button__source_label {
+    display: none !important;
+}
+
+/* Usamos ::before para insertar el icono de Font Awesome */
+a.cke_button::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 15px; /* Un poco más grande para mejor visibilidad */
+    color: #222;
+    transition: color 0.2s ease;
+}
+
+/* --- MAPEO DE ICONOS ESPECÍFICOS --- */
+.cke_button__bold::before { content: "\f032"; } /* fa-bold */
+.cke_button__italic::before { content: "\f033"; } /* fa-italic */
+.cke_button__underline::before { content: "\f0cd"; } /* fa-underline */
+.cke_button__strike::before { content: "\f0cc"; } /* fa-strikethrough */
+.cke_button__numberedlist::before { content: "\f0cb"; } /* fa-list-ol */
+.cke_button__bulletedlist::before { content: "\f0ca"; } /* fa-list-ul */
+.cke_button__blockquote::before { content: "\f10d"; } /* fa-quote-left */
+.cke_button__link::before { content: "\f0c1"; } /* fa-link */
+.cke_button__unlink::before { content: "\f127"; } /* fa-unlink */
+.cke_button__removeformat::before { content: "\f12d"; } /* fa-eraser */
+
+.cke_button__save::before { content: "\f7c2"; }
+.cke_button__newpage::before { content: "\f15b"; }
+.cke_button__source::before { content: "\f1c9"; }
+.cke_button__exportpdf::before { content: "\f1c1"; }
+.cke_button__preview::before { content: "\f26c"; }
+.cke_button__print::before { content: "\f02f"; }
+.cke_button__cut::before { content: "\f0c4"; }
+.cke_button__copy::before { content: "\f0c5"; }
+.cke_button__paste::before { content: "\f0ea"; }
+.cke_button__pastetext::before { content: "\f328"; }
+.cke_button__pastefromword::before { content: "\f1c2"; }
+.cke_button__undo::before { content: "\f2ea"; }
+.cke_button__redo::before { content: "\f2f9"; }
+.cke_button__find::before { content: "\f002"; }
+
+.cke_button__replace::before { content: "\f363"; }
+.cke_button__selectall::before { content: "\f560"; }
+.cke_button__scayt::before { content: "\f891"; }
+.cke_button__form::before { content: "\f022"; }
+.cke_button__checkbox::before { content: "\f772"; }
+.cke_button__radio::before { content: "\f192"; }
+.cke_button__subscript::before { content: "\f12c"; }
+.cke_button__superscript::before { content: "\f12b"; }
+.cke_button__copyformatting::before { content: "\f55d"; }
+.cke_button__outdent::before { content: "\f03b"; }
+.cke_button__indent::before { content: "\f03c"; }
+.cke_button__creatediv::before { content: "\f121"; }
+
+.cke_button__justifyleft::before { content: "\f036"; }
+.cke_button__justifycenter::before { content: "\f037"; }
+.cke_button__justifyright::before { content: "\f038"; }
+.cke_button__justifyblock::before { content: "\f039"; }
+.cke_button__bidiltr::before { content: "\f1dd"; }
+.cke_button__anchor::before { content: "\f13d"; }
+.cke_button__image::before { content: "\f03e"; }
+.cke_button__table::before { content: "\f0ce"; }
+.cke_button__horizontalrule::before { content: "\f547"; }
+.cke_button__smiley::before { content: "\f118"; }
+.cke_button__specialchar::before { content: "\f071"; }
+.cke_button__pagebreak::before { content: "\f715"; }
+.cke_button__iframe::before { content: "\f0ac"; }
+
+.cke_button__textcolor::before { content: "\f031"; }
+.cke_button__bgcolor::before { content: "\f5aa"; }
+.cke_button__maximize::before { content: "\f31e"; }
+.cke_button__showblocks::before { content: "\f1b2"; }
+.cke_button__about::before { content: "\3f"; }
+
+/* --- ESTILOS PARA MODO OSCURO --- */
+body.dark-mode a.cke_button::before {
+    color: #eaeaea; /* Color de los iconos en modo oscuro */
+}
+
+/* El botón activo */
+body.dark-mode a.cke_button_on::before,
+body.dark-mode a.cke_button:hover::before,
+body.dark-mode a.cke_button:focus::before,
+body.dark-mode a.cke_button:active::before {
+    color: var(--accent-color, #13a7ac);
+}

@@ -354,7 +354,7 @@ class ProfileAdminForm(forms.ModelForm):
 class CSVImportForm(forms.Form):
     csv_file = forms.FileField(
         label="Seleccionar Archivo CSV",
-        help_text='<a href="/media/ejemplo_usuarios.csv" download>Descargar archivo de ejemplo</a>',
+        help_text='<a href="/media/ejemplo_usuarios.csv">Descargar archivo de ejemplo</a>',
         widget=forms.FileInput(attrs={'accept': '.csv'})
     )
 
@@ -380,16 +380,21 @@ class PreRegistroForm(forms.ModelForm):
     """
     class Meta:
         model = PreRegistro
-        fields = ['numero_identificacion', 'email', 'nombre_completo', 'rol_asignado']
+        fields = ['numero_identificacion', 'email', 'nombres', 'apellidos', 'rol_asignado']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['numero_identificacion'].widget.attrs.update({
+            'placeholder': 'Número de ID *',
             'type': 'text',
             'inputmode': 'numeric',
             'pattern': '[0-9]*',
             'title': 'Solo se permiten números.'
         })
+        self.fields['email'].widget.attrs.update({'placeholder': 'Email (opcional)'})
+        self.fields['nombres'].widget.attrs.update({'placeholder': 'Nombres (opcional)'})
+        self.fields['apellidos'].widget.attrs.update({'placeholder': 'Apellidos (opcional)'})
+        self.fields['rol_asignado'].label = ''
 
     def clean_numero_identificacion(self):
         numero = self.cleaned_data.get('numero_identificacion')

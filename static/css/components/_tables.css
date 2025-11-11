@@ -1,0 +1,23 @@
+table {
+    width: 100%; border-collapse: collapse; background-color: var(--card-bg-color);
+    border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+th, td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); }
+th { background-color: var(--bg-color); }
+
+.student-list-table {
+    margin-top: 1.5rem;
+}
+
+.student-list-table th,
+.student-list-table td {
+    vertical-align: middle; /* Centra el contenido verticalmente */
+}
+
+.student-list-table .avatar-cell img {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover; /* Evita que la imagen se deforme */
+    border: 2px solid var(--border-color);
+}

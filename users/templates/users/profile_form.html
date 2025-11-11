@@ -1,56 +1,125 @@
 {% extends 'layout.html' %}
+{% load static %}
 
 {% block content %}
-<style>
-    .profile-form-container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 2em;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-    }
-    .current-avatar {
-        max-width: 150px;
-        height: auto;
-        border-radius: 50%;
-        margin-bottom: 1em;
-        display: block;
-    }
-</style>
-
-<div class="profile-form-container">
-    <h2>Editar Mi Perfil</h2>
-    <p>Actualiza tu información personal y de contacto.</p>
-    <hr>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-
-        <h4>Datos de la Cuenta</h4>
-        <p>{{ form.email.label_tag }}<br>{{ form.email }}</p>
-        <p>{{ form.first_name.label_tag }}<br>{{ form.first_name }}</p>
-        <p>{{ form.last_name.label_tag }}<br>{{ form.last_name }}</p>
-
-        <h4>Datos del Perfil</h4>
-        <p><strong>Avatar Actual:</strong></p>
-        {% if form.instance.profile.avatar %}
-            <img src="{{ form.instance.profile.avatar.url }}" alt="Avatar actual" class="current-avatar">
-        {% endif %}
-        <p>{{ form.avatar.label_tag }}<br>{{ form.avatar }}</p>
+<div class="container-large">
+    <div class="glass-card formulario-grande">
+        <h1><i class="fas fa-user-edit"></i> Editar Mi Perfil</h1>
+        <p>Actualiza tu información personal y de contacto.</p>
+        <hr>
         
-        <h4>Identificación</h4>
-        <p>{{ form.tipo_identificacion.label_tag }}<br>{{ form.tipo_identificacion }}</p>
-        <p>
-            {{ form.numero_identificacion.label_tag }}<br>
-            {{ form.numero_identificacion }}
-            {{ form.numero_identificacion.errors }}
-        </p>
+        <form method="post" enctype="multipart/form-data" class="form-container" style="padding: 0; border: none; box-shadow: none;">
+            {% csrf_token %}
 
-        <h4>Contacto</h4>
-        <p>{{ form.adress.label_tag }}<br>{{ form.adress }}</p>
-        <p>{{ form.telephone.label_tag }}<br>{{ form.telephone }}</p>
+            <div class="form-group" style="text-align: center;">
+                <label>Imagen de Perfil</label>
+                <div id="avatar-preview-container" style="margin-top: 1rem;">
+                    <!-- La imagen de previsualización -->
+                    <img id="avatar-preview" src="{{ user.profile.avatar.url }}" alt="Avatar actual" class="current-avatar">
+                </div>
+                
+                <!-- El widget de Django (lo ocultaremos con JS) -->
+                <div id="django-avatar-widget" style="display:none;">
+                    {{ form.avatar }}
+                </div>
 
-        <button type="submit">Guardar Cambios</button>
-        <a href="{% url 'users:dashboard' %}">Cancelar</a>
-    </form>
+                <!-- Nuestro botón falso y el checkbox de limpiar -->
+                <div class="file-widget-wrapper" style="border: none; background: transparent; padding: 0; margin-top: 1rem;">
+                    <!-- Este es el botón en el que el usuario hará clic -->
+                    <button type="button" id="avatar-trigger-btn" class="custom-file-trigger">
+                        <i class="fas fa-upload"></i>
+                        <span>Cambiar Avatar</span>
+                    </button>
+                    <!-- El checkbox de "Limpiar" que Django genera -->
+                    <div id="avatar-clear-container" class="clear-file-checkbox" style="margin-top: 0.5rem; justify-content: center;"></div>
+                </div>
+            </div>
+
+            <hr>
+            <h4><i class="fas fa-user-circle"></i> Datos de la Cuenta</h4>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    {{ form.first_name.label_tag }}
+                    {{ form.first_name }}
+                </div>
+                <div class="form-group">
+                    {{ form.last_name.label_tag }}
+                    {{ form.last_name }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                    {{ form.email }}
+                </div>
+            </div>
+
+            <hr>
+            <h4><i class="fas fa-id-card"></i> Identificación y Contacto</h4>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    {{ form.tipo_identificacion.label_tag }}
+                    {{ form.tipo_identificacion }}
+                </div>
+                <div class="form-group">
+                    {{ form.numero_identificacion.label_tag }}
+                    {{ form.numero_identificacion }}
+                </div>
+                <div class="form-group">
+                    {{ form.adress.label_tag }}
+                    {{ form.adress }}
+                </div>
+                <div class="form-group">
+                    {{ form.telephone.label_tag }}
+                    {{ form.telephone }}
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                <button type="submit" class="submit-btn"><i class="fas fa-save"></i> Guardar Cambios</button>
+                <a href="{% url 'users:dashboard' %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color); box-shadow: none;"><i class="fas fa-times"></i> Cancelar</a>
+            </div>
+        </form>
+    </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const djangoAvatarWidget = document.getElementById('django-avatar-widget');
+    const djangoAvatarInput = document.getElementById('{{ form.avatar.id_for_label }}');
+    const djangoClearCheckbox = document.querySelector('input[name="{{ form.avatar.html_name }}-clear"]');
+    
+    const triggerBtn = document.getElementById('avatar-trigger-btn');
+    const avatarPreview = document.getElementById('avatar-preview');
+    const clearContainer = document.getElementById('avatar-clear-container');
+
+    if (!djangoAvatarInput || !triggerBtn || !avatarPreview) return;
+
+    // 1. Mover el checkbox de "Limpiar" a nuestro contenedor
+    if (djangoClearCheckbox && djangoClearCheckbox.parentElement) {
+        clearContainer.appendChild(djangoClearCheckbox.parentElement);
+    } else {
+        clearContainer.style.display = 'none';
+    }
+    
+    // 2. Conectar nuestro botón al input real
+    triggerBtn.addEventListener('click', () => {
+        djangoAvatarInput.click();
+    });
+
+    // 3. Manejar la previsualización
+    djangoAvatarInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                avatarPreview.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+});
+</script>
 {% endblock %}

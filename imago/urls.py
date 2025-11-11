@@ -30,10 +30,12 @@ urlpatterns = [
     path('posts/', include('posts.urls')),
     path('users/', include('users.urls')),
     path('lecturas/', include('lecturas.urls')),
+    path("select2/", include("django_select2.urls")),
     path('accounts/', include('django.contrib.auth.urls')),
+    path("ckeditor5/", include('django_ckeditor_5.urls'), name="ck_editor_5_upload_file"),
 ]
 
 urlpatterns += staticfiles_urlpatterns()
 
-# if settings.DEBUG:
-#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+if settings.DEBUG:
+     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

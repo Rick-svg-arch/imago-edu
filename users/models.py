@@ -145,7 +145,8 @@ class PreRegistro(models.Model):
     organizacion = models.ForeignKey(Organizacion, on_delete=models.CASCADE, related_name='preregistros')
     numero_identificacion = models.CharField(max_length=20, verbose_name="Número de Identificación")
     email = models.EmailField(blank=True, null=True)
-    nombre_completo = models.CharField(max_length=255, blank=True, null=True, verbose_name="Nombre Completo (Opcional)")
+    nombres = models.CharField(max_length=70, blank=True, null=True, verbose_name="Nombres")
+    apellidos = models.CharField(max_length=70, blank=True, null=True, verbose_name="Apellidos")
     registrado = models.BooleanField(default=False, verbose_name="¿Ya se registró?")
 
     ROL_CHOICES = [

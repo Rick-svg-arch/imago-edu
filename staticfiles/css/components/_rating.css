@@ -1,0 +1,69 @@
+/* static/css/components/_rating.css (VERSIÓN CORREGIDA Y COMPLETA) */
+
+/* Contenedor principal del sistema de calificación */
+.rating-system {
+    background-color: var(--card-bg-color); /* Fondo consistente */
+    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin: 2rem 0; /* Espaciado uniforme */
+}
+
+/* Estrellas interactivas para que el usuario califique */
+.star-rating-input {
+    display: flex;
+    flex-direction: row-reverse; /* ¡El truco para el efecto hover! */
+    justify-content: flex-end;
+    gap: 0.25rem;
+}
+
+.star-rating-input .star {
+    font-family: "Font Awesome 6 Free"; /* Asegura que se use la fuente correcta */
+    font-weight: 900; /* Usa el peso para iconos sólidos */
+    font-size: 2rem;
+    color: var(--border-color); /* Color por defecto de estrella vacía */
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+/* --- REGLAS CLAVE PARA LA INTERACTIVIDAD Y PERSISTENCIA --- */
+
+/* 1. Cuando una estrella tiene la clase .selected (aplicada por JS) */
+.star-rating-input .star.selected,
+.star-rating-input .star.selected ~ .star {
+    color: var(--accent-color);
+}
+
+/* 2. Efecto hover: colorea la estrella y sus hermanas */
+.star-rating-input .star:hover,
+.star-rating-input .star:hover ~ .star {
+    color: var(--accent-color);
+    transform: scale(1.1);
+}
+
+/*
+ * 3. ANULACIÓN DE COLOR PARA HOVER SOBRE UNA CALIFICACIÓN YA HECHA:
+ * Al pasar el ratón, todas las estrellas se colorean. Esta regla asegura que, al quitar el ratón,
+ * las estrellas no seleccionadas vuelvan a su color base.
+*/
+.star-rating-input:not(:hover) .star:not(.selected) {
+    color: var(--border-color);
+}
+
+/* --- ESTRELLAS DE SOLO LECTURA PARA MOSTRAR EL PROMEDIO --- */
+
+.star-rating-display {
+    font-size: 1.2rem;
+    vertical-align: middle;
+    letter-spacing: 0.1em; /* Un poco de espacio entre las estrellas de promedio */
+}
+
+/* Estrellas llenas y a la mitad (generadas por JS) */
+.star-rating-display .fa-solid {
+    color: #f39c12; /* Color dorado para las estrellas de promedio */
+}
+
+/* Estrellas vacías (generadas por JS) */
+.star-rating-display .fa-regular {
+    color: var(--border-color);
+}

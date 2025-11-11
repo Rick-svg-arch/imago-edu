@@ -1,169 +1,275 @@
 {% extends 'layout.html' %}
 {% load auth_extras %}
+{% load static %}
 
 {% block title %}{{ documento.titulo }}{% endblock %}
 
 {% block content %}
-
-    <div class="acciones-documento" style="text-align: right; margin-bottom: 1rem;">
-        <button id="btn-enter-focus" class="btn btn-primary">
-            <i class="fas fa-arrows-alt"></i> Modo Concentración
-        </button>
-        <button id="btn-exit-focus" class="btn btn-primary">
-            <i class="fas fa-compress-arrows-alt"></i> Salir
+<div class="container">
+    <!-- BOTONES PROFESIONALES -->
+    <div class="acciones-documento">
+        {% if user|has_group:"Profesor" or user|has_group:"Administrativo" %}
+            <a href="{% url 'lecturas:subir_documento' %}" class="btn-subir-archivo">
+                <i class="fas fa-plus"></i>
+                Nueva Lectura
+            </a>
+        {% else %}
+            <div></div>
+        {% endif %}
+        
+        <button id="btn-enter-focus" class="btn-modo-concentracion">
+            <i class="fas fa-eye"></i>
+            Modo Concentración
         </button>
     </div>
-    <div id="lectura-container" class="lectura-inmersiva">
-        <div class="page-header">
+
+    <!-- BOTÓN PARA SALIR -->
+    <button id="btn-exit-focus" class="submit-btn">
+        <i class="fas fa-times"></i>
+        Salir del Modo Concentración
+    </button>
+
+    <!-- SECCIÓN PRINCIPAL DE LA LECTURA -->
+    <article id="lectura-container" class="glass-card tema-original lectura-fullscreen">
+        <div class="rating-dropdown-wrapper">
+            <!-- El disparador que siempre está visible -->
+            <button class="rating-trigger">
+                <i class="fas fa-star"></i>
+                <span>{{ documento.calificacion_promedio }}</span>
+            </button>
+
+            <!-- El panel que se despliega (contiene el sistema de calificación anterior) -->
+            <div class="rating-dropdown-panel">
+                <div class="average-rating">
+                    <h4>Calificación Promedio</h4>
+                    <div class="star-rating-display" title="{{ documento.calificacion_promedio }} de 5 estrellas"></div>
+                    <div style="margin-top: 0.5rem;">
+                        <span id="average-score-text">{{ documento.calificacion_promedio }}</span><span style="font-size: 0.9rem; opacity: 0.6;">/5</span>
+                    </div>
+                    <small>(<span id="total-ratings-text">{{ documento.num_calificaciones }}</span> voto{{ documento.num_calificaciones|pluralize:"s" }})</small>
+                </div>
+                
+                {% if user.is_authenticated %}
+                    <div class="user-rating-input">
+                        <hr style="margin: 0.75rem 0; opacity: 0.3;">
+                        <h5>Tu Voto:</h5>
+                        <div class="star-rating-input" data-url="{% url 'lecturas:calificar_documento_ajax' pk=documento.pk %}">
+                            <i class="fas fa-star star" data-value="5"></i>
+                            <i class="fas fa-star star" data-value="4"></i>
+                            <i class="fas fa-star star" data-value="3"></i>
+                            <i class="fas fa-star star" data-value="2"></i>
+                            <i class="fas fa-star star" data-value="1"></i>
+                        </div>
+                        <small id="user-rating-feedback" style="display:none; color: var(--accent-color); margin-top: 0.5rem;">¡Gracias!</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <header class="page-header">
             <h1>{{ documento.titulo }}</h1>
+            <p>
+                <small>
+                    {% if documento.autor_principal %}
+                        <strong>Autor:</strong> {{ documento.autor_principal.nombre }} |
+                    {% endif %}
+                    <strong>Grado:</strong> {{ documento.get_grado_display }} |
+                    <strong>Subido por:</strong> {{ documento.author.username }} |
+                    <strong>Fecha:</strong> {{ documento.date|date:"d M, Y" }}
+                </small>
+            </p>
+            
+            {% if documento.generos.all %}
+            <div class="generos-container" style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                {% for genero in documento.generos.all %}
+                    <span class="genero-tag" style="background-color: var(--border-color); padding: 0.35rem 0.85rem; border-radius: 15px; font-size: 0.85rem;">
+                        <i class="fas fa-tag" style="font-size: 0.75rem; opacity: 0.7;"></i>
+                        {{ genero.nombre }}
+                    </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
             {% if user == documento.author or user.is_superuser or user|has_group:"Administrativo" %}
-                <div class="documento-acciones">
-                    <a href="{% url 'lecturas:editar_documento' pk=documento.pk %}" class="btn-editar">Editar Publicación</a>
-                    <a href="{% url 'lecturas:borrar_documento' pk=documento.pk %}" class="btn-borrar">Borrar Publicación</a>
+                <div class="respuesta-acciones" style="border-top: none; padding-top: 1rem; margin-top: 1rem;">
+                    <a href="{% url 'lecturas:editar_documento' pk=documento.pk %}" class="btn-adjunto">
+                        <i class="fas fa-edit"></i> Editar Publicación
+                    </a>
+                    <a href="{% url 'lecturas:borrar_documento' pk=documento.pk %}" class="btn-adjunto" style="background-color: #ff4757; color: white; border-color: #ff4757;">
+                        <i class="fas fa-trash"></i> Borrar Publicación
+                    </a>
                 </div>
             {% endif %}
-        </div>
+        </header>
 
-        <p>
-            <strong>Grado:</strong> {{ documento.get_grado_display }}<br>
-            <strong>Subido por:</strong> {{ documento.author.username }}<br>
-            <strong>Fecha:</strong> {{ documento.date|date:"d M, Y" }}
-        </p>
-
-        <hr>
-        <div class="contenido-lectura">
-            {% if documento.descripcion %}
-                <h2>Descripción</h2>
-                <div>
-                    {{ documento.descripcion|linebreaks }}
-                </div>
-                <hr>
-            {% endif %}
-        </div>
+        <!-- IMAGEN DEL DOCUMENTO -->
         {% if documento.imagen %}
             <div class="documento-imagen">
-                <a href="{{ documento.imagen.url }}" target="_blank">
-                    <img src="{{ documento.imagen.url }}" alt="Imagen del documento" style="max-width: 400px; height: auto; border-radius: 5px;">
-                </a>
+                <img src="{{ documento.imagen.url }}" alt="Imagen del documento {{ documento.titulo }}">
             </div>
         {% endif %}
-    </div>
-    {% if documento.adjunto %}
-        <h2>Documento Adjunto</h2>
-        <p>
-            <a href="{{ documento.adjunto.url }}" target="_blank" class="btn btn-primary">
-                Descargar {{ documento.adjunto.name }}
-            </a>
-        </p>
 
-        {% with ext=documento.adjunto.name|lower %}
-            {% if '.pdf' in ext %}
-                <h3>Visualizador de PDF</h3>
-                <div style="border: 1px solid #ccc; border-radius: 5px; padding: 10px;">
-                    <iframe src="{% url 'lecturas:serve_file' pk=documento.pk %}" 
-                            width="100%" 
-                            height="600px"
-                            style="border: none;">
-                        <p>Tu navegador no soporta la visualización de PDFs. 
-                           <a href="{% url 'lecturas:serve_file' pk=documento.pk %}">Descargar PDF</a>
-                        </p>
-                    </iframe>
-                </div>
-            
-            {% elif '.txt' in ext %}
-                <h3>Contenido del Archivo de Texto</h3>
-                <div style="border: 1px solid #ccc; border-radius: 5px; padding: 10px; background: #f9f9f9;">
-                    <iframe src="{% url 'lecturas:serve_file' pk=documento.pk %}" 
-                            width="100%" 
-                            height="400px"
-                            style="border: none; background: white;">
-                        <p>Tu navegador no soporta la visualización de texto. 
-                           <a href="{% url 'lecturas:serve_file' pk=documento.pk %}">Descargar archivo de texto</a>
-                        </p>
-                    </iframe>
-                </div>
-            
-            {% elif '.doc' in ext or '.docx' in ext %}
-                <div class="alert alert-info">
-                    <h4>Documento Word</h4>
-                    <p>Los documentos Word no pueden visualizarse directamente en el navegador.</p>
-                    <a href="{% url 'lecturas:serve_file' pk=documento.pk %}" class="btn btn-success">
-                        Descargar Documento Word
-                    </a>
-                </div>
-            
-            {% else %}
-                <div class="alert alert-warning">
-                    <p>Tipo de archivo no reconocido para visualización.</p>
-                    <a href="{% url 'lecturas:serve_file' pk=documento.pk %}" class="btn btn-primary">
-                        Descargar Archivo
-                    </a>
-                </div>
-            {% endif %}
-        {% endwith %}
-    {% endif %}
-
-    {% if not documento.descripcion and not documento.adjunto %}
-        <div class="alert alert-warning">
-            <p>Este registro no tiene descripción ni archivo adjunto.</p>
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="contenido-post">
+            {{ documento.descripcion|safe }}
         </div>
-    {% endif %}
-    
-    <br>
-    <a href="{% url 'lecturas:lista_documentos_base' %}" class="btn btn-secondary">← Volver al listado</a>
 
-    <hr>
-    <div id="comentarios-container" class="comentarios-section">
-    <h3>Participaciones</h3>
+        <!-- Clearfix para el float -->
+        <div style="clear: both;"></div>
 
-        {% if user.is_authenticated %}
-        <div class="anadir-comentario">
-            <h4>Añade tu participación</h4>
-            <form action="{% url 'lecturas:anadir_comentario' pk=documento.pk %}" method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                {{ comentario_form.as_p }}
-                <button type="submit">Publicar</button>
-            </form>
-        </div>
-        {% else %}
-        <p><a href="{% url 'users:login' %}?next={{ request.path }}">Inicia sesión</a> para participar.</p>
+        <!-- VISUALIZADOR DE ARCHIVOS -->
+        {% if documento.adjunto %}
+            <div style="margin-top: 3rem; text-align: center;">
+                <h3>Documento Adjunto</h3>
+                {% with ext=documento.adjunto.name|lower %}
+                    {% if '.pdf' in ext %}
+                        <div style="position: relative; height: 600px; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; margin-top: 1rem;">
+                            <iframe src="{% url 'lecturas:serve_file' pk=documento.pk %}" 
+                                    style="width: 100%; height: 100%; border: none;"
+                                    title="Visualizador de PDF: {{ documento.titulo }}">
+                            </iframe>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'lecturas:serve_file' pk=documento.pk %}" class="btn-subir-archivo" target="_blank" style="margin-top: 1rem;">
+                            <i class="fas fa-download"></i>
+                            Descargar {{ documento.adjunto.name|slice:"-30:" }}
+                        </a>
+                    {% endif %}
+                {% endwith %}
+            </div>
         {% endif %}
-        <div class="comentarios-list">
-            {% for comentario in comentarios_page %}
-                <div class="comentario">
-                    <strong>{{ comentario.autor.username }}</strong> <small>({{ comentario.fecha_creacion|date:"d/m/Y H:i" }})</small>
-                    <p>{{ comentario.contenido|linebreaks }}</p>
-                    {% if comentario.imagen_comentario %}
-                            <div class="comentario-imagen">
-                                <a href="{{ comentario.imagen_comentario.url }}" target="_blank">
-                                    <img src="{{ comentario.imagen_comentario.url }}" alt="Imagen del comentario" style="max-width: 200px; height: auto; border-radius: 5px;">
-                                </a>
-                            </div>
-                    {% endif %}
+    </article>
 
-                    {% if comentario.adjunto_comentario %}
-                        <div class="comentario-adjunto">
-                            <p><strong>Archivo adjunto:</strong> 
-                                <a href="{{ comentario.adjunto_comentario.url }}" target="_blank">
-                                    Descargar archivo
-                                </a>
-                            </p>
-                        </div>
-                    {% endif %}
-                    {% if user == comentario.autor or user.is_superuser or user|has_group:"Administrativo" %}
-                        <div class="comentario-acciones">
-                            <a href="{% url 'lecturas:editar_comentario' pk=comentario.pk %}">Editar</a>
-                            <a href="{% url 'lecturas:borrar_comentario' pk=comentario.pk %}">Borrar</a>
-                        </div>
-                    {% endif %}
+    <hr style="margin: 3rem 0;">
+
+    <!-- SECCIÓN DE PARTICIPACIONES -->
+    <div id="comentarios-container">
+        <h3>
+            <i class="fas fa-comments"></i>
+            Participaciones ({{ comentarios_page.paginator.count }})
+        </h3>
+
+        <!-- FORMULARIO DE COMENTARIOS -->
+        {% if user.is_authenticated %}
+            <div class="form-comentario-compacto">
+                <form id="main-comment-form" method="post" action="{% url 'lecturas:anadir_comentario' pk=documento.pk %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        {{ comentario_form.contenido }}
+                    </div>
+
+                    <div class="adjuntos-container">
+                        <label class="btn-adjunto">
+                            <i class="fas fa-paperclip"></i>
+                            Adjuntar archivo
+                            {{ comentario_form.adjunto_comentario }}
+                        </label>
+
+                        <label class="btn-adjunto">
+                            <i class="fas fa-image"></i>
+                            Adjuntar imagen
+                            {{ comentario_form.imagen_comentario }}
+                        </label>
+
+                        <button type="submit" class="btn-envio-compacto">
+                            <i class="fas fa-paper-plane"></i>
+                            Publicar
+                        </button>
+                    </div>
+
+                    <div class="form-help">
+                        <small>Archivos: PDF, DOC, DOCX, EPUB (máx. 8MB) | Imágenes: JPG, PNG, WEBP (máx. 2MB)</small>
+                    </div>
+                </form>
+            </div>
+        {% else %}
+            <div class="login-prompt">
+                <div class="login-message">
+                    <h3>¡Únete a la conversación!</h3>
+                    <p>Necesitas iniciar sesión para poder dejar tu participación en esta lectura.</p>
+                    <a href="{% url 'users:login' %}?next={{ request.path }}" class="btn-login">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Iniciar Sesión
+                    </a>
                 </div>
-            {% empty %}
-                <p>Aún no hay participaciones. ¡Sé el primero!</p>
-            {% endfor %}
-            {% include 'partials/pagination.html' %}
-        </div>
-    </div>
-    <hr>
+            </div>
+        {% endif %}
 
+        <!-- LISTA DE COMENTARIOS -->
+        <div id="comments-list">
+            {% for comentario in comentarios_page %}
+                {% include 'lecturas/_comentario_item.html' with comentario=comentario documento=documento %}
+            {% empty %}
+                <p style="text-align: center; padding: 2rem; color: var(--text-color); opacity: 0.7;">
+                    <i class="fas fa-comment-slash"></i><br>
+                    Aún no hay participaciones. ¡Sé el primero en comentar!
+                </p>
+            {% endfor %}
+        </div>
+        {% include 'partials/pagination.html' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- SCRIPTS -->
+{% include 'lecturas/calificacion_script.html' %}
 {% include 'lecturas/focus_mode_script.html' %}
+{% include 'lecturas/comentario_sistema_script.html' %}
+
+<script>
+    // Sistema de colapsar/expandir hijos
+    document.addEventListener('click', function(e) {
+        const toggleBtn = e.target.closest('.toggle-hijos-btn');
+        if (toggleBtn) {
+            e.preventDefault();
+            const hijosContent = toggleBtn.nextElementSibling;
+            const icon = toggleBtn.querySelector('i');
+            
+            if (hijosContent && hijosContent.classList.contains('hijos-content')) {
+                hijosContent.classList.toggle('visible');
+                
+                if (hijosContent.classList.contains('visible')) {
+                    icon.classList.remove('fa-plus-square');
+                    icon.classList.add('fa-minus-square');
+                    toggleBtn.innerHTML = '<i class="fas fa-minus-square"></i> Ocultar respuestas';
+                } else {
+                    icon.classList.remove('fa-minus-square');
+                    icon.classList.add('fa-plus-square');
+                    const count = hijosContent.children.length;
+                    toggleBtn.innerHTML = `<i class="fas fa-plus-square"></i> Ver ${count} respuesta${count > 1 ? 's' : ''}`;
+                }
+            }
+        }
+    });
+
+    // Inicialización mejorada de CKEditor
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔄 Inicializando sistema de comentarios...');
+        
+        // Esperar a que CKEditor esté listo
+        function waitForCKEditor(callback, maxAttempts = 10) {
+            let attempts = 0;
+            const checkInterval = setInterval(() => {
+                attempts++;
+                if (window.CKEDITOR_5_INSTANCES && Object.keys(window.CKEDITOR_5_INSTANCES).length > 0) {
+                    clearInterval(checkInterval);
+                    console.log('✅ CKEditor listo después de', attempts, 'intentos');
+                    callback();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkInterval);
+                    console.warn('❌ CKEditor no se inicializó después de', maxAttempts, 'intentos');
+                }
+            }, 500);
+        }
+
+        waitForCKEditor(function() {
+            console.log('🎯 Aplicando tema inicial a CKEditor');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            if (window.applyThemeToCKEditorInstances) {
+                window.applyThemeToCKEditorInstances(isDarkMode);
+            }
+        });
+    });
+</script>
 {% endblock %}
