@@ -331,3 +331,112 @@ body.dark-mode .form-info-banner {
     min-height: 120px; /* Altura mínima */
     max-height: 250px; /* Altura máxima antes de que aparezca el scroll */
 }
+.current-files-section,
+.new-files-section {
+    background: var(--bg-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.current-file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--glass-bg);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.file-info i {
+    opacity: 0.6;
+}
+
+.file-info a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+.file-info a:hover {
+    text-decoration: underline;
+}
+
+.clear-file-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    padding: 0.4rem 0.75rem;
+    border-radius: 4px;
+    background: #ff475710;
+    color: #ff4757;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.clear-file-option:hover {
+    background: #ff475720;
+}
+
+.clear-file-option input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.custom-file-wrapper {
+    position: relative;
+}
+
+.custom-file-wrapper input[type="file"] {
+    display: none;
+}
+
+.custom-file-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.custom-file-trigger:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+.file-preview-container {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: var(--glass-bg);
+    border-radius: 6px;
+    display: none;
+}
+
+.file-preview-container.has-file {
+    display: block;
+}
+
+.file-preview-container p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-color);
+}
+
+.file-preview-container img {
+    max-width: 200px;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}

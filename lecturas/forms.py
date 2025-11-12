@@ -106,12 +106,22 @@ class ComentarioForm(forms.ModelForm):
 
     def clean_adjunto_comentario(self):
         adjunto = self.cleaned_data.get('adjunto_comentario')
-        if hasattr(adjunto, 'name'):
-            return validate_file(adjunto, ['.pdf', '.doc', '.docx', '.epub'], 8)
+        if adjunto:
+            try:
+                return validate_file(adjunto, ['.pdf', '.doc', '.docx', '.epub'], 8)
+            except ValidationError as e:
+                raise ValidationError(
+                    "Tipo de archivo no válido. Solo se permiten: PDF, DOC, DOCX, EPUB (máx. 8MB)."
+                )
         return adjunto
     
     def clean_imagen_comentario(self):
         imagen = self.cleaned_data.get('imagen_comentario')
-        if hasattr(imagen, 'name'):
-            return validate_file(imagen, ['.jpg', '.jpeg', '.png', '.webp'], 2)
+        if imagen:
+            try:
+                return validate_file(imagen, ['.jpg', '.jpeg', '.png', '.webp'], 3)
+            except ValidationError as e:
+                raise ValidationError(
+                    "Tipo de imagen no válida. Solo se permiten: JPG, JPEG, PNG, WEBP (máx. 3MB)."
+                )
         return imagen

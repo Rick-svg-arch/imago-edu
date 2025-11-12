@@ -1,23 +1,109 @@
+/* Estilos generales para todas las tablas */
 table {
-    width: 100%; border-collapse: collapse; background-color: var(--card-bg-color);
-    border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--card-bg-color);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
-th, td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); }
-th { background-color: var(--bg-color); }
 
+th, td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left; /* Alineación estándar para tablas */
+    vertical-align: middle;
+}
+
+th {
+    background-color: var(--bg-color);
+    font-weight: bold;
+}
+
+/* Estilos específicos para la tabla de estudiantes */
 .student-list-table {
     margin-top: 1.5rem;
-}
-
-.student-list-table th,
-.student-list-table td {
-    vertical-align: middle; /* Centra el contenido verticalmente */
 }
 
 .student-list-table .avatar-cell img {
     width: 45px;
     height: 45px;
     border-radius: 50%;
-    object-fit: cover; /* Evita que la imagen se deforme */
+    object-fit: cover;
     border: 2px solid var(--border-color);
+}
+
+/* Le damos un ancho mínimo a la columna de acciones para que no se comprima */
+/* Puedes aplicar esto a la clase .table o a una clase más específica si es necesario */
+.table th:last-child, .table td:last-child {
+    width: 150px; 
+}
+
+.table td form {
+    width: auto;
+}
+.table td form button {
+    width: auto;
+    justify-content: flex-start;
+}
+
+
+/* === ESTILOS RESPONSIVE (PARA MÓVILES - HASTA 991px) === */
+/* Aquí es donde ocurre la magia para las pantallas pequeñas */
+@media (max-width: 991px) {
+    /* Ocultamos los encabezados de la tabla original */
+    .table thead {
+        display: none;
+    }
+
+    /* Convertimos la tabla en un contenedor de bloques */
+    .table, .table tbody, .table tr, .table td {
+        display: block;
+        width: 100%;
+    }
+    
+    .table tr {
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        background: var(--card-bg-color);
+    }
+    
+    .table tbody tr:last-of-type {
+        margin-bottom: 0;
+    }
+
+    /* Cada celda se comporta como una fila con label y dato */
+    .table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.85rem 0.5rem;
+        border-bottom: 1px dashed var(--border-color);
+        text-align: right;
+        /* Reseteamos el ancho para la vista móvil */
+        width: 100% !important; 
+    }
+
+    .table td:last-child {
+        border-bottom: none;
+        padding-top: 1rem;
+    }
+
+    /* Usamos el atributo 'data-label' para generar los encabezados */
+    .table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        text-align: left;
+        margin-right: 1rem;
+        color: var(--text-color);
+        opacity: 0.8;
+    }
+
+    /* Adaptamos el formulario y el botón para que ocupen todo el ancho */
+    .table td form, .table td form button {
+        width: 100%;
+        justify-content: center;
+    }
 }

@@ -1,14 +1,24 @@
 {% load auth_extras %}
+{% load static %}
 
 <div class="respuesta-item respuesta-item-compacta" id="comentario-{{ comentario.pk }}">
     <div class="comment-content-wrapper">
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 0.5rem;">
-            <div>
-                <strong>
-                    <i class="fas fa-user-circle"></i>
+        <div class="comment-header">
+            <!-- Avatar del usuario -->
+            <div class="comment-avatar">
+                <img src="{% if comentario.autor.profile.avatar %}{{ comentario.autor.profile.avatar.url }}{% else %}{% static 'profiles/default.png' %}{% endif %}" 
+                     alt="Avatar de {{ comentario.autor.username }}"
+                     class="user-avatar-small"
+                     onerror="this.src='{% static 'profiles/default.png' %}'">
+            </div>
+        <div class="comment-user-info">
+                <strong class="username">
                     {{ comentario.autor.username }}
+                    {% if comentario.autor.get_full_name %}
+                        <span class="full-name">({{ comentario.autor.get_full_name }})</span>
+                    {% endif %}
                 </strong>
-                <small>
+                <small class="comment-date">
                     <i class="far fa-clock"></i>
                     {{ comentario.fecha_creacion|date:"d/m/Y H:i" }}
                 </small>
@@ -37,7 +47,7 @@
                 </a>
             </div>
         {% endif %}
-
+         <!-- BOTONES DE ACCIÓN -->
         {% if user == comentario.autor or user.is_superuser or user|has_group:"Administrativo" %}
             <div class="respuesta-acciones-compactas">
                 <a href="#" class="reply-btn" data-id="{{ comentario.pk }}">
@@ -59,29 +69,38 @@
         {% endif %}
     </div>
 
-    <!-- Formulario de respuesta -->
+    <!-- Formulario de respuesta SIMPLE (sin CKEditor) -->
     {% if user.is_authenticated %}
     <div class="reply-form-container" id="reply-form-{{ comentario.pk }}" style="display:none;">
         <form method="post" action="{% url 'lecturas:anadir_comentario' pk=comentario.documento.pk %}" class="ajax-reply-form" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="parent" value="{{ comentario.pk }}">
 
-            <!-- Textarea simple para respuestas rápidas -->
+            <!-- Textarea simple para respuestas -->
             <div class="form-group">
-                <textarea name="contenido" placeholder="Escribe tu respuesta..." class="reply-textarea" style="width: 100%; min-height: 100px; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; resize: vertical;"></textarea>
+                <textarea name="contenido" 
+                          placeholder="Escribe tu respuesta..." 
+                          class="reply-textarea" 
+                          style="width: 100%; min-height: 100px; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; resize: vertical;"></textarea>
             </div>
                 
             <div class="acciones-comentario">
                 <div>
                     <label class="btn-adjunto">
                         <i class="fas fa-paperclip"></i>
-                        Archivo
-                        <input type="file" name="adjunto_comentario" accept=".pdf,.doc,.docx,.epub" style="display: none;">
+                        <span>Archivo</span>
+                        <input type="file" 
+                               name="adjunto_comentario" 
+                               accept=".pdf,.doc,.docx,.epub" 
+                               style="display: none;">
                     </label>
                     <label class="btn-adjunto">
                         <i class="fas fa-image"></i>
-                        Imagen
-                        <input type="file" name="imagen_comentario" accept=".jpg,.jpeg,.png,.webp" style="display: none;">
+                        <span>Imagen</span>
+                        <input type="file" 
+                               name="imagen_comentario" 
+                               accept=".jpg,.jpeg,.png,.webp" 
+                               style="display: none;">
                     </label>
                 </div>
                 <div>
@@ -95,6 +114,9 @@
                     </button>
                 </div>
             </div>
+            
+            <!-- Contenedor para mostrar archivos seleccionados -->
+            <div class="selected-files-preview" style="margin-top: 0.5rem; font-size: 0.85rem;"></div>
         </form>
     </div>
     {% endif %}

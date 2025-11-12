@@ -1,14 +1,30 @@
-/* IMÁGENES DE COMENTARIOS - TAMAÑO PRUDENTE */
-.comentario-imagen img {
-    max-height: 200px, 100% !important;
+/* IMÁGENES DE COMENTARIOS - TAMAÑO PRUDENTE CORREGIDO */
+.comentario-imagen img,
+.respuesta-contenido img {
+    max-width: 150px !important;
+    max-height: 150px !important;
     width: auto;
-    border-radius: 8px;
-    margin: 0.5rem 0;
+    height: auto;
+    border-radius: 6px;
+    margin: 0.25rem 0;
     border: 1px solid var(--border-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    object-fit: contain;
+    cursor: pointer; /* Para indicar que se puede hacer click */
 }
+
+/* Para imágenes en el contenido de comentarios */
+.comentario-imagen img:hover,
+.respuesta-contenido img:hover {
+    opacity: 0.9;
+    transform: scale(1.05);
+    transition: all 0.2s ease;
+}
+
+/* Preview de imágenes (para formularios) */
 .image-preview {
     max-width: 300px;
+    max-height: 200px;
     margin: 0.5rem 0;
     border-radius: 8px;
     overflow: hidden;
@@ -18,13 +34,16 @@
 .image-preview img {
     width: 100%;
     height: auto;
+    max-height: 200px;
+    object-fit: contain;
     display: block;
 }
+
 .current-avatar {
-    width: 150px;       /* Un tamaño fijo para la previsualización */
-    height: 150px;      /* Mismo alto para que sea un círculo perfecto */
-    border-radius: 50%; /* Lo hace circular */
-    object-fit: cover;  /* Asegura que la imagen llene el círculo sin deformarse */
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
     border: 4px solid var(--border-color);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     display: block;
@@ -33,20 +52,129 @@
     margin-bottom: 1em;
 }
 
-/* Y una regla global para las imágenes en el contenido */
+/* Reglas globales para otras imágenes */
 .contenido-post img,
-.respuesta-contenido img,
 .documento-imagen img {
     max-width: 100%;
     max-height: 400px; 
+    width: auto;
+    height: auto;
     border-radius: 8px;
     display: block;
     margin: 0 auto;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
+    object-fit: contain;
 }
+
 .contenido-post img:hover,
-.documento-imagen img:hover,
-.respuesta-contenido img:hover {
+.documento-imagen img:hover {
     transform: scale(1.02);
+}
+
+/* EXCEPCIÓN: No aplicar hover a imágenes de comentarios */
+.comentario-imagen img:hover,
+.respuesta-contenido img:hover {
+    transform: none !important;
+}
+
+/* ESTILOS PARA COMENTARIOS CON AVATAR */
+.comment-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.comment-avatar {
+    flex-shrink: 0;
+}
+
+.user-avatar-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+    background-color: var(--bg-color);
+}
+
+.comment-user-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.username {
+    color: var(--text-color);
+    font-size: 0.95rem;
+    line-height: 1.2;
+}
+
+.full-name {
+    font-weight: normal;
+    opacity: 0.7;
+    font-size: 0.85rem;
+}
+
+.comment-date {
+    color: var(--text-color);
+    opacity: 0.6;
+    font-size: 0.8rem;
+}
+
+/* Ajustes para el contenido del comentario con avatar */
+.respuesta-contenido-compacto {
+    margin-left: 55px; /* 40px avatar + 15px gap */
+    margin-top: 0.5rem;
+}
+
+/* Ajustar acciones para alinear con el contenido */
+.respuesta-acciones-compactas {
+    margin-left: 55px;
+    margin-top: 0.75rem;
+}
+
+/* Para respuestas anidadas, reducir un poco el avatar */
+.hijos-container .user-avatar-small {
+    width: 32px;
+    height: 32px;
+}
+
+.hijos-container .respuesta-contenido-compacto {
+    margin-left: 47px; /* 32px avatar + 15px gap */
+}
+
+.hijos-container .respuesta-acciones-compactas {
+    margin-left: 47px;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+    .user-avatar-small {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .respuesta-contenido-compacto {
+        margin-left: 51px;
+    }
+    
+    .respuesta-acciones-compactas {
+        margin-left: 51px;
+    }
+    
+    .hijos-container .user-avatar-small {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .hijos-container .respuesta-contenido-compacto {
+        margin-left: 43px;
+    }
+    
+    .hijos-container .respuesta-acciones-compactas {
+        margin-left: 43px;
+    }
 }

@@ -55,25 +55,25 @@
                     <tbody>
                         {% for preregistro in preregistros %}
                         <tr>
-                            <td>{{ preregistro.numero_identificacion }}</td>
-                            <td>{{ preregistro.nombres|default:"N/A" }}</td>
-                            <td>{{ preregistro.apellidos|default:"N/A" }}</td>
-                            <td>{{ preregistro.email|default:"N/A" }}</td>
-                            <td>{{ preregistro.get_rol_asignado_display }}</td>
-                            <td>
+                            <td data-label="ID">{{ preregistro.numero_identificacion }}</td>
+                            <td data-label="Nombre">{{ preregistro.nombres|default:"N/A" }}</td>
+                            <td data-label="Apellido">{{ preregistro.apellidos|default:"N/A" }}</td>
+                            <td data-label="Email">{{ preregistro.email|default:"N/A" }}</td>
+                            <td data-label="Rol">{{ preregistro.get_rol_asignado_display }}</td>
+                            <td data-label="Estado">
                                 {% if preregistro.registrado %}
                                     <span class="badge bg-success" style="color: #B7E5CD;">Registrado</span>
                                 {% else %}
                                     <span class="badge bg-warning text-dark" style="color: #FCB53B;">Pendiente</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td data-label="Acciones">
                                 <a href="{% url 'users:preregistro_edit' pk=preregistro.pk %}" class="btn btn-sm btn-outline-primary">Editar</a>
                                 <a href="{% url 'users:preregistro_delete' pk=preregistro.pk %}" class="btn btn-sm btn-outline-danger">Borrar</a>
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="6" class="text-center text-muted">No se encontraron usuarios.</td></tr>
+                        <tr><td colspan="7" class="text-center text-muted">No se encontraron usuarios.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>

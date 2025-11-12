@@ -1,8 +1,10 @@
 <script>
-// Sistema de comentarios mejorado - Versión simplificada y robusta
+// Sistema de comentarios mejorado - Versión final corregida
 class CommentSystem {
     constructor() {
         this.csrfToken = this.getCSRFToken();
+        this.fileChangeHandlers = new WeakMap();
+        this.selectedFiles = new Map();
         this.init();
     }
 
@@ -14,180 +16,367 @@ class CommentSystem {
     init() {
         console.log('🚀 Inicializando sistema de comentarios...');
         this.bindEvents();
+        this.initMainFormFileListeners();
     }
 
     bindEvents() {
-        // Delegación de eventos para mejor performance
-        document.body.addEventListener('submit', (e) => this.handleFormSubmit(e));
         document.body.addEventListener('click', (e) => this.handleClick(e));
-        
-        // Prevenir envío de formularios no manejados por nosotros
         document.addEventListener('submit', (e) => {
             const form = e.target;
             if (form.matches('#main-comment-form, .ajax-reply-form, .ajax-edit-form')) {
                 e.preventDefault();
+                this.submitForm(form);
             }
         });
     }
 
-    handleFormSubmit(e) {
-        const form = e.target.closest('#main-comment-form, .ajax-reply-form, .ajax-edit-form');
-        if (!form) return;
+    // ... (initMainFormFileListeners, initReplyFormFileListeners, initEditFormFileListeners sin cambios) ...
+    initMainFormFileListeners() {
+        const mainForm = document.getElementById('main-comment-form');
+        if (!mainForm) return;
 
-        e.preventDefault();
-        this.submitForm(form);
+        const fileInputs = mainForm.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            if (!this.fileChangeHandlers.has(input)) {
+                const handler = () => this.handleFileChange(input);
+                input.addEventListener('change', handler);
+                this.fileChangeHandlers.set(input, handler);
+            }
+        });
+    }
+
+    initReplyFormFileListeners(form) {
+        const fileInputs = form.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            if (!this.fileChangeHandlers.has(input)) {
+                const handler = () => this.handleFileChange(input);
+                input.addEventListener('change', handler);
+                this.fileChangeHandlers.set(input, handler);
+            }
+        });
+    }
+
+    initEditFormFileListeners(container) {
+        container.querySelectorAll('.custom-file-wrapper').forEach(wrapper => {
+            const fieldId = wrapper.dataset.fieldId;
+            const input = document.getElementById(fieldId);
+            const trigger = wrapper.querySelector('.custom-file-trigger');
+            const previewContainer = wrapper.querySelector('.file-preview-container');
+            
+            if (!input || !trigger) return;
+
+            input.style.position = 'absolute';
+            input.style.opacity = '0';
+            input.style.width = '0.1px';
+            input.style.height = '0.1px';
+            input.style.pointerEvents = 'none';
+            
+            const existingListeners = trigger.getAttribute('data-has-listener');
+            if (!existingListeners) {
+                trigger.setAttribute('data-has-listener', 'true');
+                trigger.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    input.click();
+                });
+            }
+            
+            if (this.fileChangeHandlers.has(input)) {
+                const oldHandler = this.fileChangeHandlers.get(input);
+                input.removeEventListener('change', oldHandler);
+            }
+            
+            const handler = (e) => {
+                e.stopPropagation();
+                const file = e.target.files[0];
+                const inputName = input.getAttribute('name');
+                
+                if (!file) {
+                    this.selectedFiles.delete(inputName);
+                    previewContainer.innerHTML = '';
+                    previewContainer.classList.remove('has-file');
+                    trigger.querySelector('span').textContent = 
+                        trigger.querySelector('span').textContent.includes('Imagen') ? 
+                        'Seleccionar Imagen' : 'Seleccionar Archivo';
+                    return;
+                }
+                
+                this.selectedFiles.set(inputName, file);
+                
+                trigger.querySelector('span').textContent = 
+                    'Archivo: ' + (file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name);
+                previewContainer.classList.add('has-file');
+                
+                const isImage = input.accept.includes('image');
+                
+                if (isImage) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        previewContainer.innerHTML = `<img src="${event.target.result}" alt="Preview">`;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    previewContainer.innerHTML = `<p><i class="fas fa-check-circle" style="color: #10b981;"></i> ${file.name} (${this.formatFileSize(file.size)})</p>`;
+                }
+            };
+            
+            input.addEventListener('change', handler);
+            this.fileChangeHandlers.set(input, handler);
+        });
+    }
+
+    // ... (handleFileChange, showFilePreview, formatFileSize sin cambios) ...
+    handleFileChange(input) {
+        const file = input.files[0];
+        const label = input.closest('label');
+        const form = input.closest('form');
+        if (!label || !form) return;
+
+        const iconElement = label.querySelector('i');
+        const spanElement = label.querySelector('span');
+        const previewContainer = form.querySelector('.selected-files-preview');
+
+        if (!file) {
+            if (iconElement) {
+                const isImage = input.accept.includes('image');
+                iconElement.className = isImage ? 'fas fa-image' : 'fas fa-paperclip';
+            }
+            if (spanElement) {
+                const isImage = input.accept.includes('image');
+                spanElement.textContent = isImage ? 'Adjuntar imagen' : 'Adjuntar archivo';
+            }
+            label.style.background = '';
+            label.style.color = '';
+            
+            if (previewContainer) {
+                const preview = previewContainer.querySelector(`[data-input="${input.name}"]`);
+                if (preview) preview.remove();
+                if (previewContainer.children.length === 0) {
+                    previewContainer.style.display = 'none';
+                }
+            }
+            return;
+        }
+
+        if (iconElement) iconElement.className = 'fas fa-check-circle';
+        if (spanElement) spanElement.textContent = file.name.length > 20 ? file.name.substring(0, 20) + '...' : file.name;
+        label.style.background = '#10b981';
+        label.style.color = 'white';
+
+        if (previewContainer) this.showFilePreview(input, file, previewContainer);
+    }
+
+    showFilePreview(input, file, container) {
+        const existingPreview = container.querySelector(`[data-input="${input.name}"]`);
+        if (existingPreview) existingPreview.remove();
+
+        const previewDiv = document.createElement('div');
+        previewDiv.setAttribute('data-input', input.name);
+        previewDiv.style.cssText = `padding: 0.5rem 0.75rem; background: var(--glass-bg); border-radius: 6px; margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem; border-left: 3px solid #10b981;`;
+
+        const isImage = file.type.startsWith('image/');
+        
+        if (isImage) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewDiv.innerHTML = `<img src="${e.target.result}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"><div style="flex: 1;"><div style="font-weight: 500;">${file.name}</div><div style="font-size: 0.8rem; opacity: 0.7;">${this.formatFileSize(file.size)}</div></div><i class="fas fa-check-circle" style="color: #10b981;"></i>`;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewDiv.innerHTML = `<i class="fas fa-file-pdf" style="font-size: 2rem; opacity: 0.6;"></i><div style="flex: 1;"><div style="font-weight: 500;">${file.name}</div><div style="font-size: 0.8rem; opacity: 0.7;">${this.formatFileSize(file.size)}</div></div><i class="fas fa-check-circle" style="color: #10b981;"></i>`;
+        }
+        container.appendChild(previewDiv);
+        container.style.display = 'block';
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
     }
 
     async submitForm(form) {
-        const formData = new FormData(form);
         const submitBtn = form.querySelector('button[type="submit"]');
-        
-        // Guardar estado original del botón
         const originalBtnText = submitBtn.innerHTML;
-        const originalBtnState = submitBtn.disabled;
-        
-        // Mostrar estado de carga
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
         submitBtn.disabled = true;
 
         try {
-            // Validar contenido
+            const formData = new FormData();
+            const inputs = form.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                if (input.type === 'file') {
+                    const inputName = input.getAttribute('name');
+                    if (this.selectedFiles.has(inputName)) {
+                        formData.append(inputName, this.selectedFiles.get(inputName));
+                    } else if (input.files && input.files.length > 0) {
+                        formData.append(inputName, input.files[0]);
+                    }
+                } else if (input.type === 'checkbox') {
+                    if (input.checked) formData.append(input.name, input.value);
+                } else if (input.type !== 'submit' && input.name) {
+                    formData.append(input.name, input.value);
+                }
+            });
+
             const contenido = formData.get('contenido');
-            if (!contenido || contenido.trim() === '') {
+            if (!contenido || contenido.trim() === '' || contenido === '<p>&nbsp;</p>') {
                 throw new Error('Por favor, escribe algo antes de enviar.');
             }
 
             const response = await fetch(form.action, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': this.csrfToken
-                }
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': this.csrfToken }
             });
 
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
-            }
-
             const data = await response.json();
+            if (!response.ok) throw new Error(data.error || `Error HTTP: ${response.status}`);
 
             if (data.success) {
-                await this.handleSuccess(form, data);
+                this.selectedFiles.clear();
+                this.handleSuccess(form, data); // Se llama a handleSuccess, no await
                 this.showMessage('Comentario enviado correctamente', 'success');
             } else {
-                throw new Error(data.errors ? JSON.stringify(data.errors) : data.error || 'Error desconocido');
+                throw new Error(data.error || 'Error desconocido');
             }
 
         } catch (error) {
-            console.error('Error al enviar comentario:', error);
+            console.error('❌ Error al enviar comentario:', error);
             this.showMessage(error.message, 'error');
         } finally {
-            // Restaurar estado del botón
             submitBtn.innerHTML = originalBtnText;
-            submitBtn.disabled = originalBtnState;
+            submitBtn.disabled = false;
         }
     }
 
-    async handleSuccess(form, data) {
-        // Limpiar formulario
-        this.clearForm(form);
-
+    // ================== CORRECCIÓN IMPORTANTE ==================
+    // El método `handleSuccess` ahora está correctamente estructurado
+    // y el nuevo método `resetMainForm` está en su propio espacio, al mismo nivel.
+    
+    handleSuccess(form, data) {
         if (form.matches('.ajax-edit-form')) {
-            // Edición de comentario
-            form.closest('.comment-content-wrapper').innerHTML = data.html;
+            console.log('✏️ Manejando éxito de edición');
+            const contentWrapper = form.closest('.comment-content-wrapper');
+            contentWrapper.innerHTML = data.html;
         } else if (form.matches('.ajax-reply-form')) {
-            // Respuesta a comentario
+            console.log('💬 Manejando éxito de respuesta');
             const parentId = data.parent_id;
             if (parentId) {
                 const hijosContainer = document.getElementById(`hijos-${parentId}`);
                 if (hijosContainer) {
-                    // Mostrar el contenedor de hijos si estaba oculto
                     const hijosContent = hijosContainer.querySelector('.hijos-content');
                     if (hijosContent) {
                         hijosContent.classList.add('visible');
                         hijosContent.style.display = 'block';
                     }
-                    
-                    // Actualizar el botón toggle
                     const toggleBtn = hijosContainer.querySelector('.toggle-hijos-btn');
                     if (toggleBtn) {
-                        const newCount = data.new_count || (parseInt(toggleBtn.textContent.match(/\d+/)) + 1);
+                        const newCount = data.new_count || 1;
                         toggleBtn.innerHTML = `<i class="fas fa-minus-square"></i> Ocultar ${newCount} respuesta${newCount > 1 ? 's' : ''}`;
                     }
-                    
-                    // Añadir el nuevo comentario
                     hijosContainer.insertAdjacentHTML('beforeend', data.html);
                 }
             }
-            
-            // Ocultar formulario de respuesta
+            this.clearForm(form);
             form.closest('.reply-form-container').style.display = 'none';
         } else {
-            // Comentario principal
+            console.log('📝 Manejando éxito de comentario principal');
             document.getElementById('comments-list').insertAdjacentHTML('afterbegin', data.html);
         }
+        
+        // Llamada unificada para resetear el form principal después de cualquier acción exitosa.
+        this.resetMainForm();
     }
 
-    clearForm(form) {
-        // Limpiar textarea
-        const textarea = form.querySelector('textarea[name="contenido"]');
-        if (textarea) {
-            textarea.value = '';
-        }
+    resetMainForm() {
+        console.log('🔄 Reseteando formulario principal...');
+        const mainForm = document.getElementById('main-comment-form');
+        if (!mainForm) return;
 
-        // Limpiar inputs de archivo
-        const fileInputs = form.querySelectorAll('input[type="file"]');
-        fileInputs.forEach(input => {
+        const editorInstance = window.CKEDITOR_5_INSTANCES && window.CKEDITOR_5_INSTANCES['id_contenido'];
+        if (editorInstance) {
+            editorInstance.setData('');
+            console.log('  - Contenido de CKEditor limpiado.');
+        } else {
+            console.warn('  - No se encontró la instancia de CKEditor para limpiar.');
+        }
+        
+        mainForm.reset();
+        console.log('  - Formulario reseteado con .reset().');
+        
+        mainForm.querySelectorAll('input[type="file"]').forEach(input => {
+            this.handleFileChange(input);
+        });
+        console.log('  - Labels de archivos reseteados visualmente.');
+        
+        const previewContainer = mainForm.querySelector('.selected-files-preview');
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+            previewContainer.style.display = 'none';
+            console.log('  - Previsualización de archivos limpiada.');
+        }
+        console.log('✅ Formulario principal reseteado exitosamente.');
+    }
+
+    // ================== FIN DE LA CORRECCIÓN ==================
+    
+    clearForm(form) {
+        const textarea = form.querySelector('textarea[name="contenido"]');
+        if (textarea) textarea.value = '';
+
+        form.querySelectorAll('input[type="file"]').forEach(input => {
             input.value = '';
+            const label = input.closest('label');
+            if (label) {
+                const icon = label.querySelector('i');
+                const span = label.querySelector('span');
+                const isImage = input.accept.includes('image');
+                if (icon) icon.className = isImage ? 'fas fa-image' : 'fas fa-paperclip';
+                if (span) span.textContent = isImage ? 'Adjuntar imagen' : 'Adjuntar archivo';
+                label.style.background = '';
+                label.style.color = '';
+            }
         });
 
-        // Limpiar previews si existen
-        const previews = form.querySelectorAll('.file-preview');
-        previews.forEach(preview => preview.remove());
+        const preview = form.querySelector('.selected-files-preview');
+        if (preview) {
+            preview.innerHTML = '';
+            preview.style.display = 'none';
+        }
     }
 
     handleClick(e) {
         const target = e.target;
-        
-        if (target.closest('.reply-btn')) {
-            this.handleReplyClick(e);
-        } else if (target.closest('.cancel-reply-btn')) {
-            this.handleCancelReply(e);
-        } else if (target.closest('.edit-comment-btn')) {
-            this.handleEditClick(e);
-        } else if (target.closest('.cancel-edit-btn')) {
-            this.handleCancelEdit(e);
-        } else if (target.closest('.delete-comment-btn')) {
-            this.handleDeleteClick(e);
-        }
+        if (target.closest('.reply-btn')) this.handleReplyClick(e);
+        else if (target.closest('.cancel-reply-btn')) this.handleCancelReply(e);
+        else if (target.closest('.edit-comment-btn')) this.handleEditClick(e);
+        else if (target.closest('.cancel-edit-btn')) this.handleCancelEdit(e);
+        else if (target.closest('.delete-comment-btn')) this.handleDeleteClick(e);
     }
 
+    // ... (handleReplyClick, handleCancelReply, handleEditClick, handleCancelEdit, handleDeleteClick, showMessage sin cambios) ...
     handleReplyClick(e) {
         e.preventDefault();
         const replyBtn = e.target.closest('.reply-btn');
         const commentId = replyBtn.dataset.id;
         const formContainer = document.getElementById(`reply-form-${commentId}`);
-        
         if (!formContainer) return;
 
-        // Ocultar todos los formularios de respuesta
         document.querySelectorAll('.reply-form-container').forEach(container => {
-            container.style.display = 'none';
+            if (container !== formContainer) container.style.display = 'none';
         });
 
-        // Mostrar el formulario actual
         const isHidden = formContainer.style.display === 'none';
         formContainer.style.display = isHidden ? 'block' : 'none';
 
         if (isHidden) {
-            // Enfocar el textarea
+            const form = formContainer.querySelector('form');
+            this.initReplyFormFileListeners(form);
             const textarea = formContainer.querySelector('textarea');
-            if (textarea) {
-                setTimeout(() => textarea.focus(), 100);
-            }
-            
-            // Scroll suave
+            if (textarea) setTimeout(() => textarea.focus(), 100);
             formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
@@ -206,6 +395,9 @@ class CommentSystem {
         const contentDiv = editBtn.closest('.comment-content-wrapper');
 
         try {
+            this.selectedFiles.clear();
+            console.log('🧹 Map de archivos limpiado al iniciar edición.');
+
             contentDiv.dataset.originalHtml = contentDiv.innerHTML;
             contentDiv.innerHTML = '<p style="text-align: center; padding: 2rem;"><i class="fas fa-spinner fa-spin"></i> Cargando editor...</p>';
 
@@ -213,8 +405,9 @@ class CommentSystem {
             const data = await response.json();
             
             contentDiv.innerHTML = data.html;
+            this.initEditFormFileListeners(contentDiv);
         } catch (error) {
-            console.error('Error al cargar editor:', error);
+            console.error('❌ Error al cargar editor:', error);
             this.showMessage('Error al cargar el editor', 'error');
             contentDiv.innerHTML = contentDiv.dataset.originalHtml;
         }
@@ -223,6 +416,8 @@ class CommentSystem {
     handleCancelEdit(e) {
         e.preventDefault();
         const contentDiv = e.target.closest('.comment-content-wrapper');
+        this.selectedFiles.clear();
+        console.log('🧹 Map de archivos limpiado al cancelar edición.');
         if (contentDiv.dataset.originalHtml) {
             contentDiv.innerHTML = contentDiv.dataset.originalHtml;
         }
@@ -231,24 +426,14 @@ class CommentSystem {
     handleDeleteClick(e) {
         e.preventDefault();
         const deleteBtn = e.target.closest('.delete-comment-btn');
-        
-        if (!confirm('¿Estás seguro de que quieres borrar este comentario? Esta acción no se puede deshacer.')) {
-            return;
-        }
+        if (!confirm('¿Estás seguro de que quieres borrar este comentario? Esta acción no se puede deshacer.')) return;
 
         const url = deleteBtn.dataset.url;
         const commentDiv = deleteBtn.closest('.respuesta-item');
-
         commentDiv.style.opacity = '0.5';
         commentDiv.style.pointerEvents = 'none';
 
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': this.csrfToken
-            }
-        })
+        fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': this.csrfToken }})
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -257,9 +442,7 @@ class CommentSystem {
                 commentDiv.style.transform = 'scale(0.95)';
                 setTimeout(() => commentDiv.remove(), 500);
                 this.showMessage('Comentario eliminado', 'success');
-            } else {
-                throw new Error('Error al borrar el comentario');
-            }
+            } else { throw new Error('Error al borrar el comentario'); }
         })
         .catch(error => {
             console.error('Error:', error);
@@ -270,33 +453,11 @@ class CommentSystem {
     }
 
     showMessage(message, type = 'info') {
-        const styles = {
-            success: 'background: #10b981;',
-            error: 'background: #ef4444;',
-            info: 'background: #3b82f6;'
-        };
-
+        const styles = { success: 'background: #10b981;', error: 'background: #ef4444;', info: 'background: #3b82f6;' };
         const messageDiv = document.createElement('div');
-        messageDiv.style.cssText = `
-            position: fixed;
-            top: 100px;
-            right: 20px;
-            ${styles[type] || styles.info}
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
-        `;
-        
-        messageDiv.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}"></i>
-            <strong>${message}</strong>
-        `;
-
+        messageDiv.style.cssText = `position: fixed; top: 100px; right: 20px; ${styles[type] || styles.info} color: white; padding: 1rem 1.5rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10000; animation: slideIn 0.3s ease;`;
+        messageDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'}"></i> <strong>${message}</strong>`;
         document.body.appendChild(messageDiv);
-
         setTimeout(() => {
             messageDiv.style.animation = 'slideOut 0.3s ease';
             setTimeout(() => messageDiv.remove(), 300);
@@ -304,24 +465,9 @@ class CommentSystem {
     }
 }
 
-// Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
     new CommentSystem();
-    
-    // Añadir estilos de animación
-    const styles = `
-        @keyframes slideIn {
-            from { transform: translateX(400px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(400px); opacity: 0; }
-        }
-        .hijos-content { display: none; }
-        .hijos-content.visible { display: block; }
-    `;
-    
+    const styles = `@keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } } @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(400px); opacity: 0; } } .hijos-content { display: none; } .hijos-content.visible { display: block; }`;
     const styleSheet = document.createElement('style');
     styleSheet.textContent = styles;
     document.head.appendChild(styleSheet);

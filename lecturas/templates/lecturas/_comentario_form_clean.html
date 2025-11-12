@@ -1,0 +1,33 @@
+<form id="main-comment-form" method="post" action="{% url 'lecturas:anadir_comentario' pk=documento.pk %}" enctype="multipart/form-data">
+    {% csrf_token %}
+    
+    <div class="form-group">
+        {{ comentario_form.contenido }}
+    </div>
+
+    <div class="adjuntos-container">
+        <label class="btn-adjunto">
+            <i class="fas fa-paperclip"></i>
+            <span>Adjuntar archivo</span>
+            {{ comentario_form.adjunto_comentario }}
+        </label>
+
+        <label class="btn-adjunto">
+            <i class="fas fa-image"></i>
+            <span>Adjuntar imagen</span>
+            {{ comentario_form.imagen_comentario }}
+        </label>
+
+        <button type="submit" class="btn-envio-compacto">
+            <i class="fas fa-paper-plane"></i>
+            Publicar
+        </button>
+    </div>
+
+    <!-- Contenedor para mostrar archivos seleccionados -->
+    <div class="selected-files-preview" style="margin-top: 0.5rem; font-size: 0.85rem;"></div>
+
+    <div class="form-help">
+        <small>Archivos: PDF, DOC, DOCX, EPUB (máx. 8MB) | Imágenes: JPG, PNG, WEBP (máx. 3MB)</small>
+    </div>
+</form>

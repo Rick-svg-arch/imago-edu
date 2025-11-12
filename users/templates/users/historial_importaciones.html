@@ -24,12 +24,16 @@
             <tbody>
                 {% for lote in lotes %}
                 <tr>
-                    <td>{{ lote.fecha_importacion|date:"Y-m-d H:i" }}</td>
-                    <td>{{ lote.importado_por.username }}</td>
-                    <td>{{ lote.archivo_nombre|default:"N/A" }}</td>
-                    <td>{{ lote.registros_creados }} / {{ lote.registros_actualizados }}</td>
-                    <td><span class="genero-tag {% if lote.estado == 'COMPLETADO' %}success{% else %}warning{% endif %}">{{ lote.get_estado_display }}</span></td>
-                    <td>
+                    <td data-label="Fecha">{{ lote.fecha_importacion|date:"Y-m-d H:i" }}</td>
+                    <td data-label="Importado por">{{ lote.importado_por.username }}</td>
+                    <td data-label="Archivo">{{ lote.archivo_nombre|default:"N/A" }}</td>
+                    <td data-label="Creados / Actualizados">{{ lote.registros_creados }} / {{ lote.registros_actualizados }}</td>
+                    <td data-label="Estado">
+                        <span class="genero-tag {% if lote.estado == 'COMPLETADO' %}success{% else %}warning{% endif %}">
+                            {{ lote.get_estado_display }}
+                        </span>
+                    </td>
+                    <td data-label="Acciones">
                         {% if lote.estado == 'COMPLETADO' %}
                             <form action="{% url 'users:deshacer_importacion' lote.pk %}" method="post" onsubmit="return confirm('¿Deshacer esta importación? Los pre-registros asociados serán eliminados permanentemente.');">
                                 {% csrf_token %}
@@ -41,7 +45,7 @@
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7" style="text-align:center; padding:2rem;">No hay registros de importaciones.</td></tr>
+                <tr><td colspan="6" style="text-align:center; padding:2rem;">No hay registros de importaciones.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

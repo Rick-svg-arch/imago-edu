@@ -1,6 +1,18 @@
 {% load auth_extras %}
-<strong>{{ comentario.autor.username }}</strong> 
-<small>({{ comentario.fecha_creacion|date:"d/m/Y H:i" }})</small>
+{% load static %}
+
+<div class="comment-header">
+    <div class="comment-avatar">
+        <img src="{% if comentario.autor.profile.avatar %}{{ comentario.autor.profile.avatar.url }}{% else %}{% static 'profiles/default.png' %}{% endif %}" 
+             alt="Avatar de {{ comentario.autor.username }}"
+             class="user-avatar-small"
+             onerror="this.src='{% static 'profiles/default.png' %}'">
+    </div>
+    <div class="comment-user-info">
+        <strong class="username">{{ comentario.autor.username }}</strong> 
+        <small class="comment-date">({{ comentario.fecha_creacion|date:"d/m/Y H:i" }})</small>
+    </div>
+</div>
 
 <div class="respuesta-contenido respuesta-contenido-compacto">
     {{ comentario.contenido|safe }}

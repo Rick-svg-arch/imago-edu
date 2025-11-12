@@ -151,36 +151,7 @@
         <!-- FORMULARIO DE COMENTARIOS -->
         {% if user.is_authenticated %}
             <div class="form-comentario-compacto">
-                <form id="main-comment-form" method="post" action="{% url 'lecturas:anadir_comentario' pk=documento.pk %}" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    
-                    <div class="form-group">
-                        {{ comentario_form.contenido }}
-                    </div>
-
-                    <div class="adjuntos-container">
-                        <label class="btn-adjunto">
-                            <i class="fas fa-paperclip"></i>
-                            Adjuntar archivo
-                            {{ comentario_form.adjunto_comentario }}
-                        </label>
-
-                        <label class="btn-adjunto">
-                            <i class="fas fa-image"></i>
-                            Adjuntar imagen
-                            {{ comentario_form.imagen_comentario }}
-                        </label>
-
-                        <button type="submit" class="btn-envio-compacto">
-                            <i class="fas fa-paper-plane"></i>
-                            Publicar
-                        </button>
-                    </div>
-
-                    <div class="form-help">
-                        <small>Archivos: PDF, DOC, DOCX, EPUB (máx. 8MB) | Imágenes: JPG, PNG, WEBP (máx. 2MB)</small>
-                    </div>
-                </form>
+                {% include 'lecturas/_comentario_form_clean.html' with comentario_form=comentario_form documento=documento %}
             </div>
         {% else %}
             <div class="login-prompt">

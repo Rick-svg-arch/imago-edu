@@ -95,3 +95,65 @@
         margin: 1.5rem 0;
     }
 }
+@media (min-width: 768px) {
+    .dashboard-grid {
+        /* Aquí restauramos tu diseño original para pantallas grandes */
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        /* Volvemos al espaciado original que es más generoso */
+        gap: 2rem;
+        /* Aumentamos el padding para pantallas grandes */
+        padding: 2rem;
+    }
+
+    .dashboard-widget h2 {
+        /* Restauramos el tamaño de fuente original para el título */
+        font-size: 1.3rem;
+    }
+}
+
+@media (min-width: 768px) {
+    /* Restauramos la grilla de dos columnas */
+    .sidebar-layout { 
+        grid-template-columns: 250px 1fr; 
+    }
+    .manager-grid { 
+        grid-template-columns: 2.5fr 1fr; 
+        gap: 2em; /* Volvemos al espaciado original */
+    }
+
+    /* Restauramos los formularios en línea */
+    .inline-form-group {
+        flex-direction: row;
+        align-items: flex-end; /* Alinea los elementos en la parte inferior */
+        gap: 1rem;
+    }
+
+    .inline-form-group .form-group {
+        flex-grow: 1; /* Permite que los inputs crezcan para llenar el espacio */
+    }
+
+    /* --- Restauramos la Tabla a su estado original --- */
+    .table thead {
+        display: table-header-group; /* Mostramos los encabezados de nuevo */
+    }
+
+    .table tr {
+        display: table-row;
+        margin-bottom: 0;
+        border: none;
+        padding: 0;
+        background: transparent; /* Quitamos el fondo de tarjeta */
+    }
+
+    .table td {
+        display: table-cell;
+        padding: 0.75rem; /* Padding estándar de celda */
+        text-align: left; /* Alineación estándar */
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .table td::before {
+        display: none; /* Ocultamos los labels de móvil */
+    }
+}

@@ -1,4 +1,3 @@
-<!-- lecturas/_comentario_edit_form.html (VERSIÓN FINAL) -->
 <form method="post" action="{% url 'lecturas:editar_comentario_ajax' pk=comentario.pk %}" class="ajax-edit-form" enctype="multipart/form-data">
     {% csrf_token %}
     
@@ -6,33 +5,92 @@
         {{ form.contenido }}
     </div>
     
-    <!-- Archivos actuales (opcional, buena UX) -->
+    <!-- Archivos actuales con estilo mejorado -->
     {% if comentario.adjunto_comentario or comentario.imagen_comentario %}
-        <div style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 1rem; padding: 0.75rem; background: var(--bg-color); border-radius: 6px;">
+        <div class="current-files-section">
+            <h5 style="margin-bottom: 0.75rem; font-size: 0.9rem; opacity: 0.8;">
+                <i class="fas fa-folder-open"></i> Archivos Actuales
+            </h5>
+            
             {% if comentario.adjunto_comentario %}
-                <div><i class="fas fa-paperclip"></i> <strong>Adjunto actual:</strong> <a href="{{ comentario.adjunto_comentario.url }}" target="_blank">{{ comentario.adjunto_comentario.name|slice:"-30:" }}</a></div>
+                <div class="current-file-item">
+                    <div class="file-info">
+                        <i class="fas fa-paperclip"></i>
+                        <a href="{{ comentario.adjunto_comentario.url }}" target="_blank">
+                            {{ comentario.adjunto_comentario.name|slice:"-40:" }}
+                        </a>
+                    </div>
+                    <label class="clear-file-option">
+                        <input type="checkbox" name="adjunto_comentario-clear" id="adjunto_comentario-clear_id">
+                        <span><i class="fas fa-trash-alt"></i> Eliminar</span>
+                    </label>
+                </div>
             {% endif %}
+            
             {% if comentario.imagen_comentario %}
-                <div style="margin-top: 0.5rem;"><i class="fas fa-image"></i> <strong>Imagen actual:</strong> <a href="{{ comentario.imagen_comentario.url }}" target="_blank">Ver imagen</a></div>
+                <div class="current-file-item">
+                    <div class="file-info">
+                        <i class="fas fa-image"></i>
+                        <a href="{{ comentario.imagen_comentario.url }}" target="_blank">Ver imagen actual</a>
+                    </div>
+                    <label class="clear-file-option">
+                        <input type="checkbox" name="imagen_comentario-clear" id="imagen_comentario-clear_id">
+                        <span><i class="fas fa-trash-alt"></i> Eliminar</span>
+                    </label>
+                </div>
+                
+                <!-- Preview de la imagen -->
+                <div style="margin-top: 0.5rem;">
+                    <img src="{{ comentario.imagen_comentario.url }}" 
+                         alt="Imagen actual" 
+                         style="max-width: 200px; height: auto; border-radius: 6px; border: 1px solid var(--border-color);">
+                </div>
             {% endif %}
         </div>
     {% endif %}
     
-    <!-- Contenedor de acciones unificado -->
-    <div class="acciones-comentario">
-        <!-- Grupo de botones de adjuntos -->
-        <div>
-            <label class="btn-adjunto">
-                <i class="fas fa-paperclip"></i> Archivo
-                {{ form.adjunto_comentario }}
-            </label>
-            <label class="btn-adjunto">
-                <i class="fas fa-image"></i> Imagen
-                {{ form.imagen_comentario }}
-            </label>
+    <hr style="margin: 1.25rem 0; opacity: 0.3;">
+    
+    <!-- Sección de nuevos archivos -->
+    <div class="new-files-section">
+        <h5 style="margin-bottom: 0.75rem; font-size: 0.9rem; opacity: 0.8;">
+            <i class="fas fa-upload"></i> Subir Nuevos Archivos
+        </h5>
+        
+        <div class="custom-file-wrapper" data-field-id="id_adjunto_comentario">
+            <input type="file" 
+                   name="adjunto_comentario" 
+                   id="id_adjunto_comentario" 
+                   accept=".pdf,.doc,.docx,.epub">
+            <button type="button" class="custom-file-trigger">
+                <i class="fas fa-paperclip"></i>
+                <span>Seleccionar Archivo</span>
+            </button>
+            <div class="file-preview-container"></div>
+            <small style="display: block; margin-top: 0.5rem; opacity: 0.7; font-size: 0.85rem;">
+                Formatos: PDF, DOC, DOCX, EPUB (máx. 8MB)
+            </small>
         </div>
         
-        <!-- Grupo de botones de acción -->
+        <div class="custom-file-wrapper" data-field-id="id_imagen_comentario" style="margin-top: 0.75rem;">
+            <input type="file" 
+                   name="imagen_comentario" 
+                   id="id_imagen_comentario" 
+                   accept=".jpg,.jpeg,.png,.webp">
+            <button type="button" class="custom-file-trigger">
+                <i class="fas fa-image"></i>
+                <span>Seleccionar Imagen</span>
+            </button>
+            <div class="file-preview-container"></div>
+            <small style="display: block; margin-top: 0.5rem; opacity: 0.7; font-size: 0.85rem;">
+                Formatos: JPG, JPEG, PNG, WEBP (máx. 3MB)
+            </small>
+        </div>
+    </div>
+    
+    <!-- Contenedor de acciones -->
+    <div class="acciones-comentario" style="margin-top: 1.5rem;">
+        <div></div> <!-- Spacer -->
         <div>
             <button type="submit" class="btn-envio-compacto">
                 <i class="fas fa-save"></i> Guardar Cambios

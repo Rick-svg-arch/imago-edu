@@ -18,11 +18,19 @@
     padding-right: 0px;
 }
 .sidebar-layout, .manager-grid {
-    display: grid; gap: 2em; grid-template-columns: 1fr;
+    display: grid;
+    gap: 1.5em; /* Un espaciado ligeramente menor para móviles */
+    grid-template-columns: 1fr; /* Una sola columna por defecto */
 }
 @media (min-width: 992px) {
     .sidebar-layout { grid-template-columns: 250px 1fr; }
     .manager-grid { grid-template-columns: 2.5fr 1fr; }
+}
+/* Formularios adaptables */
+.inline-form-group {
+    display: flex;
+    flex-direction: column; /* Apila los campos del formulario verticalmente */
+    gap: 1rem;
 }
 
 .sidebar, .main-content, .widget, .list-section, .actions-section {
@@ -159,34 +167,53 @@
 /* ESTILOS PARA EL PANEL DE USUARIO */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
+    /* En móviles, queremos una sola columna que ocupe todo el ancho */
+    grid-template-columns: 1fr; 
+    /* Un espacio más pequeño en pantallas chicas se ve mejor */
+    gap: 1.5rem; 
+    /* Importante: Añadir padding para que los widgets no toquen los bordes de la pantalla */
+    padding: 1rem;
 }
 
 .dashboard-widget {
     background: var(--card-bg-color);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 2rem;
+    /* Un padding ligeramente mayor mejora la lectura en móviles */
+    padding: 1.5rem; 
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
     transition: all 0.3s ease;
+    /* La animación de hover se desactiva en muchos móviles, pero la dejamos para consistencia */
 }
-.dashboard-widget:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+
+/* No aplicamos el efecto hover de movimiento en dispositivos táctiles,
+   ya que no tiene sentido y puede causar comportamientos extraños. */
+@media (hover: hover) {
+    .dashboard-widget:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
 }
 
 .dashboard-widget h2 {
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 1rem;
+    margin-top: 0; /* Buen hábito para resetear el margen superior del primer elemento */
     margin-bottom: 1.5rem;
-    font-size: 1.3rem;
+    /* Un tamaño de fuente ligeramente más pequeño para pantallas chicas */
+    font-size: 1.2rem; 
 }
 
 .dashboard-widget ul {
     list-style: none;
     padding: 0;
+    margin: 0; /* Reseteamos también el margen de la lista */
 }
+
 .dashboard-widget li {
     margin-bottom: 1rem;
+}
+/* Ocultar el margen del último elemento de la lista para un espaciado perfecto */
+.dashboard-widget li:last-child {
+    margin-bottom: 0;
 }

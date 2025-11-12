@@ -227,25 +227,38 @@ def anadir_comentario(request, pk):
                 if comentario.parent:
                     new_count = comentario.parent.hijos.count()
                 
+                # CREAR NUEVO FORMULARIO LIMPIO
+                nuevo_form = forms.ComentarioForm()
+                
                 html = render_to_string('lecturas/_comentario_item.html', {
                     'comentario': comentario,
                     'user': request.user,
                 }, request=request)
+                
+                # Renderizar formulario limpio SOLO para comentarios principales
+                clean_form_html = None
+                if not comentario.parent:  # Solo para comentarios principales
+                    clean_form_html = render_to_string('lecturas/_comentario_form_clean.html', {
+                        'comentario_form': nuevo_form,
+                        'documento': documento  # ¡IMPORTANTE! Pasar el documento para la URL
+                    }, request=request)
                 
                 return JsonResponse({
                     'success': True,
                     'html': html,
                     'is_nested': comentario.parent is not None,
                     'parent_id': comentario.parent.pk if comentario.parent else None,
-                    'new_count': new_count
+                    'new_count': new_count,
+                    'clean_form_html': clean_form_html  # Formulario limpio para comentarios principales
                 })
             
             return redirect('lecturas:detalle_documento', pk=documento.pk)
         else:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                error_message = ". ".join([f"{field}: {', '.join(errors)}" for field, errors in form.errors.items()])
                 return JsonResponse({
                     'success': False, 
-                    'errors': form.errors
+                    'error': error_message or "Hubo un error al validar los datos."
                 }, status=400)
 
     return redirect('lecturas:detalle_documento', pk=documento.pk)
@@ -263,21 +276,40 @@ def editar_comentario_ajax(request, pk):
         return JsonResponse({'success': False, 'error': 'Permiso denegado'}, status=403)
 
     if request.method == 'POST':
-        logger.info(f"Editando comentario {pk}")
+        logger.info(f"=== EDITANDO COMENTARIO {pk} ===")
         logger.info(f"POST data keys: {request.POST.keys()}")
         logger.info(f"FILES data keys: {request.FILES.keys()}")
+        
+        # Depuración detallada de archivos
+        for key in request.FILES.keys():
+            file = request.FILES[key]
+            logger.info(f"Archivo recibido - Campo: {key}, Nombre: {file.name}, Tamaño: {file.size}")
         
         form = forms.ComentarioForm(request.POST, request.FILES, instance=comentario)
         
         if form.is_valid():
             logger.info("Formulario válido, guardando cambios")
-            comentario = form.save()
+            
+            # Guardar el comentario
+            comentario_actualizado = form.save(commit=False)
+            
+            # Log de archivos antes de guardar
+            if hasattr(comentario_actualizado, 'adjunto_comentario') and comentario_actualizado.adjunto_comentario:
+                logger.info(f"Adjunto a guardar: {comentario_actualizado.adjunto_comentario.name}")
+            if hasattr(comentario_actualizado, 'imagen_comentario') and comentario_actualizado.imagen_comentario:
+                logger.info(f"Imagen a guardar: {comentario_actualizado.imagen_comentario.name}")
+            
+            comentario_actualizado.save()
+            
+            # Verificar después de guardar
+            comentario_actualizado.refresh_from_db()
+            logger.info(f"Después de guardar - Adjunto: {bool(comentario_actualizado.adjunto_comentario)}, Imagen: {bool(comentario_actualizado.imagen_comentario)}")
             
             # Renderizar el contenido actualizado del comentario
             html = render_to_string(
                 'lecturas/_comentario_contenido.html', 
                 {
-                    'comentario': comentario, 
+                    'comentario': comentario_actualizado, 
                     'user': request.user
                 },
                 request=request
@@ -289,15 +321,11 @@ def editar_comentario_ajax(request, pk):
             # El formulario tiene errores
             logger.error(f"Errores en formulario: {form.errors}")
             
-            # Renderizar el formulario con errores
-            form_html = render_to_string(
-                'lecturas/_comentario_edit_form.html', 
-                {
-                    'form': form, 
-                    'comentario': comentario
-                }, 
-                request=request
-            )
+            error_message = ". ".join([f"{field}: {', '.join(errors)}" for field, errors in form.errors.items()])
+            return JsonResponse({
+                'success': False, 
+                'error': error_message or "Por favor, corrige los errores."
+            }, status=400)
             
             return JsonResponse({
                 'success': False, 
