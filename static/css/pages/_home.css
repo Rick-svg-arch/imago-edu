@@ -1,0 +1,133 @@
+/* === ESTILOS PARA LA NUEVA LANDING PAGE === */
+.hero-section {
+    position: relative;
+    height: 80vh; /* Ocupa el 80% de la altura de la pantalla */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+}
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Superposición oscura para legibilidad */
+}
+.hero-content {
+    position: relative; /* Para que esté sobre el overlay */
+    z-index: 2;
+    max-width: 800px;
+    padding: 2rem;
+}
+.hero-content h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+}
+.hero-content p {
+    font-size: 1.25rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+.accent-btn {
+    background-color: var(--accent-color);
+    color: white;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    transform: scale(1.05);
+}
+.recommendation-section {
+    margin-bottom: 4rem;
+}
+.recommendation-section h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+.horizontal-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem; /* Espacio para la barra de scroll */
+    /* Estilos para la barra de scroll (opcional pero recomendado) */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--bg-color);
+}
+.horizontal-scroll-container::-webkit-scrollbar {
+    height: 8px;
+}
+.horizontal-scroll-container::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+.horizontal-scroll-container::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 10px;
+}
+.empty-state {
+    color: var(--secondary-text-color);
+    padding: 2rem;
+}
+@media (max-width: 768px) {
+    .hero-content h1 { font-size: 2.5rem; }
+}
+
+.recommendation-section {
+    padding: 4rem 0;
+}
+.recommendation-section:nth-of-type(odd) {
+    background-color: var(--card-bg-color); /* Fondo alterno para resaltar */
+}
+.recommendation-section h2 {
+    font-size: 1.8rem; margin-bottom: 2rem;
+    padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);
+}
+
+/* Estilos para la nueva sección Parallax */
+.parallax-section {
+    position: relative;
+    padding: 6rem 2rem;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+.parallax-content {
+    position: relative; z-index: 2; max-width: 700px;
+    background: rgba(0,0,0,0.5); padding: 2rem; border-radius: 12px;
+}
+
+/* Estilos para las tarjetas de foros (reutilizados y adaptados) */
+.featured-forums .category-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+/* === ESTILOS PARA LAS ANIMACIONES DE SCROLL === */
+.js-scroll-fade-in {
+    opacity: 0;
+    transform: translateY(20px);
+}
+.js-scroll-fade-in.scrolled {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+/* Retrasos para un efecto escalonado */
+.hero-content h1.scrolled { transition-delay: 0.2s; }
+.hero-content p.scrolled { transition-delay: 0.4s; }
+.hero-content .submit-btn.scrolled { transition-delay: 0.6s; }
+.featured-forums .category-card.scrolled:nth-child(2) { transition-delay: 0.2s; }
+.featured-forums .category-card.scrolled:nth-child(3) { transition-delay: 0.4s; }
+.featured-forums .category-card.scrolled:nth-child(4) { transition-delay: 0.6s; }

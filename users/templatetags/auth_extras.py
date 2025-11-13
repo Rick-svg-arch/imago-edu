@@ -22,10 +22,12 @@ def has_group(user, group_name):
 @register.simple_tag(takes_context=True)
 def query_transform(context, **kwargs):
     """
-    Toma la URL actual y reemplaza/añade los parámetros GET proporcionados.
-    Uso: {% query_transform page=page_obj.next_page_number %}
+    Toma los parámetros GET actuales y los actualiza con los nuevos
+    parámetros proporcionados en kwargs.
+    
+    Uso en template: <a href="?{% query_transform page=page_obj.next_page_number %}">
     """
     query = context['request'].GET.copy()
-    for k, v in kwargs.items():
-        query[k] = v
+    for key, value in kwargs.items():
+        query[key] = value
     return query.urlencode()

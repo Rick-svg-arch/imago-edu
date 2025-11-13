@@ -1,0 +1,65 @@
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 2.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.pagination-list {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 0.5rem; /* Espacio entre botones */
+}
+
+.page-item .page-link {
+    display: block;
+    padding: 0.6rem 1rem;
+    min-width: 40px; /* Ancho mínimo para que los números no se vean apretados */
+    text-align: center;
+    text-decoration: none;
+    color: var(--text-color);
+    background-color: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+/* Estado Hover (cuando pasas el cursor) */
+.page-item:not(.active):not(.disabled) .page-link:hover {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+}
+
+/* Estado Activo (la página actual) */
+.page-item.active .page-link {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+    font-weight: bold;
+    cursor: default;
+}
+
+/* Estado Deshabilitado (botones sin acción) */
+.page-item.disabled .page-link {
+    color: var(--secondary-text-color);
+    background-color: transparent;
+    border-color: var(--border-color);
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Responsividad para móviles */
+@media (max-width: 480px) {
+    .page-item .page-link {
+        padding: 0.5rem 0.8rem;
+        min-width: 35px;
+    }
+    .pagination-list {
+        gap: 0.3rem;
+    }
+}

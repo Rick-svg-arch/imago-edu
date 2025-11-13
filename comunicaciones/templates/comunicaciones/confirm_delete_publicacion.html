@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+
+{% block title %}Confirmar Borrado{% endblock %}
+
+{% block content %}
+<div class="container-large" style="max-width: 600px;">
+    <div class="glass-card formulario-grande" style="text-align: center;">
+        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ff4757; margin-bottom: 1rem;"></i>
+        <h1>Confirmar Borrado</h1>
+        <p>¿Estás seguro de que quieres borrar permanentemente la publicación: <strong>"{{ object.titulo }}"</strong>?</p>
+        <hr>
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: flex; justify-content: center; gap: 1rem;">
+                <button type="submit" class="submit-btn" style="background-color: #ff4757; border-color: #ff4757;">Sí, Borrar</button>
+                <a href="{% url 'comunicaciones:lista_publicaciones' %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

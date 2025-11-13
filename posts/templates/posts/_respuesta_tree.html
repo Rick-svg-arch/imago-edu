@@ -1,54 +1,105 @@
 {% load auth_extras %}
+{% load static %} {# Necesario para la imagen de avatar por defecto #}
+
 <div class="respuesta-item" id="respuesta-{{ respuesta.pk }}">
-    <div class="threadline-container">
-        <div class="threadline" title="Ocultar/Mostrar comentario"></div>
+    
+    <!-- LÍNEA DE HILO Y AVATAR -->
+    <div class="comment-header">
+        <div class="comment-avatar">
+            <img src="{% if respuesta.autor.profile.avatar %}{{ respuesta.autor.profile.avatar.url }}{% else %}{% static 'profiles/default.png' %}{% endif %}" 
+                 alt="Avatar de {{ respuesta.autor.username }}"
+                 class="user-avatar-small"
+                 onerror="this.src='{% static 'profiles/default.png' %}'">
+        </div>
+        
+        <div class="comment-user-info">
+            <strong class="username">{{ respuesta.autor.username }}</strong>
+            <small class="comment-date" title="{{ respuesta.fecha_creacion }}">
+                <i class="far fa-clock"></i>
+                {{ respuesta.fecha_creacion|timesince }} ago
+            </small>
+        </div>
     </div>
-    <div>
-        <small>
-            <strong>{{ respuesta.autor.username }}</strong> - <span title="{{ respuesta.fecha_creacion }}">{{ respuesta.fecha_creacion|timesince }} ago</span>
-        </small>
+
+    <!-- CONTENIDO DE LA RESPUESTA -->
+    <div class="respuesta-contenido-wrapper">
         <div class="respuesta-contenido">
-            <p>{{ respuesta.contenido|linebreaks }}</p>
-            {% if respuesta.banner %}
-                <div class="respuesta-banner" style="margin-top: 1rem;">
-                    <a href="{{ respuesta.banner.url }}" target="_blank">
-                        <img src="{{ respuesta.banner.url }}" 
-                             alt="Imagen adjunta" 
-                             style="max-width: 100%; max-height: 400px; height: auto; border-radius: 8px; cursor: pointer;">
-                    </a>
-                </div>
-            {% endif %}
-        </div>
-        <div class="respuesta-acciones">
-            <a href="#" class="reply-btn" data-id="{{ respuesta.pk }}">Responder</a>
-            {% if user == respuesta.autor or user.is_superuser or user|has_group:"Administrativo" %}
-                | <a href="{% url 'posts:editar_respuesta' pk=respuesta.pk %}">Editar</a>
-                | <a href="{% url 'posts:borrar_respuesta' pk=respuesta.pk %}" style="color:var(--danger-color);">Borrar</a>
-            {% endif %}
+            {{ respuesta.contenido|safe }}
         </div>
 
-    <!-- Formulario de respuesta (oculto) -->
-        <div class="reply-form-container" id="reply-form-{{ respuesta.pk }}" style="display:none;">
-            <form method="post" action="{% url 'posts:detalle_tema' pk=respuesta.tema.pk %}" enctype="multipart/form-data" class="ajax-response-form">
-                {% csrf_token %}
-                <input type="hidden" name="current_page" value="{{ request.GET.page|default:'1' }}">
-                <input type="hidden" name="parent" value="{{ respuesta.pk }}">
-                {{ respuesta_form.contenido }}
-                {{ respuesta_form.banner }}
-                <button type="submit">Enviar</button>
-            </form>
-        </div>
+        {% if respuesta.banner %}
+            <div class="comentario-imagen" style="margin-top: 1rem;">
+                <a href="{{ respuesta.banner.url }}" target="_blank" title="Ver imagen completa">
+                    <img src="{{ respuesta.banner.url }}" 
+                         alt="Imagen adjunta" 
+                         loading="lazy">
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- ACCIONES: RESPONDER, EDITAR, BORRAR -->
+        <div class="respuesta-acciones-compactas">
+        <a href="#" class="reply-btn" data-id="{{ respuesta.pk }}">
+            <i class="fas fa-reply"></i> Responder
+        </a>
+        {% if user == respuesta.autor or user.is_superuser or user|has_group:"Administrativo" %}
+            <a href="#" class="edit-reply-btn" data-url="{% url 'posts:editar_respuesta_ajax' pk=respuesta.pk %}">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+            <a href="#" class="delete-reply-btn" data-url="{% url 'posts:borrar_respuesta_ajax' pk=respuesta.pk %}">
+                <i class="fas fa-trash"></i> Borrar
+            </a>
+        {% endif %}
+    </div>
     </div>
 
-    <!-- Contenedor para los hijos que se cargarán con AJAX -->
+    <!-- FORMULARIO DE RESPUESTA (OCULTO) - AHORA CON CKEDITOR Y MEJOR ESTILO -->
+    <div class="reply-form-container" id="reply-form-{{ respuesta.pk }}" style="display:none; margin-top: 1rem;">
+        <form method="post" action="{% url 'posts:detalle_tema' pk=respuesta.tema.pk %}" enctype="multipart/form-data" class="ajax-response-form">
+            {% csrf_token %}
+            <input type="hidden" name="parent" value="{{ respuesta.pk }}">
+
+            <!-- Textarea simple para respuestas rápidas -->
+            <div class="form-group">
+                <textarea name="contenido" 
+                        placeholder="Escribe tu respuesta..." 
+                        class="reply-textarea" 
+                        style="width: 100%; min-height: 100px; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; resize: vertical;"></textarea>
+            </div>
+                
+            <div class="acciones-comentario">
+                <div>
+                    <!-- Input de banner estilizado como un botón -->
+                    <label class="btn-adjunto">
+                        <i class="fas fa-image"></i>
+                        <span>Banner</span>
+                        <input type="file" name="banner" accept="image/*" style="display: none;">
+                    </label>
+                </div>
+                <div>
+                    <button type="submit" class="btn-envio-compacto">
+                        <i class="fas fa-paper-plane"></i>
+                        Responder
+                    </button>
+                    <button type="button" class="cancel-reply-btn btn-adjunto">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- CONTENEDOR PARA HIJOS (AJAX) -->
     <div class="hijos-container" id="hijos-container-{{ respuesta.pk }}">
         {% if respuesta.hijos.count > 0 %}
-            <a href="{% url 'posts:get_hijos_respuesta' pk_parent=respuesta.pk %}" 
-               class="load-hijos-btn" 
-               data-parent-id="{{ respuesta.pk }}" 
-               data-loaded="false">
-                <i class="fas fa-comment-dots"></i> Ver {{ respuesta.hijos.count }} respuesta{{ respuesta.hijos.count|pluralize }}
-            </a>
+            <button type="button" 
+                class="toggle-hijos-btn" 
+                data-url="{% url 'posts:get_hijos_respuesta' pk_parent=respuesta.pk %}"
+                data-parent-id="{{ respuesta.pk }}" 
+                data-loaded="false">
+                    <i class="fas fa-plus-square"></i> Ver {{ respuesta.hijos.count }} respuesta{{ respuesta.hijos.count|pluralize }}
+            </button>
         {% endif %}
     </div>
 </div>

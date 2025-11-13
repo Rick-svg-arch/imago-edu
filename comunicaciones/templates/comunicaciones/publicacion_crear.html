@@ -1,0 +1,29 @@
+{% extends 'layout.html' %}
+
+{% block title %}Crear Nueva Publicación{% endblock %}
+
+{% block content %}
+<div class="container-large" style="max-width: 600px;">
+    <div class="glass-card formulario-grande">
+        <h1><i class="fas fa-plus-circle"></i> Nueva Publicación (Paso 1 de 2)</h1>
+        <p>Primero, dale un título a tu nueva publicación. Luego serás redirigido al editor de bloques para añadir el contenido.</p>
+        <hr>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.titulo.label_tag }}
+                {{ form.titulo }}
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="{{ form.etiquetas.id_for_label }}">Etiquetas</label>
+                {{ form.etiquetas }}
+                <small class="form-help">{{ form.etiquetas.help_text }}</small>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                <button type="submit" class="submit-btn"><i class="fas fa-arrow-right"></i> Siguiente: Editar Contenido</button>
+                <a href="{% url 'comunicaciones:lista_publicaciones' %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

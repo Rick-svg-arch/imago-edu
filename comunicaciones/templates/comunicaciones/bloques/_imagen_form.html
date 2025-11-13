@@ -1,0 +1,181 @@
+{% load static %}
+<div class="editor-block block-type-imagen glass-card"
+    data-id="{{ bloque.pk }}"
+    data-tipo="imagen"
+    data-manage-url="{% url 'comunicaciones:gestionar_bloque_ajax' bloque_pk=bloque.pk %}">
+    <div class="block-controls">
+        <span class="drag-handle" title="Arrastrar para reordenar"><i class="fas fa-grip-vertical"></i></span>
+        <button type="button" class="delete-block-btn btn-icon danger" title="Borrar bloque"><i class="fas fa-trash"></i></button>
+    </div>
+    <div class="block-content">
+        <label for="id_bloque_imagen_{{ bloque.pk }}" class="sr-only">Subir Imagen</label>
+        <div class="custom-file-wrapper" data-field-id="id_bloque_imagen_{{ bloque.pk }}" style="margin-bottom: 1rem;">
+            <input type="file" id="id_bloque_imagen_{{ bloque.pk }}" name="contenido_imagen" accept="image/*" class="block-file-input">
+            <button type="button" class="custom-file-trigger">
+                <i class="fas fa-image"></i>
+                <span>{% if bloque.contenido_imagen %}Cambiar Imagen{% else %}Seleccionar Imagen{% endif %}</span>
+            </button>
+        </div>
+        
+        <!-- Vista previa de la imagen -->
+        <div class="file-preview-container">
+            {% if bloque.contenido_imagen %}
+                <img src="{{ bloque.contenido_imagen.url }}" 
+                     alt="Imagen actual" 
+                     class="preview-image"
+                     data-size="{{ bloque.tamanio_imagen|default:'medium' }}"
+                     data-alignment="{{ bloque.alineacion_imagen|default:'center' }}">
+            {% endif %}
+        </div>
+        
+        <!-- Controles de imagen -->
+        {% if bloque.contenido_imagen %}
+        <div class="image-controls-wrapper">
+            <!-- Selector de tamaño -->
+            <label>Tamaño de la imagen:</label>
+            <div class="image-size-selector">
+                <div class="size-option {% if bloque.tamanio_imagen == 'small' or not bloque.tamanio_imagen %}active{% endif %}" data-size="small">
+                    <div class="size-label">Pequeño</div>
+                    <div class="size-dimensions">400px</div>
+                </div>
+                <div class="size-option {% if bloque.tamanio_imagen == 'medium' %}active{% endif %}" data-size="medium">
+                    <div class="size-label">Mediano</div>
+                    <div class="size-dimensions">600px</div>
+                </div>
+                <div class="size-option {% if bloque.tamanio_imagen == 'large' %}active{% endif %}" data-size="large">
+                    <div class="size-label">Grande</div>
+                    <div class="size-dimensions">800px</div>
+                </div>
+                <div class="size-option {% if bloque.tamanio_imagen == 'full' %}active{% endif %}" data-size="full">
+                    <div class="size-label">Completo</div>
+                    <div class="size-dimensions">100%</div>
+                </div>
+            </div>
+            
+            <!-- Selector de alineación -->
+            <label>Alineación:</label>
+            <div class="image-alignment-selector">
+                <button type="button" class="alignment-btn {% if bloque.alineacion_imagen == 'left' %}active{% endif %}" data-alignment="left">
+                    <i class="fas fa-align-left"></i> Izquierda
+                </button>
+                <button type="button" class="alignment-btn {% if bloque.alineacion_imagen == 'center' or not bloque.alineacion_imagen %}active{% endif %}" data-alignment="center">
+                    <i class="fas fa-align-center"></i> Centro
+                </button>
+                <button type="button" class="alignment-btn {% if bloque.alineacion_imagen == 'right' %}active{% endif %}" data-alignment="right">
+                    <i class="fas fa-align-right"></i> Derecha
+                </button>
+            </div>
+            
+            <!-- Campo de descripción/caption -->
+            <label for="caption_{{ bloque.pk }}">Descripción de la imagen (opcional):</label>
+            <input type="text" 
+                   id="caption_{{ bloque.pk }}" 
+                   name="caption_imagen"
+                   class="image-caption-input block-input" 
+                   placeholder="Ej: Vista del evento de verano 2024"
+                   value="{{ bloque.caption_imagen|default:'' }}">
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+(function() {
+    const block = document.querySelector('[data-id="{{ bloque.pk }}"]');
+    if (!block) return;
+    
+    // Manejar cambios de tamaño
+    const sizeOptions = block.querySelectorAll('.size-option');
+    sizeOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            sizeOptions.forEach(opt => opt.classList.remove('active'));
+            this.classList.add('active');
+            
+            const size = this.dataset.size;
+            const img = block.querySelector('.preview-image');
+            if (img) {
+                img.dataset.size = size;
+                applyImageStyles(img);
+            }
+            
+            // Guardar el cambio
+            saveImageSettings(block, { tamanio_imagen: size });
+        });
+    });
+    
+    // Manejar cambios de alineación
+    const alignmentBtns = block.querySelectorAll('.alignment-btn');
+    alignmentBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            alignmentBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const alignment = this.dataset.alignment;
+            const img = block.querySelector('.preview-image');
+            if (img) {
+                img.dataset.alignment = alignment;
+                applyImageStyles(img);
+            }
+            
+            // Guardar el cambio
+            saveImageSettings(block, { alineacion_imagen: alignment });
+        });
+    });
+    
+    // Aplicar estilos a la imagen según configuración
+    function applyImageStyles(img) {
+        const size = img.dataset.size || 'medium';
+        const alignment = img.dataset.alignment || 'center';
+        
+        // Resetear estilos
+        img.style.maxWidth = '';
+        img.style.width = '';
+        img.parentElement.style.textAlign = '';
+        
+        // Aplicar tamaño
+        switch(size) {
+            case 'small':
+                img.style.maxWidth = '400px';
+                break;
+            case 'medium':
+                img.style.maxWidth = '600px';
+                break;
+            case 'large':
+                img.style.maxWidth = '800px';
+                break;
+            case 'full':
+                img.style.width = '100%';
+                break;
+        }
+        
+        // Aplicar alineación
+        img.parentElement.style.textAlign = alignment;
+    }
+    
+    // Guardar configuración de imagen
+    function saveImageSettings(block, settings) {
+        const manageUrl = block.dataset.manageUrl;
+        const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]').value;
+        
+        fetch(manageUrl, {
+            method: 'PUT',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        }).then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  console.log('✅ Configuración de imagen guardada');
+              }
+          });
+    }
+    
+    // Aplicar estilos iniciales si hay imagen
+    const img = block.querySelector('.preview-image');
+    if (img) {
+        applyImageStyles(img);
+    }
+})();
+</script>

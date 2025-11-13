@@ -10,7 +10,10 @@
     </div>
     <div class="comment-user-info">
         <strong class="username">{{ comentario.autor.username }}</strong> 
-        <small class="comment-date">({{ comentario.fecha_creacion|date:"d/m/Y H:i" }})</small>
+        <small class="comment-date" title="{{ comentario.fecha_creacion|date:"d M Y, H:i" }}">
+            <i class="far fa-clock"></i>
+            hace {{ comentario.fecha_creacion|timesince }}
+        </small>
     </div>
 </div>
 

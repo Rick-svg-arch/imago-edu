@@ -1,0 +1,18 @@
+{% if bloque.contenido_imagen %}
+<div class="publication-image-wrapper" style="text-align: {{ bloque.alineacion_imagen|default:'center' }};">
+    <img src="{{ bloque.contenido_imagen.url }}" 
+         alt="{{ bloque.caption_imagen|default:'Imagen de publicación' }}"
+         style="{% if bloque.tamanio_imagen == 'small' %}max-width: 400px;
+                {% elif bloque.tamanio_imagen == 'large' %}max-width: 800px;
+                {% elif bloque.tamanio_imagen == 'full' %}width: 100%;
+                {% else %}max-width: 600px;{% endif %}
+                height: auto;
+                border-radius: 8px;
+                margin: 1rem 0;">
+    {% if bloque.caption_imagen %}
+    <p style="font-size: 0.9rem; color: var(--secondary-text-color); font-style: italic; margin-top: 0.5rem;">
+        {{ bloque.caption_imagen }}
+    </p>
+    {% endif %}
+</div>
+{% endif %}

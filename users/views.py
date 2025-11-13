@@ -12,16 +12,18 @@ from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView, PasswordChangeDoneView
 from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Q
-from functools import reduce # <-- AÑADE ESTO
+from functools import reduce
 import operator
 
 from .models import Profile, Clase, PreRegistro, ImportacionLote
+from lecturas.models import Documento
 from .mixins import GroupRequiredMixin
 from . import forms
 
@@ -169,6 +171,22 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     def get_object(self, queryset=None):
         # El objeto a editar es el propio usuario logueado
         return self.request.user
+    
+@login_required
+def borrar_cuenta(request):
+    if request.method == 'POST':
+        user = request.user
+        user.is_active = False
+        user.save()
+        
+        logout(request)
+        
+        messages.success(request, 'Tu cuenta ha sido desactivada permanentemente. Esperamos verte de nuevo.')
+        
+        # Redirigimos a la página de inicio
+        return redirect('home')
+
+    return render(request, 'users/confirm_delete_cuenta.html')
 
 class ClassCreateView(GroupRequiredMixin, CreateView):
     groups_required = ['Profesor', 'Administrativo']

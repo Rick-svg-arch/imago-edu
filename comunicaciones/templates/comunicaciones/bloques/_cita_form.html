@@ -1,0 +1,17 @@
+{% load static %}
+<div class="editor-block block-type-cita glass-card"
+    data-id="{{ bloque.pk }}"
+    data-tipo="cita"
+    data-manage-url="{% url 'comunicaciones:gestionar_bloque_ajax' bloque_pk=bloque.pk %}">
+    <div class="block-controls">
+        <span class="drag-handle" title="Arrastrar para reordenar"><i class="fas fa-grip-vertical"></i></span>
+        <button type="button" class="delete-block-btn btn-icon danger" title="Borrar bloque"><i class="fas fa-trash"></i></button>
+    </div>
+    <div class="block-content">
+        <label for="id_bloque_cita_contenido_{{ bloque.pk }}">Texto de la Cita</label>
+        <textarea id="id_bloque_cita_contenido_{{ bloque.pk }}" name="contenido_cita" class="block-textarea">{{ bloque.contenido_cita|default_if_none:'' }}</textarea>
+        
+        <label for="id_bloque_cita_autor_{{ bloque.pk }}" style="margin-top: 1rem;">Autor de la Cita (opcional)</label>
+        <input type="text" id="id_bloque_cita_autor_{{ bloque.pk }}" name="autor_cita" value="{{ bloque.autor_cita|default_if_none:'' }}" class="block-input">
+    </div>
+</div>

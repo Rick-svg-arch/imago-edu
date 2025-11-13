@@ -1,0 +1,325 @@
+{% extends 'layout.html' %}
+{% load auth_extras %}
+{% load comunicaciones_tags %}
+
+{% block title %}Acerca de Nosotros{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1><i class="fas fa-bullhorn"></i> Comunicaciones</h1>
+        <p>Novedades, anuncios y contenido destacado de nuestra comunidad.</p>
+    </div>
+    {% if user|has_group:"Administrativo" %}
+        <a href="{% url 'comunicaciones:crear_publicacion' %}" class="submit-btn"><i class="fas fa-plus"></i> Nueva Publicación</a>
+    {% endif %}
+</div>
+
+<div class="tag-filter-bar">
+    <a href="{% url 'comunicaciones:lista_publicaciones' %}{% if request.GET.q %}?q={{ request.GET.q }}{% endif %}" 
+       class="tag-filter-item {% if not etiqueta_activa %}active{% endif %}">
+       Mostrar Todo
+    </a>
+    {% for etiqueta in todas_las_etiquetas %}
+        <a href="?{% query_transform etiqueta=etiqueta.slug %}"
+           class="tag-filter-item {% if etiqueta.slug == etiqueta_activa %}active{% endif %}">
+            {{ etiqueta.name }}
+        </a>
+    {% endfor %}
+</div>
+
+<div class="about-grid">
+    {% for publicacion in publicaciones %}
+        <div class="publication-card {% if publicacion.anclado %}pinned{% endif %}">
+            
+            <div class="publication-content">
+                <div class="card-tags" style="margin-bottom: 1rem;">
+                    {% for etiqueta in publicacion.etiquetas.all %}
+                        <span class="genero-tag">{{ etiqueta.name }}</span>
+                    {% endfor %}
+                </div>
+                
+                {% if publicacion.anclado %}
+                    <div class="pinned-indicator" title="Publicación Anclada">
+                        <i class="fas fa-thumbtack"></i>
+                    </div>
+                {% endif %}
+
+                {% if user|has_group:"Administrativo" and publicacion.estado != 'publicado' or publicacion.fecha_publicacion > now %}
+                    <div class="status-indicator {% if publicacion.estado == 'borrador' %}draft{% else %}scheduled{% endif %}">
+                        <i class="fas {% if publicacion.estado == 'borrador' %}fa-pencil-ruler{% else %}fa-clock{% endif %}"></i>
+                        {% if publicacion.estado == 'borrador' %}
+                            Borrador
+                        {% else %}
+                            Programado para {{ publicacion.fecha_publicacion|date:"d M, H:i" }}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            
+                <h2>{{ publicacion.titulo }}</h2>
+                
+                {% for bloque in publicacion.bloques.all %}
+                    {% include 'comunicaciones/bloques_display/_'|add:bloque.tipo|add:'_display.html' with bloque=bloque %}
+                {% endfor %}
+                
+            </div>
+            
+            <div class="publication-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <small>
+                    <i class="far fa-clock"></i> hace {{ publicacion.fecha_publicacion|timesince }} por <strong>{{ publicacion.autor.username|default:'Admin' }}</strong>
+                </small>
+                {% if user|has_group:"Administrativo" %}
+                <div class="card-actions">
+                    <button type="button" 
+                            class="btn-icon pin-btn {% if publicacion.anclado %}active{% endif %}" 
+                            data-url="{% url 'comunicaciones:anclar_publicacion_ajax' pk=publicacion.pk %}"
+                            title="Anclar/Desanclar Publicación">
+                        <i class="fas fa-thumbtack"></i>
+                    </button>
+                    <a href="{% url 'comunicaciones:editar_publicacion' pk=publicacion.pk %}" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></a>
+                    <a href="{% url 'comunicaciones:borrar_publicacion' pk=publicacion.pk %}" class="btn-icon danger" title="Borrar"><i class="fas fa-trash"></i></a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <p>Aún no hay publicaciones.</p>
+    {% endfor %}
+</div>
+{% include 'partials/pagination.html' %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.about-grid {
+    /* Por defecto, se comporta como un bloque normal en móviles */
+    max-width: 1200px; 
+    margin: 2rem auto;
+}
+
+/* --- Media Query para Activar las Columnas --- */
+/* Se activa en pantallas de 768px o más (tablets y escritorio) */
+@media (min-width: 768px) {
+    .about-grid {
+        /* ¡LA MAGIA! Le decimos que se divida en 2 columnas */
+        column-count: 2;
+        /* Espacio entre las columnas */
+        column-gap: 2rem;
+    }
+}
+
+/* --- Estilos para cada Tarjeta DENTRO de las Columnas --- */
+.publication-card {
+    /* Evita que una tarjeta se parta por la mitad entre columnas */
+    break-inside: avoid-column;
+    /* Añade espacio debajo de cada tarjeta */
+    margin-bottom: 2rem;
+    
+    position: relative;
+    background: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.pinned-indicator {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    font-size: 1.2rem;
+    color: var(--accent-color);
+    opacity: 0.7;
+    z-index: 5; /* Asegura que esté por encima del contenido */
+}
+
+/* --- Botón de Anclar con Estado Activo --- */
+.pin-btn {
+    color: var(--secondary-text-color) !important;
+    opacity: 0.6;
+    border: none;
+    background-color: var(--theme-color);
+}
+.pin-btn:hover {
+    color: var(--accent-color);
+    opacity: 1;
+    cursor: pointer;
+}
+.pin-btn.active {
+    /* Estilo cuando está anclado */
+    color: var(--accent-color) !important;
+    opacity: 1;
+    font-weight: bold; /* Opcional: para hacerlo más obvio */
+}
+.publication-image-link img {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    display: block;
+}
+.publication-content { 
+    padding: 1.5rem; 
+    flex-grow: 1; /* Permite que esta sección crezca para empujar el footer */
+}
+.publication-content h2 { margin-top: 0; }
+.publication-footer {
+    padding: 1rem 1.5rem;
+    background-color: var(--bg-color);
+    border-top: 1px solid var(--border-color);
+    opacity: 0.8;
+    font-size: 0.85rem;
+}
+.prose-style { line-height: 1.7; }
+
+/* --- 1. ESTILOS PARA VIDEOS (16:9) --- */
+/* (Sin cambios, sigue funcionando perfecto) */
+.embed-responsive.embed-responsive-16by9 {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    padding-top: 56.25%;
+}
+.embed-responsive.embed-responsive-16by9 iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    border: 0;
+}
+
+/* --- 2. ESTILOS PARA REDES SOCIALES (Instagram, Twitter, etc.) --- */
+.embed-responsive {
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center;     /* Centra verticalmente */
+    
+    /* Damos espacio y hacemos que ocupe el área disponible */
+    padding: 2rem 1rem;
+    flex-grow: 1;
+}
+.card-actions { display: flex; gap: 0.5rem; }
+.btn-icon {
+    font-size: 1rem; color: var(--secondary-text-color);
+    padding: 0.5rem; transition: color 0.2s ease;
+}
+.btn-icon:hover { color: var(--accent-color); }
+.btn-icon.danger:hover { color: #ff4757; }
+/* Estilo para la nueva cita */
+.styled-quote {
+    border-left: 4px solid var(--accent-color);
+    padding-left: 1.5rem;
+    margin: 2rem 1rem;
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--secondary-text-color);
+}
+.styled-quote footer {
+    font-style: normal;
+    font-weight: bold;
+    margin-top: 1rem;
+    font-size: 1rem;
+}
+.publication-image-wrapper img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+.status-indicator {
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+.status-indicator.draft {
+    background-color: var(--border-color);
+    color: var(--secondary-text-color);
+}
+.status-indicator.scheduled {
+    background-color: #3b82f6; /* Azul */
+    color: white;
+}
+.tag-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    padding: 1rem 0;
+    margin: 2rem auto 0;
+    max-width: 1200px;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+.tag-filter-item {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    background-color: var(--card-bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+.tag-filter-item:hover {
+    background-color: var(--accent-color-light);
+    border-color: var(--accent-color);
+    color: var(--accent-color-dark);
+}
+.tag-filter-item.active {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+    font-weight: bold;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const grid = document.querySelector('.about-grid');
+    if (!grid) return;
+    
+    // Usamos delegación de eventos para manejar todos los botones de anclar
+    grid.addEventListener('click', function(e) {
+        const pinBtn = e.target.closest('.pin-btn');
+        if (!pinBtn) return;
+        
+        e.preventDefault();
+        const url = pinBtn.dataset.url;
+        const csrfToken = '{{ csrf_token }}'; // Django inyectará el token aquí
+        
+        pinBtn.disabled = true; // Prevenir clics duplicados
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                pinBtn.classList.toggle('active', data.anclado);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 300);
+            } else {
+                alert('Error: ' + data.error);
+                pinBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ocurrió un error de red.');
+            pinBtn.disabled = false;
+        });
+    });
+});
+</script>
+{% endblock %}

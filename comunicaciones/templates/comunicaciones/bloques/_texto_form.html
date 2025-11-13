@@ -1,0 +1,13 @@
+{% load static %}
+<div class="editor-block block-type-texto glass-card"
+    data-id="{{ bloque.pk }}"
+    data-tipo="texto"
+    data-manage-url="{% url 'comunicaciones:gestionar_bloque_ajax' bloque_pk=bloque.pk %}">
+    <div class="block-controls">
+        <span class="drag-handle" title="Arrastrar para reordenar"><i class="fas fa-grip-vertical"></i></span>
+        <button type="button" class="delete-block-btn btn-icon danger" title="Borrar bloque"><i class="fas fa-trash"></i></button>
+    </div>
+    <div class="block-content">
+        {{ form.contenido_texto }}
+    </div>
+</div>

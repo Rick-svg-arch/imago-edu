@@ -24,6 +24,7 @@
 @import url("components/_iframe.css");
 @import url("components/_images.css");
 @import url("components/_custom_file_input.css");
+@import url("components/_pagination.css");
 @import url("components/_tables.css");
 @import url("components/_file_widgets.css");
 @import url("components/_dropdown_rating.css");
@@ -33,6 +34,7 @@
  * Ejemplo: @import url("pages/_homepage.css");
 */
 @import url("pages/_class_form.css");
+@import url("pages/_home.css");
 /*
  * 6. RESPONSIVE: Media queries. Siempre deben ir al final para que puedan
  * anular los estilos base en pantallas más pequeñas.

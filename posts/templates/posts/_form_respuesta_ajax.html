@@ -1,0 +1,30 @@
+<form method="post" action="{% url 'posts:editar_respuesta_ajax' pk=respuesta.pk %}" enctype="multipart/form-data" class="ajax-edit-form">
+    {% csrf_token %}
+    <div class.form-group">
+        {{ form.contenido }}
+    </div>
+    <div class="form-group" style="margin-top: 1rem;">
+        <label class="btn-adjunto">
+            <i class="fas fa-image"></i>
+            <span>Adjuntar banner</span>
+            {{ form.banner }}
+        </label>
+        {% if respuesta.banner %}
+        <div style="margin-top: 0.5rem; font-size: 0.8rem;">
+            Actual: <a href="{{ respuesta.banner.url }}" target="_blank">{{ respuesta.banner.name|slice:"-30:" }}</a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="acciones-comentario" style="margin-top: 1rem;">
+        <div></div>
+        <div>
+            <button type="submit" class="btn-envio-compacto">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <button type="button" class="cancel-edit-btn btn-adjunto">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+        </div>
+    </div>
+    {{ form.media }}
+</form>

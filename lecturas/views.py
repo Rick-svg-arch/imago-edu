@@ -2,6 +2,7 @@ import os
 import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, Http404, JsonResponse
+from django.db.models import Q
 from django.views.generic import ListView, DetailView, UpdateView, DeleteView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -99,6 +100,16 @@ class DocumentoListView(ListView):
             queryset = queryset.filter(idioma=self.kwargs['idioma'])
         if 'grado' in self.kwargs:
             queryset = queryset.filter(grado=self.kwargs['grado'])
+        
+        query = self.request.GET.get('q')
+        
+        if query:
+            queryset = queryset.filter(
+                Q(titulo__icontains=query) |
+                Q(autor_principal__nombre__icontains=query) |
+                Q(generos__nombre__icontains=query)
+            ).distinct()
+            
         return queryset
     
     def get_context_data(self, **kwargs):
@@ -279,13 +290,13 @@ def editar_comentario_ajax(request, pk):
         logger.info(f"=== EDITANDO COMENTARIO {pk} ===")
         logger.info(f"POST data keys: {request.POST.keys()}")
         logger.info(f"FILES data keys: {request.FILES.keys()}")
+
+        form = forms.ComentarioEditForm(request.POST, request.FILES, instance=comentario)
         
         # Depuración detallada de archivos
         for key in request.FILES.keys():
             file = request.FILES[key]
             logger.info(f"Archivo recibido - Campo: {key}, Nombre: {file.name}, Tamaño: {file.size}")
-        
-        form = forms.ComentarioForm(request.POST, request.FILES, instance=comentario)
         
         if form.is_valid():
             logger.info("Formulario válido, guardando cambios")
@@ -327,15 +338,10 @@ def editar_comentario_ajax(request, pk):
                 'error': error_message or "Por favor, corrige los errores."
             }, status=400)
             
-            return JsonResponse({
-                'success': False, 
-                'form_html': form_html,
-                'errors': form.errors
-            }, status=400)
     else:
         # Petición GET: devolver el formulario de edición
         logger.info(f"Cargando formulario de edición para comentario {pk}")
-        form = forms.ComentarioForm(instance=comentario)
+        form = forms.ComentarioEditForm(instance=comentario)
         
         form_html = render_to_string(
             'lecturas/_comentario_edit_form.html', 

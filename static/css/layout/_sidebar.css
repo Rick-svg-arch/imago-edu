@@ -30,3 +30,17 @@
 .category-filter .grade-list li {
     padding: 0.5em 0;
 }
+/* Estilos para el sidebar */
+.sidebar-layout {
+    display: grid;
+    grid-template-columns: 1fr; /* Móvil: una sola columna */
+    gap: 2rem;
+}
+@media (min-width: 992px) {
+    .sidebar-layout {
+        grid-template-columns: 280px 1fr; /* Escritorio: sidebar y contenido */
+    }
+    .main-content {
+        padding-left: 1.5rem; /* Separación del sidebar */
+    }
+}

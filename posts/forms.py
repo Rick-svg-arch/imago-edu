@@ -28,10 +28,22 @@ class RespuestaForm(forms.ModelForm):
     class Meta:
         model = models.Respuesta
         fields = ['contenido', 'banner', 'parent']
-        widgets = {
-            'contenido': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Escribe tu respuesta aquí...'}),
-        }
     
+    def clean_banner(self):
+        banner = self.cleaned_data.get('banner')
+        if hasattr(banner, 'name'):
+            return validate_file(banner, ['.jpg', '.jpeg', '.png', 'webp'], 3)
+        return banner
+    
+class RespuestaEditForm(forms.ModelForm):
+    """
+    Un formulario específico para editar respuestas existentes.
+    No incluye el campo 'parent' para evitar que se borre la anidación.
+    """
+    class Meta:
+        model = models.Respuesta
+        fields = ['contenido', 'banner']
+
     def clean_banner(self):
         banner = self.cleaned_data.get('banner')
         if hasattr(banner, 'name'):

@@ -1,0 +1,7 @@
+{% if bloque.contenido_texto %}
+<div class="prose-style">{{ bloque.contenido_texto|safe }}</div>
+{% else %}
+<div class="prose-style" style="opacity: 0.5; font-style: italic;">
+    <p>Este bloque de texto aún no tiene contenido.</p>
+</div>
+{% endif %}

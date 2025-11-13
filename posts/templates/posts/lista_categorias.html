@@ -1,20 +1,47 @@
 {% extends "layout.html" %}
 {% load auth_extras %}
 
+{% block title %}Foros de la Comunidad{% endblock %}
+
 {% block content %}
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>Foros</h1>
-        
-        <!-- BOTÓN VISIBLE SOLO PARA ADMINS Y SUPERUSUARIOS -->
-        {% if user|has_group:"Administrativo" or user|has_group:"Profesor" or user.is_superuser %}
-            <a href="{% url 'posts:crear_categoria' %}" class="btn-primary">+ Crear Categoría</a>
-        {% endif %}
-    </div>
-    <hr>
-    {% for categoria in categorias %}
-        <div class="categoria-item">
-            <h2><a href="{% url 'posts:lista_temas' slug_categoria=categoria.slug %}">{{ categoria.nombre }}</a></h2>
-            <p>{{ categoria.descripcion }}</p>
+    <div class="page-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <h1><i class="fas fa-comments"></i> Foros de la Comunidad</h1>
+            {% if user|has_group:"Administrativo" or user|has_group:"Profesor" or user.is_superuser %}
+                <a href="{% url 'posts:crear_categoria' %}" class="submit-btn"><i class="fas fa-plus"></i> Crear Categoría</a>
+            {% endif %}
         </div>
-    {% endfor %}
+
+        <!-- ================== FORMULARIO DE BÚSQUEDA ================== -->
+        <form method="get" style="margin-top: 1.5rem;">
+            <div class="search-input-wrapper" style="max-width: 500px;">
+                <input type="search" name="q" placeholder="Buscar categorías por nombre o descripción..." value="{{ request.GET.q|default_if_none:'' }}" class="styled-search-input">
+                <button type="submit" class="search-submit-btn" aria-label="Buscar">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="category-card-grid">
+        {% for categoria in categorias_page %}
+        <a href="{% url 'posts:lista_temas' slug_categoria=categoria.slug %}" class="category-card">
+            <div class="card-icon"><i class="fas fa-folder-open"></i></div>
+            <div class="card-content">
+                <h2>{{ categoria.nombre }}</h2>
+                <p>{{ categoria.descripcion }}</p>
+            </div>
+            <div class="card-footer">
+                <span><i class="fas fa-file-alt"></i> {{ categoria.temas.count }} Temas</span>
+            </div>
+        </a>
+        {% empty %}
+        <div class="no-results-message" style="grid-column: 1 / -1;"> {# Ocupa todo el ancho de la grilla #}
+            <i class="fas fa-search-minus"></i>
+            <p>No se encontraron categorías que coincidan con tu búsqueda.</p>
+        </div>
+        {% endfor %}
+    </div>
+{% include 'partials/pagination.html' %}
+
 {% endblock %}

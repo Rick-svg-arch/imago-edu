@@ -1,0 +1,7 @@
+{% if bloque.contenido_embed %}
+    {% if 'iframe' in bloque.contenido_embed %}
+        <div class="embed-responsive embed-responsive-16by9">{{ bloque.contenido_embed|safe }}</div>
+    {% else %}
+        <div class="embed-responsive">{{ bloque.contenido_embed|safe }}</div>
+    {% endif %}
+{% endif %}

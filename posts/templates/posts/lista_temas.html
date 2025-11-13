@@ -1,14 +1,64 @@
 {% extends "layout.html" %}
-{% block content %}
-    <h1>Foro: {{ categoria.nombre }}</h1>
-    <a href="{% url 'posts:crear_tema' slug_categoria=categoria.slug %}">Crear Nuevo Tema</a>
-    <hr>
-    {% for tema in temas_page %}
-        <div class="tema-item">
-            <h3><a href="{% url 'posts:detalle_tema' pk=tema.pk %}">{{ tema.titulo }}</a></h3>
-            <small>por {{ tema.autor.username }} el {{ tema.fecha_creacion|date:"d M Y" }}</small>
-        </div>
-    {% endfor %}
+{% load static %}
 
-    {% include 'partials/pagination.html' %}
+{% block title %}Foro: {{ categoria.nombre }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <!-- Breadcrumbs (Migas de Pan) para una mejor navegación -->
+    <nav aria-label="breadcrumb" style="margin-bottom: 0.5rem;">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'posts:lista_categorias' %}">Foros</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ categoria.nombre }}</li>
+        </ol>
+    </nav>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h1>{{ categoria.nombre }}</h1>
+        <a href="{% url 'posts:crear_tema' slug_categoria=categoria.slug %}" class="submit-btn"><i class="fas fa-plus"></i> Crear Nuevo Tema</a>
+    </div>
+
+    <!-- Formulario de Búsqueda -->
+    <form method="get" style="margin-top: 1.5rem;">
+        <div class="search-input-wrapper" style="max-width: 500px;">
+            <input type="search" name="q" placeholder="Buscar en este foro..." value="{{ request.GET.q|default_if_none:'' }}" class="styled-search-input">
+            <button type="submit" class="search-submit-btn" aria-label="Buscar">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="topic-list-container">
+    {% for tema in temas_page %}
+    <a href="{% url 'posts:detalle_tema' pk=tema.pk %}" class="topic-card">
+        <div class="topic-card-banner">
+            {% if tema.banner %}
+            <img src="{{ tema.banner.url }}" alt="Banner de {{ tema.titulo }}" loading="lazy">
+            {% else %}
+            <img src="{% static 'images/foro.jpg' %}" alt="Sin banner" loading="lazy">
+            {% endif %}
+        </div>
+        <div class="topic-card-content">
+            <div class="topic-card-author">
+                <img src="{% if tema.autor.profile.avatar %}{{ tema.autor.profile.avatar.url }}{% else %}{% static 'profiles/default.png' %}{% endif %}" alt="Avatar de {{ tema.autor.username }}" class="user-avatar-small">
+            </div>
+            <div class="topic-card-details">
+                <h3>{{ tema.titulo }}</h3>
+                <small>por <strong>{{ tema.autor.username }}</strong> &bull; hace {{ tema.fecha_creacion|timesince }}</small>
+            </div>
+        </div>
+        <div class="topic-card-stats">
+            <span><i class="fas fa-comments"></i> {{ tema.respuestas.count }}</span>
+        </div>
+    </a>
+    {% empty %}
+    <div class="no-results-message" style="padding: 2rem;">
+        <i class="fas fa-search-minus"></i>
+        <p>No se encontraron temas que coincidan con tu búsqueda en este foro.</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% include 'partials/pagination.html' %}
 {% endblock %}

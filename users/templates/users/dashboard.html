@@ -91,5 +91,12 @@
             </div>
         {% endif %}
     </div>
+    <div class="danger-zone" style="border: 2px solid #79363cff; border-radius: 12px; padding: 1.5rem; text-align: center;">
+        <h3 style="color: #79363cff, margin-top: 0;">Zona de Peligro</h3>
+        <p>La siguiente acción es irreversible. Por favor, asegúrate de lo que estás haciendo.</p>
+        <a href="{% url 'users:borrar_cuenta' %}" class="submit-btn" style="background-color: #79363cff; border-color: #79363cff; display: inline-block; margin-top: 1rem;">
+            <i class="fas fa-user-slash"></i> Desactivar mi Cuenta Permanentemente
+        </a>
+    </div>
 </div>
 {% endblock %}

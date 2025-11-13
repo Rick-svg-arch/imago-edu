@@ -1,0 +1,35 @@
+{% extends 'layout.html' %}
+
+{% block title %}Confirmar Desactivación de Cuenta{% endblock %}
+
+{% block content %}
+<div class="container-large" style="max-width: 600px;">
+    <div class="glass-card formulario-grande" style="text-align: center;">
+        
+        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ff4757; margin-bottom: 1rem;"></i>
+        
+        <h1>¿Estás seguro?</h1>
+        
+        <p style="font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+            Esta acción desactivará permanentemente tu cuenta, <strong>{{ user.username }}</strong>.
+        </p>
+        <p style="opacity: 0.8; margin-top: 0.5rem;">
+            No podrás volver a iniciar sesión. Tu contenido (posts, comentarios) se mantendrá, pero de forma anónima o bajo tu nombre de usuario.
+        </p>
+        
+        <hr>
+
+        <form method="post" style="margin-top: 2rem;">
+            {% csrf_token %}
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <button type="submit" class="submit-btn" style="background-color: #ff4757; border-color: #ff4757;">
+                    <i class="fas fa-user-slash"></i> Sí, Desactivar mi Cuenta
+                </button>
+                <a href="{% url 'users:dashboard' %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">
+                    <i class="fas fa-times"></i> No, volver
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

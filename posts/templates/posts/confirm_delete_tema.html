@@ -1,11 +1,37 @@
 {% extends 'layout.html' %}
+{% load static %}
+
+{% block title %}Confirmar Borrado de Tema{% endblock %}
+
 {% block content %}
-    <h2>Confirmar Borrado</h2>
-    <p>¿Estás seguro de que quieres borrar el tema "<strong>{{ object.titulo }}</strong>"?</p>
-    <p>Esta acción no se puede deshacer.</p>
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit">Sí, borrar</button>
-        <a href="{% url 'posts:detalle_tema' pk=object.pk %}">Cancelar</a>
-    </form>
+<div class="container-large">
+    <div class="glass-card formulario-grande" style="text-align: center;">
+        
+        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ff4757; margin-bottom: 1rem;"></i>
+        
+        <h1>Confirmar Borrado</h1>
+        
+        <p style="font-size: 1.1rem; max-width: 600px; margin: 0 auto;">
+            ¿Estás seguro de que quieres borrar permanentemente el tema: 
+            <br>
+            <strong>"{{ object.titulo }}"</strong>?
+        </p>
+        <p style="opacity: 0.8; margin-top: 0.5rem;">Esta acción no se puede deshacer.</p>
+        
+        <hr>
+
+        <form method="post" style="margin-top: 2rem;">
+            {% csrf_token %}
+            
+            <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+                <button type="submit" class="submit-btn" style="background-color: #ff4757; border-color: #ff4757;">
+                    <i class="fas fa-trash"></i> Sí, Borrar Tema
+                </button>
+                <a href="{% url 'posts:detalle_tema' pk=object.pk %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

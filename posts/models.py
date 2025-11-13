@@ -2,6 +2,7 @@ import os
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
+from django_ckeditor_5.fields import CKEditor5Field
 
 # Create your models here.
 def ruta_banner_tema(instance, filename):
@@ -37,7 +38,7 @@ class Categoria(models.Model):
 class Tema(models.Model):
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE, related_name='temas')
     titulo = models.CharField(max_length=200)
-    contenido = models.TextField()
+    contenido = CKEditor5Field(config_name='default', blank=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     banner = models.ImageField(blank=True, upload_to=ruta_banner_tema)
     autor = models.ForeignKey(User, on_delete=models.CASCADE, default=None)
@@ -53,7 +54,7 @@ class Tema(models.Model):
 class Respuesta(models.Model):
     tema = models.ForeignKey(Tema, on_delete=models.CASCADE, related_name='respuestas')
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='hijos')
-    contenido = models.TextField()
+    contenido = CKEditor5Field(config_name='comments')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     autor = models.ForeignKey(User, on_delete=models.CASCADE)
     banner = models.ImageField(blank=True, upload_to=ruta_banner_respuesta)

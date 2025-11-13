@@ -1,0 +1,413 @@
+<script>
+class BlockEditor {
+    constructor() {
+        this.form = document.getElementById('publicacion-main-form');
+        this.pubId = this.form.dataset.pubId;
+        this.reorderUrl = this.form.dataset.reorderUrl;
+        this.publicationSaveUrl = this.form.dataset.saveUrl;
+        this.createBlockUrl = this.form.dataset.createBlockUrl;
+        this.container = document.getElementById('block-editor-container');
+        this.csrfToken = this.form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        this.ckeditorInstances = new Map();
+        this.debounceTimeouts = new Map();
+        this.saveStatus = document.getElementById('save-status');
+        this.init();
+    }
+
+    init() {
+        this.initSortable();
+        this.bindEvents();
+        this.container.querySelectorAll('.editor-block').forEach(block => {
+            this.initializeBlockScripts(block);
+        });
+    }
+
+    initSortable() {
+        new Sortable(this.container, {
+            animation: 150,
+            handle: '.drag-handle',
+            onEnd: (evt) => this.reorderBlocks(),
+        });
+    }
+
+    bindEvents() {
+        document.body.addEventListener('click', e => this.handleClick(e));
+        
+        const mainForm = this.form;
+        
+        mainForm.querySelector('input[name="titulo"]').addEventListener('input', (e) => {
+            this.debounceSave(this.reorderUrl, 'titulo', { titulo: e.target.value });
+        });
+
+        mainForm.querySelectorAll('select[name="estado"], input[name="fecha_publicacion"], input[name="etiquetas"]').forEach(input => {
+            input.addEventListener('change', (e) => {
+                this.debounceSave(this.reorderUrl, e.target.name, { [e.target.name]: e.target.value });
+            });
+        });
+
+        this.form.addEventListener('change', (e) => {
+            if (e.target.matches('input, select')) {
+                this.debounceSavePublication();
+            }
+        });
+        
+        this.container.addEventListener('input', (e) => {
+            const target = e.target;
+            if (target.matches('.block-textarea:not(.ckeditor-instance), .block-input')) {
+                const block = target.closest('.editor-block');
+                this.debounceSave(block.dataset.manageUrl, block.dataset.id, {[target.name]: target.value});
+            }
+        });
+    }
+    
+    debounceSavePublication() {
+        const key = `pub-${this.pubId}`;
+        clearTimeout(this.debounceTimeouts.get(key));
+        this.setSaveStatus('saving', 'Guardando...');
+        
+        const timeoutId = setTimeout(async () => {
+            const formData = new FormData(this.form);
+            const dataToSave = Object.fromEntries(formData.entries());
+            delete dataToSave.csrfmiddlewaretoken;
+
+            const result = await this.saveData(this.publicationSaveUrl, dataToSave);
+            if (result.success) {
+                this.setSaveStatus('saved', 'Cambios guardados');
+            } else {
+                this.setSaveStatus('error', 'Error al guardar');
+            }
+        }, 2000);
+        
+        this.debounceTimeouts.set(key, timeoutId);
+    }
+
+    initializeBlockScripts(block) {
+        const editorContainer = block.querySelector('.django-ckeditor-widget, .ck-editor');
+        if (editorContainer) {
+            console.log('📝 Contenedor CKEditor encontrado:', editorContainer);
+            this.attachSaveListenerToEditor(block, editorContainer);
+        }
+        
+        const fileInput = block.querySelector('.block-file-input');
+        if (fileInput) {
+            const trigger = block.querySelector('.custom-file-trigger');
+            if (trigger) trigger.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', e => this.handleImageUpload(e));
+        }
+    }
+
+    async attachSaveListenerToEditor(block, editorContainer, maxAttempts = 20) {
+        console.log(`🔍 Buscando instancia de CKEditor en bloque ${block.dataset.id}...`);
+        
+        for (let i = 0; i < maxAttempts; i++) {
+            // Método 1: Buscar en window.CKEDITOR_5_INSTANCES
+            const textarea = block.querySelector('textarea.ckeditor-instance');
+            if (textarea && window.CKEDITOR_5_INSTANCES && window.CKEDITOR_5_INSTANCES[textarea.id]) {
+                const editor = window.CKEDITOR_5_INSTANCES[textarea.id];
+                console.log(`✅ Método 1: CKEditor encontrado para ${textarea.id}`);
+                this.registerEditorListeners(block, editor, textarea.id);
+                return;
+            }
+            
+            // Método 2: Buscar directamente en el DOM usando la API de CKEditor
+            const ckEditorElement = editorContainer.querySelector('.ck-editor__editable');
+            if (ckEditorElement && ckEditorElement.ckeditorInstance) {
+                const editor = ckEditorElement.ckeditorInstance;
+                console.log(`✅ Método 2: CKEditor encontrado en DOM`);
+                this.registerEditorListeners(block, editor, 'dom-instance');
+                return;
+            }
+            
+            // Método 3: Buscar en todas las instancias globales de CKEditor
+            if (window.ClassicEditor) {
+                const editables = document.querySelectorAll('.ck-editor__editable');
+                for (const editable of editables) {
+                    if (editable.closest('.editor-block') === block && editable.ckeditorInstance) {
+                        const editor = editable.ckeditorInstance;
+                        console.log(`✅ Método 3: CKEditor encontrado via ClassicEditor`);
+                        this.registerEditorListeners(block, editor, 'classic-instance');
+                        return;
+                    }
+                }
+            }
+            
+            console.log(`⏳ Intento ${i + 1}/${maxAttempts} - CKEditor aún no disponible...`);
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        
+        console.error(`❌ No se pudo encontrar CKEditor después de ${maxAttempts} intentos`);
+        console.log('🔍 Información de depuración:');
+        console.log('- window.CKEDITOR_5_INSTANCES:', window.CKEDITOR_5_INSTANCES);
+        console.log('- Editables encontrados:', document.querySelectorAll('.ck-editor__editable'));
+    }
+
+    registerEditorListeners(block, editor, editorId) {
+        this.ckeditorInstances.set(block.dataset.id, editor);
+        console.log(`📌 CKEditor registrado para bloque ${block.dataset.id}`);
+        
+        // Listener para cambios en CKEditor
+        editor.model.document.on('change:data', () => {
+            const contenido = editor.getData();
+            console.log(`📝 CKEditor cambió en bloque ${block.dataset.id}:`, contenido.substring(0, 100) + '...');
+            this.debounceSaveBlock(block, { contenido_texto: contenido });
+        });
+        
+        // También escuchar el evento 'blur' como respaldo
+        editor.editing.view.document.on('blur', () => {
+            const contenido = editor.getData();
+            if (contenido) {
+                console.log(`💾 CKEditor perdió foco, guardando contenido...`);
+                this.debounceSaveBlock(block, { contenido_texto: contenido }, 500);
+            }
+        });
+    }
+
+    handleClick(e) {
+        const addBtn = e.target.closest('.add-block-btn');
+        const deleteBtn = e.target.closest('.delete-block-btn');
+        const saveBtn = e.target.closest('#manual-save-btn');
+
+        if (addBtn) { e.preventDefault(); this.addBlock(addBtn.dataset.tipo); }
+        if (deleteBtn) { e.preventDefault(); this.deleteBlock(deleteBtn.closest('.editor-block')); }
+        if (saveBtn) { e.preventDefault(); this.manualSaveAll(); }
+    }
+
+    async addBlock(tipo) {
+        this.setSaveStatus('saving', 'Añadiendo bloque...');
+        try {
+            const response = await fetch(this.createBlockUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.csrfToken,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `tipo=${tipo}`
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({error: `El servidor respondió con un error ${response.status}`}));
+                throw new Error(errorData.error);
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = data.html;
+                
+                const newBlockElement = tempDiv.firstElementChild;
+                this.container.appendChild(newBlockElement);
+                
+                // Ejecutar scripts del nuevo bloque
+                tempDiv.querySelectorAll('script').forEach(script => {
+                    const newScript = document.createElement('script');
+                    newScript.innerHTML = script.innerHTML;
+                    document.head.appendChild(newScript).parentNode.removeChild(newScript);
+                });
+                
+                // Esperar un poco más para que CKEditor se inicialice
+                setTimeout(() => {
+                    this.initializeBlockScripts(newBlockElement);
+                }, 500);
+                
+                this.setSaveStatus('saved', 'Bloque añadido');
+            } else { 
+                throw new Error(data.error || 'Error al añadir bloque.');
+            }
+        } catch (error) {
+            this.setSaveStatus('error', 'Error');
+            this.showMessage(error.message, 'error');
+        }
+    }
+
+    async manualSaveAll() {
+        this.setSaveStatus('saving', 'Guardando todo...');
+        try {
+            // 1. Dispara el guardado del formulario principal
+            this.debounceSavePublication();
+
+            // 2. Dispara el guardado de todos los bloques
+            const blocks = this.container.querySelectorAll('.editor-block');
+            for (const block of blocks) {
+                const blockId = block.dataset.id;
+                const blockData = {};
+                if (this.ckeditorInstances.has(blockId)) {
+                    blockData.contenido_texto = this.ckeditorInstances.get(blockId).getData();
+                }
+                block.querySelectorAll('.block-textarea:not(.ckeditor-instance), .block-input').forEach(input => {
+                    if(input.name) blockData[input.name] = input.value;
+                });
+                if (Object.keys(blockData).length > 0) {
+                    // Usamos el debounce para evitar saturar el servidor, pero con un delay corto
+                    this.debounceSaveBlock(block, blockData, 100); 
+                }
+            }
+            // El estado se actualizará por los debounces individuales
+        } catch (error) {
+            this.setSaveStatus('error', 'Error');
+            this.showMessage(`Error en guardado: ${error.message}`, 'error');
+        }
+    }
+
+    async deleteBlock(blockElement) {
+        const manageUrl = blockElement.dataset.manageUrl;
+        if (!confirm('¿Estás seguro de que quieres borrar este bloque?')) return;
+        try {
+            const response = await fetch(manageUrl, { method: 'DELETE', headers: {'X-CSRFToken': this.csrfToken} });
+            const data = await response.json();
+            if (data.success) {
+                const blockId = blockElement.dataset.id;
+                if (this.ckeditorInstances.has(blockId)) {
+                    const editor = this.ckeditorInstances.get(blockId);
+                    editor.destroy();
+                    this.ckeditorInstances.delete(blockId);
+                }
+                blockElement.remove();
+                this.showMessage('Bloque borrado.', 'success');
+            } else { throw new Error(data.error); }
+        } catch (error) { this.showMessage(error.message, 'error'); }
+    }
+
+    async reorderBlocks() {
+        const orden = Array.from(this.container.children).map(el => el.dataset.id);
+        try {
+            await fetch(this.reorderUrl, {
+                method: 'PUT',
+                headers: {'X-CSRFToken': this.csrfToken, 'Content-Type': 'application/json'},
+                body: JSON.stringify({ orden: orden })
+            });
+        } catch (error) { this.showMessage('Error al reordenar.', 'error'); }
+    }
+
+    async handleImageUpload(event) {
+        const fileInput = event.target;
+        const block = fileInput.closest('.editor-block');
+        const manageUrl = block.dataset.manageUrl;
+        const uploadUrl = manageUrl.replace(/\/$/, '') + '/upload-image/';
+        const file = fileInput.files[0];
+        const trigger = block.querySelector('.custom-file-trigger span');
+        const previewContainer = block.querySelector('.file-preview-container');
+        if (!file) return;
+        trigger.textContent = 'Subiendo...';
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const response = await fetch(uploadUrl, { method: 'POST', headers: {'X-CSRFToken': this.csrfToken}, body: formData });
+            const data = await response.json();
+            if (data.success) {
+                previewContainer.innerHTML = `<img src="${data.file_url}" style="max-width: 200px; margin-top: 1rem;">`;
+                trigger.textContent = 'Cambiar Imagen';
+                this.showMessage('Imagen guardada.', 'success');
+            } else { throw new Error(data.error); }
+        } catch (error) { this.showMessage(error.message || 'Error al subir la imagen.', 'error'); }
+    }
+
+    debounceSaveTitulo(titulo) {
+        const key = 'titulo';
+        clearTimeout(this.debounceTimeouts.get(key));
+        this.setSaveStatus('saving', 'Guardando...');
+        
+        const timeoutId = setTimeout(async () => {
+            const result = await this.saveData(this.tituloUrl, { titulo: titulo });
+            if (result.success) {
+                this.setSaveStatus('saved', 'Cambios guardados');
+            } else {
+                this.setSaveStatus('error', 'Error al guardar');
+            }
+        }, 2000);
+        
+        this.debounceTimeouts.set(key, timeoutId);
+    }
+
+    debounceSaveBlock(block, dataToSave, delay = 2000) {
+        const blockId = block.dataset.id;
+        clearTimeout(this.debounceTimeouts.get(blockId));
+        this.setSaveStatus('saving', 'Guardando...');
+        
+        console.log(`⏱️ Programando guardado para bloque ${blockId} en ${delay}ms:`, dataToSave);
+        
+        const timeoutId = setTimeout(async () => {
+            console.log(`💾 Ejecutando guardado para bloque ${blockId}`);
+            const result = await this.saveData(block.dataset.manageUrl, dataToSave);
+            if (result.success) {
+                this.setSaveStatus('saved', 'Cambios guardados');
+                console.log(`✅ Bloque ${blockId} guardado exitosamente`);
+            } else {
+                this.setSaveStatus('error', 'Error al guardar');
+                console.error(`❌ Error guardando bloque ${blockId}`);
+            }
+        }, delay);
+        
+        this.debounceTimeouts.set(blockId, timeoutId);
+    }
+
+    async saveData(url, data) {
+        try {
+            console.log('📤 Enviando a:', url, 'Datos:', data);
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRFToken': this.csrfToken, 
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const responseData = await response.json();
+            console.log('📥 Respuesta del servidor:', responseData);
+            
+            if (!response.ok) {
+                throw new Error(responseData.error || 'Error de servidor');
+            }
+            
+            return { success: true };
+        } catch (error) {
+            console.error('❌ Error al guardar:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    setSaveStatus(status, text) {
+        this.saveStatus.className = `save-status ${status}`;
+        this.saveStatus.innerHTML = `<i class="fas fa-${status === 'saving' ? 'spinner fa-spin' : status === 'saved' ? 'check-circle' : 'exclamation-circle'}"></i> ${text}`;
+        
+        if (status === 'saved') {
+            setTimeout(() => {
+                if (this.saveStatus.classList.contains('saved')) {
+                    this.saveStatus.classList.remove('saved');
+                }
+            }, 3000);
+        }
+    }
+    
+    showMessage(message, type = 'info') {
+        const styles = { success: 'background: #10b981;', error: 'background: #ef4444;', info: 'background: #3b82f6;' };
+        const messageDiv = document.createElement('div');
+        messageDiv.style.cssText = `position: fixed; top: 100px; right: 20px; ${styles[type] || styles.info} color: white; padding: 1rem 1.5rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10000; animation: slideIn 0.3s ease;`;
+        messageDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : 'exclamation-triangle'}"></i> <strong>${message}</strong>`;
+        document.body.appendChild(messageDiv);
+        setTimeout(() => {
+            messageDiv.style.animation = 'slideOut 0.3s ease forwards';
+            messageDiv.addEventListener('animationend', () => messageDiv.remove());
+        }, 3000);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const styles = `@keyframes slideIn { from { transform: translateX(120%); } to { transform: translateX(0); } } @keyframes slideOut { from { transform: translateX(0); } to { transform: translateX(120%); } }`;
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = styles;
+    document.head.appendChild(styleSheet);
+    
+    if (document.getElementById('block-editor-container')) {
+        console.log('🚀 Inicializando BlockEditor...');
+        window.blockEditorInstance = new BlockEditor();
+        
+        // Debug helper
+        console.log('💡 Comandos de depuración disponibles:');
+        console.log('- window.blockEditorInstance.ckeditorInstances');
+        console.log('- window.blockEditorInstance.manualSaveAll()');
+    }
+});
+</script>

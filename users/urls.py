@@ -8,6 +8,7 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('panel/', views.DashboardView.as_view(), name='dashboard'),
+    path('cuenta/borrar/', views.borrar_cuenta, name='borrar_cuenta'),
     path('panel/profile/edit/', views.ProfileUpdateView.as_view(), name='profile_edit'),
     path('panel/clases/crear/', views.ClassCreateView.as_view(), name='class_create'),
     path('panel/clases/find-students/', views.FindStudentsByIdView.as_view(), name='find_students_by_id'),

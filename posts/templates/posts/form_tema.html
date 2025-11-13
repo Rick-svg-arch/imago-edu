@@ -1,10 +1,70 @@
 {% extends 'layout.html' %}
+{% load static %}
+
+{% block title %}
+    {% if object %}Editar Tema{% else %}Crear Nuevo Tema{% endif %}
+{% endblock %}
+
 {% block content %}
-    <h2>{% if object %}Editar{% else %}Subir{% endif %} Tema</h2>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar Cambios</button>
-        <a href="{% url 'posts:detalle_tema' pk=object.pk %}">Cancelar</a>
-    </form>
+<div class="container-large">
+    <div class="glass-card formulario-grande">
+        <h1>
+            {% if object %}
+                <i class="fas fa-edit"></i> Editar Tema
+            {% else %}
+                <i class="fas fa-plus-circle"></i> Crear Nuevo Tema en: <strong>{{ categoria.nombre }}</strong>
+            {% endif %}
+        </h1>
+        <p>Comparte tus ideas y conocimientos con la comunidad.</p>
+        <hr>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- ================== RENDERIZADO MANUAL DE CAMPOS ================== -->
+            <div class="form-group">
+                <label for="{{ form.titulo.id_for_label }}">Título del Tema</label>
+                {{ form.titulo }}
+                {% if form.titulo.errors %}<div class="error-text">{{ form.titulo.errors }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>Contenido</label>
+                {{ form.contenido }}
+                {% if form.contenido.errors %}<div class="error-text">{{ form.contenido.errors }}</div>{% endif %}
+            </div>
+
+            <div class="form-group">
+                <label>Banner (Opcional)</label>
+                <div class="adjuntos-container" style="justify-content: flex-start;">
+                    <label class="btn-adjunto">
+                        <i class="fas fa-image"></i>
+                        <span>Seleccionar banner</span>
+                        {{ form.banner }}
+                    </label>
+                </div>
+                {% if form.banner.errors %}<div class="error-text">{{ form.banner.errors }}</div>{% endif %}
+                {% if object.banner %}
+                <small class="form-help" style="margin-top: 0.5rem; display: block;">
+                    Imagen actual: <a href="{{ object.banner.url }}" target="_blank">{{ object.banner.name|slice:"-30:" }}</a>
+                </small>
+                {% endif %}
+            </div>
+            
+            <!-- Botones de acción ... -->
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+                {% if object %}
+                    <a href="{% url 'posts:detalle_tema' pk=object.pk %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">Cancelar</a>
+                {% else %}
+                    <a href="{% url 'posts:lista_temas' slug_categoria=categoria.slug %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">Cancelar</a>
+                {% endif %}
+            </div>
+        </form>
+        
+        {{ form.media }}
+    </div>
+</div>
 {% endblock %}

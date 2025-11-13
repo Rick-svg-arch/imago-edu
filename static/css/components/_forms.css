@@ -440,3 +440,49 @@ body.dark-mode .form-info-banner {
     border-radius: 6px;
     border: 1px solid var(--border-color);
 }
+/* 1. El Contenedor Ancla*/
+.search-input-wrapper {
+    position: relative; /* Establece el contexto de posicionamiento */
+}
+
+/* 2. El Input de Búsqueda */
+.search-input-wrapper .styled-search-input {
+    width: 100%;
+    padding: 0.8rem 2.8rem 0.8rem 1rem; /* Deja espacio a la derecha para el botón */
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-size: 1rem;
+    line-height: 1.5; /* Asegura una altura consistente */
+}
+
+.search-input-wrapper .styled-search-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--accent-color-light);
+}
+
+/* 3. El Botón Absoluto (Ahora siempre centrado) */
+.search-input-wrapper .search-submit-btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%); /* Técnica infalible para centrado vertical */
+    
+    background: transparent;
+    border: none;
+    color: var(--secondary-text-color);
+    cursor: pointer;
+    padding: 0.5rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    
+    /* Evita que los estilos del botón interfieran con el layout */
+    margin: 0; 
+    height: auto;
+}
+
+.search-input-wrapper .search-submit-btn:hover {
+    color: var(--accent-color);
+}

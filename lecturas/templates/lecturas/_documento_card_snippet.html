@@ -1,0 +1,33 @@
+{% load static %}
+<div class="lectura-card" style="flex: 0 0 280px; width: 280px;">
+    <a href="{% url 'lecturas:detalle_documento' pk=doc.pk %}" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; height: 100%;">
+        <div class="lectura-card-image-wrapper">
+            {% if doc.imagen %}
+                <img src="{{ doc.imagen.url }}" alt="Imagen de {{ doc.titulo }}" loading="lazy">
+            {% else %}
+                <img src="{% static 'images/lectura.jpg' %}" alt="Sin imagen" loading="lazy">
+            {% endif %}
+            <div class="card-overlay">
+                <i class="fas fa-expand-alt"></i> Ver Detalle
+            </div>
+        </div>
+        <div class="lectura-card-content">
+            <h4 class="card-title">{{ doc.titulo|truncatechars:50 }}</h4>
+            <div class="card-meta">
+                <span class="meta-item"><i class="fas fa-user-edit"></i> {{ doc.autor_principal.nombre|default:doc.author.username|truncatechars:20 }}</span>
+            </div>
+            <div class="card-rating" style="margin-top: auto;">
+                {% with rating=doc.calificacion_promedio %}
+                    {% for i in "12345"|make_list %}
+                        {% if forloop.counter <= rating %}
+                            <i class="fas fa-star"></i>
+                        {% else %}
+                            <i class="far fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                {% endwith %}
+                <small>({{ doc.num_calificaciones }})</small>
+            </div>
+        </div>
+    </a>
+</div>

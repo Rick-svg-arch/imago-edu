@@ -75,7 +75,11 @@
 
             <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
                 <button type="submit" class="submit-btn">Guardar</button>
-                <a href="{% url 'lecturas:detalle_documento' pk=object.pk %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">Cancelar</a>
+                {% if object %}
+                    <a href="{% url 'lecturas:detalle_documento' pk=object.pk %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">Cancelar</a>
+                {% else %}
+                    <a href="{% url 'lecturas:lista_documentos_base' %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">Cancelar</a>
+                {% endif %}
             </div>
         </form>
     </div>

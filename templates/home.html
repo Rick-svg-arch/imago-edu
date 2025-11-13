@@ -1,11 +1,120 @@
-{% extends "layout.html" %}
+{% extends 'layout.html' %}
+{% load static %}
 
-{% block title %}
-    Home
-{% endblock %}
+{% block title %}Bienvenido a Imago{% endblock %}
+
+{% block container_class %}{% endblock %}
 
 {% block content %}
-    <h1>Home</h1>
-    <p>Check out my <a href='/about'>about</a> page</p>
 
+<!-- SECCIÓN HERO INMERSIVA -->
+<section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <!-- "Ganchos" para la animación de scroll -->
+        <h1 class="js-scroll-fade-in">Descubre, Comparte y Aprende</h1>
+        <p class="js-scroll-fade-in">Tu portal de lecturas colaborativas. Explora recursos, participa en foros y enriquece tu conocimiento.</p>
+        <a href="{% url 'lecturas:lista_documentos_base' %}" class="submit-btn accent-btn js-scroll-fade-in">Explorar la Biblioteca</a>
+    </div>
+</section>
+
+<!-- CONTENIDO PRINCIPAL DE LA PÁGINA -->
+<main class="landing-content">
+
+    <!-- SECCIÓN: LECTURAS MEJOR VALORADAS -->
+    <section class="recommendation-section">
+        <div class="container-large">
+            <h2 class="js-scroll-fade-in"><i class="fas fa-star"></i> Lecturas Mejor Valoradas</h2>
+            <div class="horizontal-scroll-container">
+                {% for doc in mejor_valoradas %}
+                    {% include 'lecturas/_documento_card_snippet.html' with doc=doc %}
+                {% empty %}
+                    <p class="empty-state">Aún no hay lecturas valoradas.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- ======================= NUEVA SECCIÓN PARALLAX ======================= -->
+    <section class="parallax-section">
+        <div class="parallax-content">
+            <h2 class="js-scroll-fade-in">Únete a la Conversación</h2>
+            <p class="js-scroll-fade-in">Nuestros foros son el lugar perfecto para debatir ideas, resolver dudas y conectar con otros estudiantes y profesores.</p>
+        </div>
+    </section>
+
+    <!-- ======================= NUEVA SECCIÓN FOROS DESTACADOS ======================= -->
+    <section class="recommendation-section featured-forums">
+        <div class="container-large">
+            <h2 class="js-scroll-fade-in"><i class="fas fa-comments"></i> Foros Más Activos</h2>
+            <div class="category-card-grid">
+                {% for categoria in foros_destacados %}
+                <a href="{% url 'posts:lista_temas' slug_categoria=categoria.slug %}" class="category-card js-scroll-fade-in">
+                    <div class="card-icon"><i class="fas fa-folder-open"></i></div>
+                    <div class="card-content">
+                        <h3>{{ categoria.nombre }}</h3>
+                        <p>{{ categoria.descripcion|truncatechars:80 }}</p>
+                    </div>
+                    <div class="card-footer">
+                        <span><i class="fas fa-file-alt"></i> {{ categoria.temas.count }} Temas</span>
+                    </div>
+                </a>
+                {% empty %}
+                <p class="empty-state">Aún no se han creado categorías en el foro.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- SECCIÓN: NOVEDADES RECIENTES -->
+    <section class="recommendation-section">
+        <div class="container-large">
+            <h2 class="js-scroll-fade-in"><i class="fas fa-history"></i> Novedades Recientes</h2>
+            <div class="horizontal-scroll-container">
+                {% for doc in recientes %}
+                    {% include 'lecturas/_documento_card_snippet.html' with doc=doc %}
+                {% empty %}
+                    <p class="empty-state">Aún no se han subido lecturas.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .hero-section {
+            background-image: url("{% static 'images/hero-background.jpg' %}");
+        }
+        .parallax-section {
+            background-image: url("{% static 'images/parallax-bg.jpg' %}");
+        }
+    </style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- ======================= SCRIPT PARA ANIMACIONES DE SCROLL ======================= -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const scrollElements = document.querySelectorAll('.js-scroll-fade-in');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            // Cuando el elemento es visible
+            if (entry.isIntersecting) {
+                entry.target.classList.add('scrolled');
+                // Dejamos de observar el elemento una vez animado para mejorar el rendimiento
+                observer.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.1 // Activa la animación cuando el 10% del elemento es visible
+    });
+
+    scrollElements.forEach(el => {
+        observer.observe(el);
+    });
+});
+</script>
 {% endblock %}

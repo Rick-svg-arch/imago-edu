@@ -1,15 +1,37 @@
 {% extends "layout.html" %}
 
-{% block content %}
-    <h2>Crear Nueva Categoría de Foro</h2>
-    <p>Las categorías son los subforos principales de tu comunidad.</p>
+{% block title %}Crear Nueva Categoría{% endblock %}
 
-    <form method="post">
-        {% csrf_token %}
-        
-        {{ form.as_p }}
-        
-        <button type="submit">Crear Categoría</button>
-        <a href="{% url 'posts:lista_categorias' %}" style="margin-left: 1em;">Cancelar</a>
-    </form>
+{% block content %}
+<div class="container-large">
+    <div class="glass-card formulario-grande">
+        <h1><i class="fas fa-folder-plus"></i> Crear Nueva Categoría</h1>
+        <p>Las categorías son los subforos principales de tu comunidad.</p>
+        <hr>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.nombre.id_for_label }}">Nombre de la Categoría</label>
+                {{ form.nombre }}
+                {% if form.nombre.errors %}<div class="error-text">{{ form.nombre.errors }}</div>{% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.descripcion.id_for_label }}">Descripción</label>
+                {{ form.descripcion }}
+                {% if form.descripcion.errors %}<div class="error-text">{{ form.descripcion.errors }}</div>{% endif %}
+                <small class="form-help">Una breve descripción de qué se trata esta categoría.</small>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-check"></i> Crear Categoría
+                </button>
+                <a href="{% url 'posts:lista_categorias' %}" class="submit-btn" style="background-color: var(--border-color); color: var(--text-color);">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

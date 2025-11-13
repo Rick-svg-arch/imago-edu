@@ -18,9 +18,9 @@
                         <span class="full-name">({{ comentario.autor.get_full_name }})</span>
                     {% endif %}
                 </strong>
-                <small class="comment-date">
+                <small class="comment-date" title="{{ comentario.fecha_creacion|date:"d M Y, H:i" }}">
                     <i class="far fa-clock"></i>
-                    {{ comentario.fecha_creacion|date:"d/m/Y H:i" }}
+                    hace {{ comentario.fecha_creacion|timesince }}
                 </small>
             </div>
         </div>

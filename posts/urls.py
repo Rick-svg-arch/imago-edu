@@ -11,7 +11,7 @@ urlpatterns = [
     path('tema/<int:pk>/', views.detalle_tema, name='detalle_tema'),
     path('tema/<int:pk>/editar/', views.TemaUpdateView.as_view(), name='editar_tema'),
     path('tema/<int:pk>/borrar/', views.TemaDeleteView.as_view(), name='borrar_tema'),
-    path('respuesta/<int:pk>/editar/', views.RespuestaUpdateView.as_view(), name='editar_respuesta'),
-    path('respuesta/<int:pk>/borrar/', views.RespuestaDeleteView.as_view(), name='borrar_respuesta'),
     path('respuesta/<int:pk_parent>/get-hijos/', views.get_hijos_respuesta_ajax, name='get_hijos_respuesta'),
+    path('ajax/respuesta/<int:pk>/editar/', views.editar_respuesta_ajax, name='editar_respuesta_ajax'),
+    path('ajax/respuesta/<int:pk>/borrar/', views.borrar_respuesta_ajax, name='borrar_respuesta_ajax'),
 ]

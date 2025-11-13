@@ -70,27 +70,6 @@ class DocumentoForm(forms.ModelForm):
         if not descripcion and not adjunto:
             raise ValidationError("Debes proporcionar una descripción o adjuntar un archivo.")
         return cleaned_data
-    
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        
-        # Asignar el autor
-        autor = self.cleaned_data.get('autor_nombre')
-        instance.autor_principal = autor
-        
-        if commit:
-            instance.save()
-            
-            # Asignar géneros (relación ManyToMany)
-            generos = self.cleaned_data.get('generos_nombres', [])
-            if generos:
-                instance.generos.set(generos)
-            else:
-                instance.generos.clear()
-            
-            self.save_m2m()
-        
-        return instance
 
 
 class ComentarioForm(forms.ModelForm):
@@ -103,6 +82,37 @@ class ComentarioForm(forms.ModelForm):
     class Meta:
         model = models.Comentario
         fields = ['contenido', 'adjunto_comentario', 'imagen_comentario', 'parent']
+
+    def clean_adjunto_comentario(self):
+        adjunto = self.cleaned_data.get('adjunto_comentario')
+        if adjunto:
+            try:
+                return validate_file(adjunto, ['.pdf', '.doc', '.docx', '.epub'], 8)
+            except ValidationError as e:
+                raise ValidationError(
+                    "Tipo de archivo no válido. Solo se permiten: PDF, DOC, DOCX, EPUB (máx. 8MB)."
+                )
+        return adjunto
+    
+    def clean_imagen_comentario(self):
+        imagen = self.cleaned_data.get('imagen_comentario')
+        if imagen:
+            try:
+                return validate_file(imagen, ['.jpg', '.jpeg', '.png', '.webp'], 3)
+            except ValidationError as e:
+                raise ValidationError(
+                    "Tipo de imagen no válida. Solo se permiten: JPG, JPEG, PNG, WEBP (máx. 3MB)."
+                )
+        return imagen
+    
+class ComentarioEditForm(forms.ModelForm):
+    """
+    Un formulario específico para editar comentarios existentes.
+    No incluye el campo 'parent' para evitar que se borre la anidación.
+    """
+    class Meta:
+        model = models.Comentario
+        fields = ['contenido', 'adjunto_comentario', 'imagen_comentario']
 
     def clean_adjunto_comentario(self):
         adjunto = self.cleaned_data.get('adjunto_comentario')

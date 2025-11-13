@@ -6,23 +6,47 @@ from django.utils.text import slugify
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.template.loader import render_to_string
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
+from django.db.models import Q
 
 from .models import Categoria, Tema, Respuesta
-from .forms import TemaForm, RespuestaForm, CategoriaForm
+from .forms import TemaForm, RespuestaForm, CategoriaForm, RespuestaEditForm
 from users.mixins import GroupRequiredMixin
 from .mixins import UserIsAuthorMixin
 
 def lista_categorias(request):
-    """Muestra la lista de todos los subforos."""
-    categorias = Categoria.objects.all()
-    return render(request, 'posts/lista_categorias.html', {'categorias': categorias})
+    """Muestra la lista de todos los subforos, con búsqueda y paginación."""
+    categorias_list = Categoria.objects.all().order_by('nombre')
+
+    query = request.GET.get('q')
+    if query:
+        categorias_list = categorias_list.filter(
+            Q(nombre__icontains=query) |
+            Q(descripcion__icontains=query)
+        ).distinct()
+
+    paginator = Paginator(categorias_list, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'posts/lista_categorias.html', {
+        'categorias_page': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'page_obj': page_obj
+    })
 
 def lista_temas(request, slug_categoria):
-    """Muestra los temas dentro de una categoría específica."""
+    """Muestra los temas dentro de una categoría específica y maneja la búsqueda."""
     categoria = get_object_or_404(Categoria, slug=slug_categoria)
+    # Empezamos con la lista de temas de la categoría
     temas_list = Tema.objects.filter(categoria=categoria).order_by('-fecha_creacion')
 
+    query = request.GET.get('q')
+    if query:
+        temas_list = temas_list.filter(
+            Q(titulo__icontains=query) |
+            Q(autor__username__icontains=query)
+        ).distinct()
     paginator = Paginator(temas_list, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -33,6 +57,7 @@ def lista_temas(request, slug_categoria):
         'is_paginated': page_obj.has_other_pages(),
         'page_obj': page_obj
     })
+
 def detalle_tema(request, pk):
     """
     Muestra un tema, sus respuestas, y maneja la creación de nuevas respuestas.
@@ -115,7 +140,7 @@ def crear_tema(request, slug_categoria):
             return redirect('posts:detalle_tema', pk=nuevo_tema.pk) # Redirigir al nuevo tema
     else:
         form = TemaForm()
-    return render(request, 'posts/crear_tema.html', {'form': form, 'categoria': categoria})
+    return render(request, 'posts/form_tema.html', {'form': form, 'categoria': categoria})
 
 class CategoriaCreateView(GroupRequiredMixin, CreateView):
     groups_required = ['Administrativo', 'Profesor']
@@ -145,21 +170,57 @@ class TemaDeleteView(LoginRequiredMixin, UserIsAuthorMixin, DeleteView):
     model = Tema
     template_name = 'posts/confirm_delete_tema.html'
     success_url = reverse_lazy('posts:lista_categorias')
+
+
+@login_required
+def editar_respuesta_ajax(request, pk):
+    respuesta = get_object_or_404(Respuesta, pk=pk)
+
+    # Comprobación de permisos manual
+    is_author = request.user == respuesta.autor
+    is_admin = request.user.is_superuser or request.user.groups.filter(name='Administrativo').exists()
+    if not is_author and not is_admin:
+        return HttpResponseForbidden("No tienes permiso para editar esta respuesta.")
+
+    if request.method == 'POST':
+        form = RespuestaEditForm(request.POST, request.FILES, instance=respuesta)
+        if form.is_valid():
+            form.save()
+            # Devolvemos la respuesta actualizada y re-renderizada
+            html = render_to_string('posts/_respuesta_tree.html', {
+                'respuesta': respuesta,
+                'respuesta_form': RespuestaForm(), # Un form limpio para anidar
+                'user': request.user
+            }, request=request)
+            return JsonResponse({'success': True, 'html': html})
+        else:
+            # Devolvemos el formulario con errores
+            form_html = render_to_string('posts/_form_respuesta_ajax.html', {'form': form}, request=request)
+            return JsonResponse({'success': False, 'form_html': form_html}, status=400)
+    else:
+        # Petición GET: devolver el formulario de edición
+        form = RespuestaEditForm(instance=respuesta)
+        form_html = render_to_string('posts/_form_respuesta_ajax.html', {
+            'form': form,
+            'respuesta': respuesta
+        }, request=request)
+        return JsonResponse({'html': form_html})
+
+@login_required
+def borrar_respuesta_ajax(request, pk):
+    respuesta = get_object_or_404(Respuesta, pk=pk)
+
+    # Comprobación de permisos manual
+    is_author = request.user == respuesta.autor
+    is_admin = request.user.is_superuser or request.user.groups.filter(name='Administrativo').exists()
+    if not is_author and not is_admin:
+        return HttpResponseForbidden("No tienes permiso para borrar esta respuesta.")
+
+    if request.method == 'POST':
+        respuesta.delete()
+        return JsonResponse({'success': True})
     
-class RespuestaUpdateView(LoginRequiredMixin, UserIsAuthorMixin, UpdateView):
-    model = Respuesta
-    form_class = RespuestaForm
-    template_name = 'posts/form_respuesta.html'
-
-    def get_success_url(self):
-        return reverse_lazy('posts:detalle_tema', kwargs={'pk': self.object.tema.pk})
-
-class RespuestaDeleteView(LoginRequiredMixin, UserIsAuthorMixin, DeleteView):
-    model = Respuesta
-    template_name = 'posts/confirm_delete_respuesta.html'
-
-    def get_success_url(self):
-        return reverse_lazy('posts:detalle_tema', kwargs={'pk': self.object.tema.pk})
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
     
 def get_hijos_respuesta_ajax(request, pk_parent):
     # Obtenemos la respuesta "padre"
