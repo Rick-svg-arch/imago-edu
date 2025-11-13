@@ -9,8 +9,9 @@ steps:
     id: Push
     args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu']
 
-  # Deployment variables
+  # Deploy to Cloud Run
   - name: 'gcr.io/cloud-builders/gcloud'
+    id: Deploy
     args:
     - 'run'
     - 'deploy'
@@ -35,3 +36,5 @@ steps:
 
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/containers/imago-edu'
+
+timeout: 1200s

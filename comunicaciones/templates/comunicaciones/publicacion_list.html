@@ -45,15 +45,16 @@
                     </div>
                 {% endif %}
 
-                {% if user|has_group:"Administrativo" and publicacion.estado != 'publicado' or publicacion.fecha_publicacion > now %}
-                    <div class="status-indicator {% if publicacion.estado == 'borrador' %}draft{% else %}scheduled{% endif %}">
-                        <i class="fas {% if publicacion.estado == 'borrador' %}fa-pencil-ruler{% else %}fa-clock{% endif %}"></i>
-                        {% if publicacion.estado == 'borrador' %}
-                            Borrador
-                        {% else %}
-                            Programado para {{ publicacion.fecha_publicacion|date:"d M, H:i" }}
-                        {% endif %}
-                    </div>
+                {% if user|has_group:"Administrativo" %}
+                    {% if publicacion.estado == 'borrador' %}
+                        <div class="status-indicator draft">
+                            <i class="fas fa-pencil-ruler"></i> Borrador
+                        </div>
+                    {% elif publicacion.estado == 'publicado' and publicacion.fecha_publicacion > now %}
+                        <div class="status-indicator scheduled">
+                            <i class="fas fa-clock"></i> Programado para {{ publicacion.fecha_publicacion|date:"d M, H:i" }}
+                        </div>
+                    {% endif %}
                 {% endif %}
             
                 <h2>{{ publicacion.titulo }}</h2>

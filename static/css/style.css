@@ -31,7 +31,6 @@
 
 /*
  * 5. PAGES: Estilos específicos para páginas concretas (si los tienes).
- * Ejemplo: @import url("pages/_homepage.css");
 */
 @import url("pages/_class_form.css");
 @import url("pages/_home.css");

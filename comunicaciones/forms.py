@@ -1,32 +1,37 @@
 from django import forms
 from .models import Publicacion, BloqueContenido
 
-class PublicacionForm(forms.ModelForm): # Cambiamos el nombre para más claridad
+class PublicacionCrearForm(forms.ModelForm):
     """
-    Formulario para la edición principal de una Publicación.
-    Las etiquetas se manejan por separado para un mejor control.
+    Formulario simple para el Paso 1. Solo captura el título y las etiquetas iniciales.
     """
-    # ================== CAMBIO: Definimos el campo de etiquetas manualmente ==================
+    class Meta:
+        model = Publicacion
+        fields = ['titulo', 'etiquetas']
+        widgets = {
+            'titulo': forms.TextInput(attrs={'placeholder': 'Ej: "Anuncio de Nuevos Talleres de Verano"'}),
+            'etiquetas': forms.TextInput(attrs={'placeholder': 'Ej: Eventos, Anuncios, Verano'})
+        }
+
+class PublicacionEditarForm(forms.ModelForm):
+    """
+    Formulario completo para la página de edición. Incluye estado y programación.
+    """
     etiquetas = forms.CharField(
         required=False,
-        help_text="Una lista de etiquetas separadas por comas. Ej: Eventos, Anuncios, Verano",
-        widget=forms.TextInput(attrs={'placeholder': 'Ej: Eventos, Anuncios, Verano'})
+        help_text="Una lista de etiquetas separadas por comas.",
+        widget=forms.TextInput(attrs={'placeholder': 'Ej: Eventos, Anuncios'})
     )
 
     class Meta:
         model = Publicacion
-        fields = ['titulo', 'estado', 'fecha_publicacion', 'etiquetas'] # Mantenemos 'etiquetas' aquí
+        fields = ['titulo', 'estado', 'fecha_publicacion', 'etiquetas']
         
         widgets = {
-            'titulo': forms.TextInput(attrs={'placeholder': 'Ej: "Anuncio de Nuevos Talleres de Verano"'}),
             'fecha_publicacion': forms.DateTimeInput(
                 format='%Y-%m-%dT%H:%M',
                 attrs={'type': 'datetime-local'}
             ),
-        }
-        
-        help_texts = {
-            'fecha_publicacion': 'Para publicar inmediatamente, deja la fecha y hora actual. Para programar, elige una fecha y hora futura.',
         }
 
 class BloqueTextoForm(forms.ModelForm):

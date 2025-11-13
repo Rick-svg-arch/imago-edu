@@ -1,6 +1,0 @@
-.lectura-fullscreen iframe {
-    width: 100% !important;
-    max-width: 100% !important;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
-}

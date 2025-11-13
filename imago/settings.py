@@ -92,7 +92,12 @@ WSGI_APPLICATION = 'imago.wsgi.application'
 # ====================
 # Detectar si estamos en Cloud Run o en desarrollo local
 USE_CLOUD_SQL_AUTH_PROXY = os.getenv('USE_CLOUD_SQL_AUTH_PROXY', 'False') == 'True'
-CLOUD_RUN_ENVIRONMENT = os.getenv('K_SERVICE') is not None  # Cloud Run establece esta variable
+FORCE_CLOUD_SQL = os.getenv('FORCE_CLOUD_SQL', 'False') == 'True'
+CLOUD_RUN_ENVIRONMENT = (
+    os.getenv('K_SERVICE') is not None or 
+    os.getenv('K_CONFIGURATION') is not None or
+    FORCE_CLOUD_SQL
+)
 
 print("\n" + "="*60)
 print("CONFIGURACIÓN DE BASE DE DATOS")

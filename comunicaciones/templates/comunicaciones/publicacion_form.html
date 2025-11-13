@@ -25,11 +25,15 @@
                 <input type="text" name="titulo" value="{{ publicacion.titulo }}" required id="id_titulo" class="styled-input">
                 <div class="form-grid-2" style="margin-top: 1.5rem;">
                     <div class="form-group">
-                        <label for="{{ form.estado.id_for_label }}">Estado</label>
+                        <label for="{{ form.estado.id_for_label }}">Visibilidad</label>
                         {{ form.estado }}
+                        <small class="form-help">
+                            <b>Borrador:</b> Oculto para todos, solo visible para administradores.<br>
+                            <b>Publicado:</b> Visible para el público (inmediatamente o en la fecha programada).
+                        </small>
                     </div>
                     <div class="form-group">
-                        <label for="{{ form.fecha_publicacion.id_for_label }}">Fecha de Publicación / Programación</label>
+                        <label for="{{ form.fecha_publicacion.id_for_label }}">Fecha de Publicación</label>
                         {{ form.fecha_publicacion }}
                         <small class="form-help">{{ form.fecha_publicacion.help_text }}</small>
                     </div>

@@ -49,17 +49,20 @@ class PublicacionListView(ListView):
             num_publicaciones=Count('taggit_taggeditem_items')
         ).order_by('-num_publicaciones')[:15]
         context['etiqueta_activa'] = self.request.GET.get('etiqueta')
+        context['now'] = timezone.now()
         
         return context
 
 class PublicacionCreateView(LoginRequiredMixin, GroupRequiredMixin, CreateView):
     groups_required = ['Administrativo']
     model = Publicacion
-    form_class = forms.PublicacionForm
+    # ================== CAMBIO: Usar el formulario simple de creación ==================
+    form_class = forms.PublicacionCrearForm
     template_name = 'comunicaciones/publicacion_crear.html'
 
     def form_valid(self, form):
         form.instance.autor = self.request.user
+        form.instance.fecha_publicacion = timezone.now()
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -68,14 +71,12 @@ class PublicacionCreateView(LoginRequiredMixin, GroupRequiredMixin, CreateView):
 class PublicacionUpdateView(LoginRequiredMixin, GroupRequiredMixin, UpdateView):
     groups_required = ['Administrativo']
     model = Publicacion
-    form_class = forms.PublicacionForm
+    # ================== CAMBIO: Usar el formulario completo de edición ==================
+    form_class = forms.PublicacionEditarForm
     template_name = 'comunicaciones/publicacion_form.html'
     context_object_name = 'publicacion'
 
     def get_initial(self):
-        """
-        Poblamos el campo de etiquetas con una cadena de texto legible.
-        """
         initial = super().get_initial()
         etiquetas = self.object.etiquetas.all()
         initial['etiquetas'] = ', '.join(tag.name for tag in etiquetas)
