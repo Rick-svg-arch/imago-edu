@@ -486,3 +486,37 @@ body.dark-mode .form-info-banner {
 .search-input-wrapper .search-submit-btn:hover {
     color: var(--accent-color);
 }
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Aplica esto a los campos de contraseña de Django */
+.password-wrapper input[type="password"],
+.password-wrapper input[type="text"] {
+    width: 100%;
+    padding-right: 40px; /* Espacio para el ícono */
+}
+
+.password-toggle-icon {
+    position: absolute;
+    right: 15px;
+    cursor: pointer;
+    color: #888; /* Color por defecto (modo claro) */
+    transition: color 0.2s ease-in-out;
+}
+
+.password-toggle-icon:hover {
+    color: var(--accent-color); /* O el color que prefieras al pasar el mouse */
+}
+
+/* ESTA ES LA PARTE CLAVE PARA EL MODO OSCURO */
+/* Asumiendo que tu modo oscuro se activa con una clase '.dark-mode' en el body o html */
+.dark-mode .password-toggle-icon {
+    color: #ccc; /* Color para el ícono en modo oscuro */
+}
+
+.dark-mode .password-toggle-icon:hover {
+    color: var(--accent-color); /* Color de hover en modo oscuro */
+}

@@ -31,7 +31,10 @@
 
             <div class="form-group">
                 <label for="{{ form.password.id_for_label }}">Contraseña</label>
-                {{ form.password }}
+                <div class="password-wrapper">
+                    {{ form.password }}
+                    <i class="fas fa-eye password-toggle-icon" id="togglePassword"></i>
+                </div>
             </div>
 
             {% if request.GET.next %}
@@ -52,4 +55,26 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Este script se explica en la sección de abajo
+    document.addEventListener('DOMContentLoaded', function() {
+        function setupPasswordToggle(inputId, toggleId) {
+            const passwordField = document.getElementById(inputId);
+            const toggleIcon = document.getElementById(toggleId);
+
+            if (passwordField && toggleIcon) {
+                toggleIcon.addEventListener('click', function() {
+                    const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordField.setAttribute('type', type);
+                    this.classList.toggle('fa-eye');
+                    this.classList.toggle('fa-eye-slash');
+                });
+            }
+        }
+        setupPasswordToggle('{{ form.password.id_for_label }}', 'togglePassword');
+    });
+</script>
 {% endblock %}

@@ -35,9 +35,17 @@
         <!-- Columna Izquierda: Lista y Búsqueda -->
         <div class="dashboard-widget">
             <h3><i class="fas fa-users"></i> Whitelist Actual</h3>
-            <form method="get" style="display: flex; gap: 10px; margin: 1.5rem 0;">
-                <input type="search" name="q" placeholder="Buscar..." value="{{ request.GET.q|default_if_none:'' }}" style="flex-grow: 1;">
-                <button type="submit" class="submit-btn"><i class="fas fa-search"></i></button>
+            <form method="get" style="margin: 1.5rem 0;">
+                <div class="search-input-wrapper">
+                    <label for="preregistro-search-input" class="sr-only">Buscar usuarios</label>
+                    <input type="search" id="preregistro-search-input" name="q" 
+                        placeholder="Buscar..." 
+                        value="{{ request.GET.q|default_if_none:'' }}" 
+                        class="styled-search-input">
+                    <button type="submit" class="search-submit-btn" aria-label="Buscar">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
             </form>
             <div style="overflow-x: auto;">
                 <table class="table">
