@@ -16,4 +16,6 @@ urlpatterns = [
     path('ajax/comentario/<int:pk>/editar/', views.editar_comentario_ajax, name='editar_comentario_ajax'),
     path('ajax/comentario/<int:pk>/borrar/', views.borrar_comentario_ajax, name='borrar_comentario_ajax'),
     path('ajax/documento/<int:pk>/calificar/', views.calificar_documento_ajax, name='calificar_documento_ajax'),
+    path('ajax/documento/<int:pk>/guardar/', views.guardar_documento_ajax, name='guardar_documento_ajax'),
+    path('ajax/documento/<int:pk>/subir/<str:field_name>/', views.subir_archivo_ajax, name='subir_archivo_ajax'),
 ]

@@ -18,10 +18,12 @@
         <p>Comparte tus ideas y conocimientos con la comunidad.</p>
         <hr>
 
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" 
+              id="tema-auto-save-form"
+              data-save-url="{% if object %}{% url 'posts:guardar_tema_ajax' pk=object.pk %}{% endif %}"
+              data-banner-upload-url="{% if object %}{% url 'posts:subir_banner_ajax' pk=object.pk %}{% endif %}">
             {% csrf_token %}
             
-            <!-- ================== RENDERIZADO MANUAL DE CAMPOS ================== -->
             <div class="form-group">
                 <label for="{{ form.titulo.id_for_label }}">Título del Tema</label>
                 {{ form.titulo }}
@@ -34,24 +36,27 @@
                 {% if form.contenido.errors %}<div class="error-text">{{ form.contenido.errors }}</div>{% endif %}
             </div>
 
+            <!-- SECCIÓN DEL BANNER COMPLETAMENTE REESTRUCTURADA -->
             <div class="form-group">
                 <label>Banner (Opcional)</label>
-                <div class="adjuntos-container" style="justify-content: flex-start;">
-                    <label class="btn-adjunto">
-                        <i class="fas fa-image"></i>
-                        <span>Seleccionar banner</span>
-                        {{ form.banner }}
-                    </label>
+                <!-- 1. Contenedor para la previsualización -->
+                <div id="banner-preview-container" style="max-width: 250px; margin-bottom: 1rem; border-radius: 8px; overflow: hidden;">
+                    <!-- El JavaScript pondrá la imagen aquí -->
                 </div>
+                <!-- 2. Contenedor para el widget original de Django (que se ocultará) -->
+                <div id="django-banner-widget-container" style="display: none;">
+                    {{ form.banner }}
+                </div>
+                <!-- 3. Contenedor para el checkbox "Limpiar" (si existe) -->
+                <div id="banner-clear-container" style="margin-bottom: 1rem;"></div>
+                <!-- 4. Botón visible para el usuario -->
+                <button type="button" id="banner-trigger-btn" class="btn-adjunto" style="display: inline-block;">
+                    <i class="fas fa-image"></i>
+                    <span id="banner-btn-text">Seleccionar banner</span>
+                </button>
                 {% if form.banner.errors %}<div class="error-text">{{ form.banner.errors }}</div>{% endif %}
-                {% if object.banner %}
-                <small class="form-help" style="margin-top: 0.5rem; display: block;">
-                    Imagen actual: <a href="{{ object.banner.url }}" target="_blank">{{ object.banner.name|slice:"-30:" }}</a>
-                </small>
-                {% endif %}
             </div>
             
-            <!-- Botones de acción ... -->
             <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
                 <button type="submit" class="submit-btn">
                     <i class="fas fa-save"></i> Guardar
@@ -63,8 +68,142 @@
                 {% endif %}
             </div>
         </form>
-        
-        {{ form.media }}
     </div>
 </div>
+{% endblock %}
+
+{% block body_end %}
+{% if object %}
+<div id="save-status" class="save-status-floating" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999;">
+    <i class="fas fa-check-circle"></i> 
+    <span>Cambios guardados</span>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if object %}
+<script>
+class AutoSaveForm {
+    constructor(formId) {
+        this.form = document.getElementById(formId);
+        if (!this.form) return;
+        this.saveUrl = this.form.dataset.saveUrl;
+        this.bannerUploadUrl = this.form.dataset.bannerUploadUrl;
+        this.csrfToken = this.form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        this.saveStatus = document.getElementById('save-status');
+        this.debounceTimeouts = new Map();
+        this.ckeditorInstance = null;
+        this.init();
+    }
+    init() {
+        if (!this.saveUrl) return;
+        this.bindTextEvents();
+        this.initializeCKEditorListener();
+        this.initializeBannerWidget();
+    }
+    bindTextEvents() {
+        this.form.querySelector('input[name="titulo"]').addEventListener('input', (e) => {
+            this.debounceSave('titulo', e.target.value);
+        });
+    }
+
+    async initializeCKEditorListener() {
+        const textarea = this.form.querySelector('textarea[name="contenido"]');
+        if (!textarea) {
+            console.error("No se encontró el textarea 'contenido' para CKEditor.");
+            return;
+        }
+
+        console.log("🔍 Buscando instancia de CKEditor para 'contenido'...");
+        for (let i = 0; i < 20; i++) {
+            if (window.CKEDITOR_5_INSTANCES && window.CKEDITOR_5_INSTANCES[textarea.id]) {
+                this.ckeditorInstance = window.CKEDITOR_5_INSTANCES[textarea.id];
+                console.log("✅ CKEditor encontrado vía MÉTODO 1 (Global Instances).");
+                break; // Salimos del bucle
+            }
+
+            const ckEditableElement = this.form.querySelector('.ck-editor__editable');
+            if (ckEditableElement && ckEditableElement.ckeditorInstance) {
+                this.ckeditorInstance = ckEditableElement.ckeditorInstance;
+                console.log("✅ CKEditor encontrado vía MÉTODO 2 (DOM Instance).");
+                break;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        if (this.ckeditorInstance) {
+            this.ckeditorInstance.model.document.on('change:data', () => {
+                this.debounceSave('contenido', this.ckeditorInstance.getData());
+            });
+            console.log("👍 Listener de autoguardado para CKEditor ('contenido') activado.");
+        } else {
+            console.error("❌ No se pudo inicializar el listener de CKEditor tras 10 segundos. El autoguardado para 'contenido' no funcionará.");
+        }
+    }
+
+    initializeBannerWidget() {
+        const djangoWidgetContainer = document.getElementById('django-banner-widget-container');
+        const bannerInput = djangoWidgetContainer ? djangoWidgetContainer.querySelector('input[type="file"][name="banner"]') : null;
+        if (!bannerInput) return;
+        const previewContainer = document.getElementById('banner-preview-container');
+        const clearContainer = document.getElementById('banner-clear-container');
+        const triggerBtn = document.getElementById('banner-trigger-btn');
+        const btnText = document.getElementById('banner-btn-text');
+        const currentLink = djangoWidgetContainer.querySelector('a');
+        const clearCheckbox = djangoWidgetContainer.querySelector('input[type="checkbox"]');
+        if (currentLink) {
+            previewContainer.innerHTML = `<img src="${currentLink.href}" alt="Banner actual" style="width: 100%; border-radius: 8px;">`;
+            btnText.textContent = 'Cambiar banner';
+        }
+        if (clearCheckbox) {
+            const clearLabel = document.createElement('label');
+            clearLabel.appendChild(clearCheckbox);
+            clearLabel.append(' Limpiar banner actual');
+            clearContainer.appendChild(clearLabel);
+        }
+        triggerBtn.addEventListener('click', () => bannerInput.click());
+        bannerInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                previewContainer.innerHTML = `<img src="${event.target.result}" alt="Vista previa del banner" style="width: 100%; border-radius: 8px;">`;
+                if(clearContainer) clearContainer.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+            this.setSaveStatus('saving', 'Subiendo banner...');
+            const formData = new FormData(); formData.append('banner', file);
+            try {
+                const response = await fetch(this.bannerUploadUrl, { method: 'POST', headers: { 'X-CSRFToken': this.csrfToken }, body: formData });
+                const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Error del servidor');
+                this.setSaveStatus('saved', 'Banner guardado'); btnText.textContent = 'Cambiar banner';
+            } catch (error) { this.setSaveStatus('error', `Error: ${error.message}`); }
+        });
+    }
+    debounceSave(fieldName, value) {
+        clearTimeout(this.debounceTimeouts.get(fieldName));
+        this.setSaveStatus('saving', 'Guardando...');
+        const timeoutId = setTimeout(() => this.saveData({ [fieldName]: value }), 1500);
+        this.debounceTimeouts.set(fieldName, timeoutId);
+    }
+    async saveData(data) {
+        try {
+            const response = await fetch(this.saveUrl, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': this.csrfToken }, body: JSON.stringify(data) });
+            const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Error del servidor');
+            this.setSaveStatus('saved', 'Cambios guardados');
+        } catch (error) { this.setSaveStatus('error', `Error: ${error.message}`); }
+    }
+    setSaveStatus(status, text) {
+        if (!this.saveStatus) return;
+        this.saveStatus.className = `save-status-floating ${status}`;
+        const icon = this.saveStatus.querySelector('i'); const span = this.saveStatus.querySelector('span');
+        const icons = { saving: 'fa-spinner fa-spin', saved: 'fa-check-circle', error: 'fa-exclamation-circle' };
+        icon.className = `fas ${icons[status]}`; span.textContent = text;
+        if (status === 'saved') { setTimeout(() => { if (this.saveStatus.classList.contains('saved')) this.saveStatus.classList.remove('saved'); }, 3000); }
+    }
+}
+document.addEventListener('DOMContentLoaded', () => { new AutoSaveForm('tema-auto-save-form'); });
+</script>
+{% endif %}
 {% endblock %}

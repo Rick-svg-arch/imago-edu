@@ -1,7 +1,56 @@
 {% if bloque.contenido_embed %}
-    {% if 'iframe' in bloque.contenido_embed %}
-        <div class="embed-responsive embed-responsive-16by9">{{ bloque.contenido_embed|safe }}</div>
+<div class="embed-responsive-wrapper">
+    {% comment %}
+    Detectar tipo de embed y aplicar el contenedor apropiado
+    {% endcomment %}
+    
+    {% if 'twitter-tweet' in bloque.contenido_embed or 'instagram-media' in bloque.contenido_embed %}
+        {# Redes sociales: necesitan contenedor centrado flexible #}
+        <div class="embed-responsive embed-social">
+            {{ bloque.contenido_embed|safe }}
+        </div>
+    {% elif 'iframe' in bloque.contenido_embed %}
+        {# Iframes: ya viene con su wrapper responsivo del conversor #}
+        <div class="embed-responsive">
+            {{ bloque.contenido_embed|safe }}
+        </div>
     {% else %}
-        <div class="embed-responsive">{{ bloque.contenido_embed|safe }}</div>
+        {# Otros tipos de embed #}
+        <div class="embed-responsive">
+            {{ bloque.contenido_embed|safe }}
+        </div>
     {% endif %}
+</div>
+
+{% comment %}
+Script para limpiar enlaces de atribución y recargar widgets de redes sociales
+{% endcomment %}
+<script>
+(function() {
+    // 1. Buscar y ocultar enlaces de atribución no deseados
+    const embedWrappers = document.querySelectorAll('.embed-responsive-wrapper');
+    embedWrappers.forEach(wrapper => {
+        let nextElement = wrapper.nextElementSibling;
+        if (nextElement && nextElement.tagName === 'A' && 
+            (nextElement.href.includes('canva.com') || 
+             nextElement.href.includes('docs.google.com') ||
+             nextElement.textContent.trim().length < 50)) {
+            nextElement.style.display = 'none';
+            if (nextElement.nextSibling && nextElement.nextSibling.nodeType === 3) {
+                nextElement.nextSibling.textContent = '';
+            }
+        }
+    });
+    
+    // 2. Recargar widgets de Twitter si existen
+    if (typeof twttr !== 'undefined' && twttr.widgets) {
+        twttr.widgets.load();
+    }
+    
+    // 3. Recargar widgets de Instagram si existen
+    if (typeof instgrm !== 'undefined' && instgrm.Embeds) {
+        instgrm.Embeds.process();
+    }
+})();
+</script>
 {% endif %}

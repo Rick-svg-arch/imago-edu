@@ -2,6 +2,7 @@ import os
 from django import forms
 from django.core.exceptions import ValidationError
 from django_select2.forms import ModelSelect2Widget, ModelSelect2TagWidget, Select2TagMixin
+from django.utils.safestring import mark_safe
 from users.forms import validate_file
 from . import models
 
@@ -50,6 +51,11 @@ class DocumentoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['descripcion'].help_text = mark_safe(
+            '<b>Consejo:</b> Para colocar el documento adjunto en una posición específica, '
+            'escribe el marcador <code>[ADJUNTO_AQUI]</code> en el texto. '
+            'Si no lo haces, el adjunto se mostrará al final.'
+        )
 
     def clean_adjunto(self):
         adjunto = self.cleaned_data.get('adjunto')

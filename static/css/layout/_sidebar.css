@@ -25,7 +25,7 @@
     transition: max-height 0.3s ease-out; /* Animación suave */
 }
 .category-filter .grade-list.active {
-    max-height: 500px; /* Altura máxima para mostrar la lista */
+    max-height: 1000px; /* Altura máxima para mostrar la lista */
 }
 .category-filter .grade-list li {
     padding: 0.5em 0;
@@ -35,6 +35,28 @@
     display: grid;
     grid-template-columns: 1fr; /* Móvil: una sola columna */
     gap: 2rem;
+}
+.grade-list .grade-group-header {
+    font-weight: 600;
+    font-size: 0.9em;
+    color: var(--text-color);
+    opacity: 0.7;
+    margin-top: 1rem;
+    margin-bottom: 0.25rem;
+    padding-left: 0; /* Asegura que no tenga sangría extra */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Opcional: añade una ligera sangría a los elementos de grado para mejorar la jerarquía */
+.grade-list li a {
+    padding-left: 0.75rem;
+    display: block; /* Asegura que toda el área sea clickeable */
+}
+
+/* Asegura que el primer grupo no tenga un margen superior innecesario */
+.grade-list .grade-group-header:first-child {
+    margin-top: 0.5rem;
 }
 @media (min-width: 992px) {
     .sidebar-layout {

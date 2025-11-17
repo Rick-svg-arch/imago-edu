@@ -35,99 +35,103 @@
     <script src="{% static 'js/main.js' %}" defer></script>
 
     <!-- Font Awesome -->
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
     {% block extra_css %}{% endblock %}
 </head>
-<body style="display: flex; flex-direction: column; min-height: 100vh;">
-    <header class="main-header">
-        <nav class="main-nav">
-            <!-- Logo -->
-            <a href="/" class="logo" title="Logo Imago" aria-label="Logo Imago">Imago</a>
-            
-            <!-- Botón hamburguesa (móvil) -->
-            <button class="hamburger" id="hamburger-btn" aria-label="Menú de navegación">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            
-            <!-- Links de navegación -->
-            <div class="nav-links" id="nav-links">
-                <a href="{% url 'comunicaciones:lista_publicaciones' %}" title="Sobre esta página" aria-label="Sobre esta página">
-                    <i class="fas fa-info-circle"></i> About
-                </a>
+<body> <!-- <<< CAMBIO: Se eliminaron los estilos flex de aquí -->
+
+    <!-- NUEVO DIV ENVOLTORIO PARA EL LAYOUT -->
+    <div class="page-wrapper" style="display: flex; flex-direction: column; min-height: 100vh;">
+        <header class="main-header">
+            <nav class="main-nav">
+                <!-- Logo -->
+                <a href="/" class="logo" title="Logo Imago" aria-label="Logo Imago">Imago</a>
                 
-                <a href="{% url 'posts:lista_categorias' %}" title="Foros" aria-label="Foros">
-                    <i class="fas fa-comments"></i> Foros
-                </a>
+                <!-- Botón hamburguesa (móvil) -->
+                <button class="hamburger" id="hamburger-btn" aria-label="Menú de navegación">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
                 
-                <a href="{% url 'lecturas:lista_documentos_base' %}" title="Lista de lecturas" aria-label="Lista de lecturas">
-                    <i class="fas fa-book"></i> Lecturas
-                </a>
-                
-                {% if user.is_authenticated %}
-                    <!-- Separador visual -->
-                    <span class="nav-separator"></span>
+                <!-- Links de navegación -->
+                <div class="nav-links" id="nav-links">
+                    <a href="{% url 'comunicaciones:lista_publicaciones' %}" title="Comunicaciones" aria-label="Comunicaciones">
+                        <i class="fas fa-info-circle"></i> Comunicaciones
+                    </a>
                     
-                    <!-- Botón de agregar lectura (si tiene permisos) -->
-                    {% if user|has_group:"Profesor" or user|has_group:"Administrativo" or user.is_superuser %}
-                        <a href="{% url 'lecturas:subir_documento' %}?next={{ request.path }}" class="nav-btn-primary" title="Subir nueva lectura" aria-label="Subir nueva lectura">
-                            <i class="fas fa-plus"></i>Nueva Lectura
+                    <a href="{% url 'posts:lista_categorias' %}" title="Foros" aria-label="Foros">
+                        <i class="fas fa-comments"></i> Foros
+                    </a>
+                    
+                    <a href="{% url 'lecturas:lista_documentos_base' %}" title="Lista de lecturas" aria-label="Lista de lecturas">
+                        <i class="fas fa-book"></i> Lecturas
+                    </a>
+                    
+                    {% if user.is_authenticated %}
+                        <!-- Separador visual -->
+                        <span class="nav-separator"></span>
+                        
+                        <!-- Botón de agregar lectura (si tiene permisos) -->
+                        {% if user|has_group:"Profesor" or user|has_group:"Administrativo" or user.is_superuser %}
+                            <a href="{% url 'lecturas:subir_documento' %}?next={{ request.path }}" class="nav-btn-primary" title="Subir nueva lectura" aria-label="Subir nueva lectura">
+                                <i class="fas fa-plus"></i>Nueva Lectura
+                            </a>
+                        {% endif %}
+                        
+                        <!-- Usuario logueado -->
+                        <span class="user-greeting" title="Nombre de usuario" aria-label="Nombre de Usuario">
+                            <i class="fas fa-user-circle"></i> {{ user.username }}
+                        </span>
+                        
+                        <!-- Panel de control -->
+                        <a href="{% url 'users:dashboard' %}" title="Panel de control" aria-label="Panel de control">
+                            <i class="fas fa-tachometer-alt"></i> Panel
+                        </a>
+                        
+                        <!-- Cerrar sesión -->
+                        <form style="display: inline; margin: 0;" action="{% url 'users:logout' %}?next={{ request.path }}" method="post" title="Cerrar sesión" aria-label="Cerrar sesión">
+                            {% csrf_token %}
+                            <button type="submit">
+                                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                            </button>
+                        </form>
+                    {% else %}
+                        <!-- Usuario no autenticado -->
+                        <span class="nav-separator"></span>
+                        
+                        <a href="{% url 'users:register' %}?next={{ request.path }}" title="Registrarse" aria-label="Registrarse">
+                            <i class="fas fa-user-plus"></i>Registrarse
+                        </a>
+                        
+                        <a href="{% url 'users:login' %}?next={{ request.path }}" class="nav-btn-primary" title="Iniciar sesión" aria-label="Iniciar sesión">
+                            <i class="fas fa-sign-in-alt"></i>Login
                         </a>
                     {% endif %}
                     
-                    <!-- Usuario logueado -->
-                    <span class="user-greeting" title="Nombre de usuario" aria-label="Nombre de Usuario">
-                        <i class="fas fa-user-circle"></i> {{ user.username }}
-                    </span>
-                    
-                    <!-- Panel de control -->
-                    <a href="{% url 'users:dashboard' %}" title="Panel de control" aria-label="Panel de control">
-                        <i class="fas fa-tachometer-alt"></i> Panel
-                    </a>
-                    
-                    <!-- Cerrar sesión -->
-                    <form style="display: inline; margin: 0;" action="{% url 'users:logout' %}?next={{ request.path }}" method="post" title="Cerrar sesión" aria-label="Cerrar sesión">
-                        {% csrf_token %}
-                        <button type="submit">
-                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                        </button>
-                    </form>
-                {% else %}
-                    <!-- Usuario no autenticado -->
+                    <!-- Separador -->
                     <span class="nav-separator"></span>
                     
-                    <a href="{% url 'users:register' %}?next={{ request.path }}" title="Registrarse" aria-label="Registrarse">
-                        <i class="fas fa-user-plus"></i>Registrarse
-                    </a>
-                    
-                    <a href="{% url 'users:login' %}?next={{ request.path }}" class="nav-btn-primary" title="Iniciar sesión" aria-label="Iniciar sesión">
-                        <i class="fas fa-sign-in-alt"></i>Login
-                    </a>
-                {% endif %}
-                
-                <!-- Separador -->
-                <span class="nav-separator"></span>
-                
-                <!-- Cambiar tema -->
-                <button class="theme-switch" id="theme-toggle" title="Cambiar tema" aria-label="Cambiar tema">
-                    <i class="fas fa-moon"></i>
-                </button>
-            </div>
-        </nav>
-    </header>
-    
-    <main class="{% block container_class %}container{% endblock %}" style="flex-grow: 1;">
-        {% block content %}
-        {% endblock %}
-    </main>
-    
-    <footer class="main-footer" style="background-color: var(--card-bg-color); border-top: 1px solid var(--border-color); padding: 2rem; text-align: center; margin-top: 3rem;">
-        <p style="margin: 0; color: var(--text-color); opacity: 0.7;">&copy; {% now "Y" %} Imago. Todos los derechos reservados.</p>
-    </footer>
+                    <!-- Cambiar tema -->
+                    <button class="theme-switch" id="theme-toggle" title="Cambiar tema" aria-label="Cambiar tema">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </nav>
+        </header>
+        
+        <main class="{% block container_class %}container{% endblock %}" style="flex-grow: 1;">
+            {% block content %}
+            {% endblock %}
+        </main>
+        
+        <footer class="main-footer" style="background-color: var(--card-bg-color); border-top: 1px solid var(--border-color); padding: 2rem; text-align: center; margin-top: 3rem;">
+            <p style="margin: 0; color: var(--text-color); opacity: 0.7;">&copy; {% now "Y" %} Imago. Todos los derechos reservados.</p>
+        </footer>
+    </div> <!-- <<< CAMBIO: Cierre del nuevo div.page-wrapper -->
 
+    <!-- Los scripts y el bloque body_end ahora están FUERA del layout principal -->
     <script>
     // === TEMA ===
     const themeToggle = document.getElementById('theme-toggle');
@@ -198,5 +202,8 @@
     
     {% block extra_js %}{% endblock %}
     <script src="{% static 'js/theme_handler.js' %}"></script>
+    
+    {% block body_end %}{% endblock %}
+
 </body>
 </html>

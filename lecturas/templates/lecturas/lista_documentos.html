@@ -56,12 +56,17 @@
                             <li style="margin-top: 0.5rem;">
                                 <a href="{% url 'lecturas:lista_por_idioma' idioma=code %}" style="font-weight: bold;">Todos los {{ name }}</a>
                             </li>
-                            {% for grado_code, grado_name in lista_grados %}
-                            <li>
-                                <a href="{% url 'lecturas:lista_documentos_filtrada' idioma=code grado=grado_code %}">
-                                    {{ grado_name }}
-                                </a>
-                            </li>
+                            {% for group in structured_grados %}
+                                {% if group.group_name %}
+                                    <li class="grade-group-header">{{ group.group_name }}</li>
+                                {% endif %}
+                                {% for grado_code, grado_name in group.grades %}
+                                <li>
+                                    <a href="{% url 'lecturas:lista_documentos_filtrada' idioma=code grado=grado_code %}">
+                                        {{ grado_name }}
+                                    </a>
+                                </li>
+                                {% endfor %}
                             {% endfor %}
                         </ul>
                     </li>

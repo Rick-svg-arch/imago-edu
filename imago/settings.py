@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'posts',
     'users.apps.UsersConfig',
     'comunicaciones.apps.ComunicacionesConfig',
-    'lecturas',
+    'lecturas.apps.LecturasConfig',
     'taggit',
     'storages',
     'django_select2',

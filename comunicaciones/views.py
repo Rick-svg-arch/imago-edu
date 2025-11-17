@@ -13,6 +13,7 @@ from django.db.models import Count
 
 from users.mixins import GroupRequiredMixin
 from .models import Publicacion, BloqueContenido
+from .utils import detectar_y_limpiar_embed, validar_embed_code, obtener_info_embed
 from . import forms
 
 logger = logging.getLogger(__name__)
@@ -105,18 +106,32 @@ def editar_publicacion_ajax(request, pk):
     
     if request.method == 'PUT':
         data = json.loads(request.body)
+        
+        # Primero, comprobamos si la petición es para REORDENAR bloques.
+        if 'orden' in data:
+            bloques_ids = [int(bid) for bid in data['orden']]
+            
+            if BloqueContenido.objects.filter(publicacion_id=pk, id__in=bloques_ids).count() != len(bloques_ids):
+                return JsonResponse({'success': False, 'error': 'IDs de bloque no válidos'}, status=400)
+
+            for index, bloque_id in enumerate(bloques_ids):
+                BloqueContenido.objects.filter(pk=bloque_id, publicacion_id=pk).update(orden=index)
+            
+            logger.info(f"Bloques reordenados para publicación {pk}")
+            return JsonResponse({'success': True, 'message': 'Orden guardado'})
+
+        # Si no, es una petición para guardar los campos de la publicación.
         allowed_fields = ['titulo', 'estado', 'fecha_publicacion']
         for field, value in data.items():
             if field in allowed_fields:
                 setattr(publicacion, field, value)
         
-        publicacion.save()
-        
         if 'etiquetas' in data:
             tags_string = data.get('etiquetas', '')
-            publicacion.etiquetas.clear()
-            if tags_string: # Solo si la cadena no está vacía
-                publicacion.etiquetas.add(*[tag.strip() for tag in tags_string.split(',') if tag.strip()])
+            # Creamos una lista limpia de etiquetas a partir del string
+            tag_list = [tag.strip() for tag in tags_string.split(',') if tag.strip()]
+            publicacion.etiquetas.set(tag_list)
+        publicacion.save()
 
         return JsonResponse({'success': True, 'message': 'Publicación guardada'})
 
@@ -207,13 +222,29 @@ def gestionar_bloque_ajax(request, **kwargs):
             updated_fields = []
             for field, value in data.items():
                 if field in allowed_fields and hasattr(bloque, field):
-                    setattr(bloque, field, value)
-                    updated_fields.append(field)
                     
-                    # Log especial para contenido_texto
-                    if field == 'contenido_texto':
+                    # Aplicar limpieza de colores problemáticos para TODO contenido de texto
+                    if field == 'contenido_texto' and value:
                         preview = value[:100] if value else 'None'
                         logger.info(f"💾 Guardando contenido_texto para bloque {bloque_pk}: '{preview}...'")
+                    
+                    # También limpiar contenido_embed si contiene texto HTML
+                    elif field == 'contenido_embed' and value:
+                        # Primero validar el embed
+                        is_valid, cleaned_code, error_msg = validar_embed_code(value)
+                        
+                        if not is_valid:
+                            logger.warning(f"❌ Código embed inválido: {error_msg}")
+                            return JsonResponse({
+                                'success': False, 
+                                'error': f'Código embed inválido: {error_msg}'
+                            }, status=400)
+                        
+                        value = cleaned_code
+                        logger.info(f"✅ Código embed validado y limpiado para bloque {bloque_pk}")
+                    
+                    setattr(bloque, field, value)
+                    updated_fields.append(field)
             
             bloque.save()
             logger.info(f"✅ Bloque {bloque_pk} guardado. Campos: {updated_fields}")
@@ -238,7 +269,19 @@ def gestionar_bloque_ajax(request, **kwargs):
         bloque.save()
         
         logger.info(f"Imagen subida para bloque {bloque_pk}")
-        return JsonResponse({'success': True, 'file_url': bloque.contenido_imagen.url})
+
+        # --- NUEVA LÓGICA ---
+        # Renderizamos el HTML de los controles y lo devolvemos en la respuesta
+        controls_html = render_to_string(
+            'comunicaciones/bloques/_imagen_controls.html', 
+            {'bloque': bloque}
+        )
+        
+        return JsonResponse({
+            'success': True, 
+            'file_url': bloque.contenido_imagen.url,
+            'controls_html': controls_html
+        })
 
     logger.warning(f"Petición no manejada: {request.method} con kwargs: {kwargs}")
     return JsonResponse({'success': False, 'error': 'Petición inválida'}, status=400)
@@ -259,3 +302,63 @@ def anclar_publicacion_ajax(request, pk):
         return JsonResponse({'success': True, 'anclado': publicacion.anclado})
 
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+@login_required
+def preview_embed_ajax(request):
+    """
+    Vista AJAX para generar preview de embeds en tiempo real.
+    Permite a los usuarios ver cómo se verá el embed antes de guardar.
+    """
+    if not (request.user.is_superuser or request.user.groups.filter(name='Administrativo').exists()):
+        return HttpResponseForbidden("No tienes permiso para realizar esta acción.")
+    
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            contenido = data.get('contenido', '')
+            
+            if not contenido:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No se proporcionó contenido'
+                }, status=400)
+            
+            # Obtener información del embed
+            info = obtener_info_embed(contenido)
+            
+            # Convertir y limpiar
+            embed_limpio = detectar_y_limpiar_embed(contenido)
+            
+            # Validar
+            is_valid, cleaned_code, error_msg = validar_embed_code(contenido)
+            
+            if not is_valid:
+                return JsonResponse({
+                    'success': False,
+                    'error': error_msg,
+                    'info': info
+                }, status=400)
+            
+            return JsonResponse({
+                'success': True,
+                'html': cleaned_code,
+                'info': info,
+                'message': 'Preview generado correctamente'
+            })
+            
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'JSON inválido'
+            }, status=400)
+        except Exception as e:
+            logger.error(f"Error al generar preview: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': f'Error al generar preview: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({
+        'success': False,
+        'error': 'Método no permitido'
+    }, status=405)

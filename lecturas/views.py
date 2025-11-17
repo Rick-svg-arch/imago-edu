@@ -1,7 +1,8 @@
 import os
 import logging
+import json
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse, Http404, JsonResponse
+from django.http import HttpResponse, Http404, JsonResponse, HttpResponseForbidden
 from django.db.models import Q
 from django.views.generic import ListView, DetailView, UpdateView, DeleteView
 from django.contrib.auth.decorators import login_required
@@ -92,9 +93,10 @@ class DocumentoListView(ListView):
     template_name = 'lecturas/lista_documentos.html'
     context_object_name = 'documentos'
     ordering = ['-date']
-    paginate_by = 15
+    paginate_by = 16
     
     def get_queryset(self):
+        # ... (esta función no cambia, la dejamos como está)
         queryset = super().get_queryset()
         if 'idioma' in self.kwargs:
             queryset = queryset.filter(idioma=self.kwargs['idioma'])
@@ -115,7 +117,41 @@ class DocumentoListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['lista_idiomas'] = ELEGIR_IDIOMA
-        context['lista_grados'] = ELEGIR_GRADO
+        
+        todos_los_grados = dict(ELEGIR_GRADO)
+        
+        structured_grados = [
+            # Separamos 'General' para que aparezca primero y solo.
+            {'group_name': None, 'grades': [('general', todos_los_grados.pop('general'))]},
+            
+            {'group_name': 'Educación Básica', 'grades': [
+                ('primero', todos_los_grados.pop('primero')),
+                ('segundo', todos_los_grados.pop('segundo')),
+                ('tercero', todos_los_grados.pop('tercero')),
+                ('cuarto', todos_los_grados.pop('cuarto')),
+                ('quinto', todos_los_grados.pop('quinto')),
+            ]},
+            {'group_name': 'Bachillerato', 'grades': [
+                ('sexto', todos_los_grados.pop('sexto')),
+                ('septimo', todos_los_grados.pop('septimo')),
+                ('octavo', todos_los_grados.pop('octavo')),
+                ('noveno', todos_los_grados.pop('noveno')),
+                ('decimo', todos_los_grados.pop('decimo')),
+                ('once', todos_los_grados.pop('once')),
+            ]},
+            {'group_name': 'Profesionales', 'grades': [
+                ('docentes', todos_los_grados.pop('docentes')),
+                ('directivos', todos_los_grados.pop('directivos')),
+            ]}
+        ]
+        
+        # Si quedan grados sin agrupar, los añadimos al final.
+        if todos_los_grados:
+            structured_grados.append({'group_name': 'Otros', 'grades': list(todos_los_grados.items())})
+
+        context['structured_grados'] = structured_grados
+        # --- FIN DE LA LÓGICA ---
+        
         context['current_idioma'] = self.kwargs.get('idioma')
         context['current_grado'] = self.kwargs.get('grado')
         return context
@@ -399,3 +435,95 @@ def calificar_documento_ajax(request, pk):
         })
     
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+@login_required
+def guardar_documento_ajax(request, pk):
+    """
+    Vista AJAX para el autoguardado de campos del formulario de Documento.
+    Ahora maneja la creación de nuevas etiquetas para campos Select2.
+    """
+    try:
+        documento = DocumentoUpdateView().get_queryset().get(pk=pk)
+    except Documento.DoesNotExist:
+        return HttpResponseForbidden("No tienes permiso para editar este documento o no existe.")
+    except Exception as e:
+        logger.error(f"Error inesperado al obtener documento {pk} para autoguardado: {e}")
+        return JsonResponse({'success': False, 'error': 'Error interno del servidor.'}, status=500)
+
+    if request.method == 'PUT':
+        try:
+            data = json.loads(request.body)
+            field_name, value = next(iter(data.items()))
+
+            # --- LÓGICA MEJORADA PARA MANEJAR STRINGS O IDs ---
+
+            if field_name == 'autor_principal':
+                # Si el valor no es un número, es un nuevo autor.
+                if value and isinstance(value, str) and not value.isdigit():
+                    autor, _ = Autor.objects.get_or_create(nombre=value)
+                    documento.autor_principal = autor
+                elif value:
+                    documento.autor_principal_id = value
+                else:
+                    documento.autor_principal = None
+                documento.save(update_fields=['autor_principal'])
+
+            elif field_name == 'generos':
+                final_pks = []
+                if isinstance(value, list):
+                    for item in value:
+                        # Si el item no es un número, es un nuevo género.
+                        if item and isinstance(item, str) and not item.isdigit():
+                            genero, _ = Genero.objects.get_or_create(nombre=item)
+                            final_pks.append(genero.pk)
+                        elif item:
+                            final_pks.append(int(item))
+                documento.generos.set(final_pks)
+                # .set() guarda automáticamente, no necesita .save()
+
+            else: # Para campos normales (titulo, descripcion, etc.)
+                if hasattr(documento, field_name):
+                    setattr(documento, field_name, value)
+                    documento.save(update_fields=[field_name])
+                else:
+                    return JsonResponse({'success': False, 'error': f'El campo "{field_name}" no existe.'}, status=400)
+            
+            return JsonResponse({'success': True, 'message': f'Campo "{field_name}" guardado.'})
+
+        except (json.JSONDecodeError, StopIteration):
+            return JsonResponse({'success': False, 'error': 'Datos inválidos.'}, status=400)
+        except Exception as e:
+            logger.error(f"Error al autoguardar documento {pk} ({field_name}): {e}")
+            return JsonResponse({'success': False, 'error': f"Error al guardar: {e}"}, status=500)
+
+    return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
+
+@login_required
+def subir_archivo_ajax(request, pk, field_name):
+    """
+    Vista AJAX para subir archivos (adjunto o imagen) a un Documento existente.
+    """
+    if request.method == 'POST':
+        try:
+            documento = DocumentoUpdateView().get_queryset().get(pk=pk)
+        except Documento.DoesNotExist:
+            return HttpResponseForbidden("No tienes permiso para editar este documento o no existe.")
+
+        # Asegurarnos de que el campo es válido ('adjunto' o 'imagen')
+        if field_name not in ['adjunto', 'imagen']:
+            return JsonResponse({'success': False, 'error': 'Campo de archivo inválido.'}, status=400)
+
+        file = request.FILES.get('file')
+        if not file:
+            return JsonResponse({'success': False, 'error': 'No se encontró ningún archivo.'}, status=400)
+        
+        # Asignamos el archivo al campo correspondiente y guardamos
+        setattr(documento, field_name, file)
+        documento.save(update_fields=[field_name])
+        
+        # Devolvemos la URL del archivo guardado para actualizar la UI
+        file_url = getattr(documento, field_name).url
+
+        return JsonResponse({'success': True, 'file_url': file_url, 'message': 'Archivo subido con éxito.'})
+    
+    return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)

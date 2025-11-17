@@ -33,18 +33,6 @@ class BlockEditor {
     bindEvents() {
         document.body.addEventListener('click', e => this.handleClick(e));
         
-        const mainForm = this.form;
-        
-        mainForm.querySelector('input[name="titulo"]').addEventListener('input', (e) => {
-            this.debounceSave(this.reorderUrl, 'titulo', { titulo: e.target.value });
-        });
-
-        mainForm.querySelectorAll('select[name="estado"], input[name="fecha_publicacion"], input[name="etiquetas"]').forEach(input => {
-            input.addEventListener('change', (e) => {
-                this.debounceSave(this.reorderUrl, e.target.name, { [e.target.name]: e.target.value });
-            });
-        });
-
         this.form.addEventListener('change', (e) => {
             if (e.target.matches('input, select')) {
                 this.debounceSavePublication();
@@ -55,7 +43,7 @@ class BlockEditor {
             const target = e.target;
             if (target.matches('.block-textarea:not(.ckeditor-instance), .block-input')) {
                 const block = target.closest('.editor-block');
-                this.debounceSave(block.dataset.manageUrl, block.dataset.id, {[target.name]: target.value});
+                this.debounceSaveBlock(block, {[target.name]: target.value});
             }
         });
     }
@@ -151,15 +139,6 @@ class BlockEditor {
             console.log(`📝 CKEditor cambió en bloque ${block.dataset.id}:`, contenido.substring(0, 100) + '...');
             this.debounceSaveBlock(block, { contenido_texto: contenido });
         });
-        
-        // También escuchar el evento 'blur' como respaldo
-        editor.editing.view.document.on('blur', () => {
-            const contenido = editor.getData();
-            if (contenido) {
-                console.log(`💾 CKEditor perdió foco, guardando contenido...`);
-                this.debounceSaveBlock(block, { contenido_texto: contenido }, 500);
-            }
-        });
     }
 
     handleClick(e) {
@@ -167,9 +146,34 @@ class BlockEditor {
         const deleteBtn = e.target.closest('.delete-block-btn');
         const saveBtn = e.target.closest('#manual-save-btn');
 
+        const sizeOption = e.target.closest('.size-option');
+        const alignmentBtn = e.target.closest('.alignment-btn');
+
         if (addBtn) { e.preventDefault(); this.addBlock(addBtn.dataset.tipo); }
         if (deleteBtn) { e.preventDefault(); this.deleteBlock(deleteBtn.closest('.editor-block')); }
         if (saveBtn) { e.preventDefault(); this.manualSaveAll(); }
+        
+        if (sizeOption) {
+            e.preventDefault();
+            const block = sizeOption.closest('.editor-block');
+            const newSize = sizeOption.dataset.value;
+            // Actualizar UI
+            block.querySelectorAll('.size-option').forEach(opt => opt.classList.remove('active'));
+            sizeOption.classList.add('active');
+            // Guardar cambio
+            this.debounceSaveBlock(block, { tamanio_imagen: newSize });
+        }
+        
+        if (alignmentBtn) {
+            e.preventDefault();
+            const block = alignmentBtn.closest('.editor-block');
+            const newAlignment = alignmentBtn.dataset.value;
+            // Actualizar UI
+            block.querySelectorAll('.alignment-btn').forEach(btn => btn.classList.remove('active'));
+            alignmentBtn.classList.add('active');
+            // Guardar cambio
+            this.debounceSaveBlock(block, { alineacion_imagen: newAlignment });
+        }
     }
 
     async addBlock(tipo) {
@@ -270,37 +274,90 @@ class BlockEditor {
     }
 
     async reorderBlocks() {
-        const orden = Array.from(this.container.children).map(el => el.dataset.id);
+        // 1. Mostrar estado de "Guardando..."
+        this.setSaveStatus('saving', 'Guardando orden...');
+        
+        const orden = Array.from(this.container.querySelectorAll('.editor-block')).map(el => el.dataset.id);
+        
         try {
-            await fetch(this.reorderUrl, {
+            // 2. Enviar los datos a la URL principal de guardado
+            const response = await fetch(this.publicationSaveUrl, {
                 method: 'PUT',
-                headers: {'X-CSRFToken': this.csrfToken, 'Content-Type': 'application/json'},
+                headers: {
+                    'X-CSRFToken': this.csrfToken, 
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({ orden: orden })
             });
-        } catch (error) { this.showMessage('Error al reordenar.', 'error'); }
+            
+            const data = await response.json();
+            
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Error del servidor al reordenar.');
+            }
+            
+            // 3. Mostrar estado de "Guardado"
+            this.setSaveStatus('saved', 'Orden guardado');
+            
+        } catch (error) {
+            // 4. Mostrar estado de "Error" si algo falla
+            this.setSaveStatus('error', 'Error al reordenar');
+            this.showMessage(error.message, 'error');
+        }
     }
 
     async handleImageUpload(event) {
         const fileInput = event.target;
         const block = fileInput.closest('.editor-block');
-        const manageUrl = block.dataset.manageUrl;
-        const uploadUrl = manageUrl.replace(/\/$/, '') + '/upload-image/';
+        const manageUrl = block.dataset.manageUrl; 
         const file = fileInput.files[0];
-        const trigger = block.querySelector('.custom-file-trigger span');
+        
+        // Contenedores del DOM
         const previewContainer = block.querySelector('.file-preview-container');
-        if (!file) return;
-        trigger.textContent = 'Subiendo...';
+        const controlsContainer = block.querySelector('.image-controls-container'); 
+        const triggerButtonSpan = block.querySelector('.custom-file-trigger span');
+
+        if (!file || !previewContainer) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewContainer.innerHTML = `<img src="${e.target.result}" alt="Vista previa" class="image-preview">`;
+        };
+        reader.readAsDataURL(file);
+
+        // --- 2. SUBIDA ASÍNCRONA AL SERVIDOR ---
+        triggerButtonSpan.textContent = 'Subiendo...';
         const formData = new FormData();
         formData.append('file', file);
+
         try {
-            const response = await fetch(uploadUrl, { method: 'POST', headers: {'X-CSRFToken': this.csrfToken}, body: formData });
+            const response = await fetch(manageUrl, { 
+                method: 'POST', 
+                headers: {'X-CSRFToken': this.csrfToken}, 
+                body: formData 
+            });
             const data = await response.json();
+
             if (data.success) {
-                previewContainer.innerHTML = `<img src="${data.file_url}" style="max-width: 200px; margin-top: 1rem;">`;
-                trigger.textContent = 'Cambiar Imagen';
+                // El servidor responde con los controles actualizados
+                if (controlsContainer) {
+                    controlsContainer.innerHTML = data.controls_html;
+                }
+                // Actualizamos la URL de la imagen en la preview a la permanente (opcional pero buena práctica)
+                const previewImg = previewContainer.querySelector('img');
+                if (previewImg) previewImg.src = data.file_url;
+                
+                triggerButtonSpan.textContent = 'Cambiar Imagen';
                 this.showMessage('Imagen guardada.', 'success');
-            } else { throw new Error(data.error); }
-        } catch (error) { this.showMessage(error.message || 'Error al subir la imagen.', 'error'); }
+            } else { 
+                throw new Error(data.error || 'Error desconocido del servidor.');
+            }
+        } catch (error) { 
+            triggerButtonSpan.textContent = 'Reintentar Subida';
+            this.showMessage(error.message || 'Error al subir la imagen.', 'error'); 
+            // Si falla, podrías revertir la preview al placeholder
+            // previewContainer.innerHTML = `<div class="image-placeholder">...</div>`;
+        }
     }
 
     debounceSaveTitulo(titulo) {
@@ -369,13 +426,32 @@ class BlockEditor {
     }
 
     setSaveStatus(status, text) {
-        this.saveStatus.className = `save-status ${status}`;
-        this.saveStatus.innerHTML = `<i class="fas fa-${status === 'saving' ? 'spinner fa-spin' : status === 'saved' ? 'check-circle' : 'exclamation-circle'}"></i> ${text}`;
+        // No cambies this.saveStatus, ya está definido en el constructor
+        if (!this.saveStatus) return;
+
+        const icon = this.saveStatus.querySelector('i');
+        const span = this.saveStatus.querySelector('span');
+
+        const icons = {
+            saving: 'fa-spinner fa-spin',
+            saved: 'fa-check-circle',
+            error: 'fa-exclamation-circle'
+        };
+
+        // --- CAMBIOS CLAVE AQUÍ ---
+        // 1. Asigna la clase CSS dinámica al contenedor principal.
+        this.saveStatus.className = `save-status-floating ${status}`;
         
+        // 2. Actualiza el ícono y el texto por separado.
+        icon.className = `fas ${icons[status] || 'fa-info-circle'}`;
+        if (span) span.textContent = text;
+        // --- FIN DE LOS CAMBIOS ---
+
         if (status === 'saved') {
             setTimeout(() => {
                 if (this.saveStatus.classList.contains('saved')) {
-                    this.saveStatus.classList.remove('saved');
+                    // Lo devolvemos a su estado base (oculto)
+                    this.saveStatus.className = 'save-status-floating';
                 }
             }, 3000);
         }

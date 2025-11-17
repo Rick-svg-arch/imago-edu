@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.views.generic import CreateView, UpdateView, DeleteView
@@ -241,3 +242,52 @@ def get_hijos_respuesta_ajax(request, pk_parent):
     
     # Devolvemos el HTML como una respuesta JSON
     return JsonResponse({'html': html})
+
+@login_required
+def guardar_tema_ajax(request, pk):
+    """ Vista AJAX para el autoguardado de los campos de texto de un Tema. """
+    # --- CORRECCIÓN DE PERMISOS ---
+    # Obtenemos el objeto y LUEGO verificamos el permiso manualmente.
+    tema = get_object_or_404(Tema, pk=pk)
+    if tema.autor != request.user and not request.user.is_superuser:
+        return HttpResponseForbidden("No tienes permiso para editar este tema.")
+    # --- FIN CORRECCIÓN ---
+
+    if request.method == 'PUT':
+        try:
+            data = json.loads(request.body)
+            for field_name, value in data.items():
+                if hasattr(tema, field_name):
+                    setattr(tema, field_name, value)
+            
+            tema.save(update_fields=data.keys())
+            return JsonResponse({'success': True, 'message': 'Cambios guardados.'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)
+
+
+@login_required
+def subir_banner_ajax(request, pk):
+    """ Vista AJAX dedicada a la subida del banner de un Tema. """
+    # --- CORRECCIÓN DE PERMISOS ---
+    tema = get_object_or_404(Tema, pk=pk)
+    if tema.autor != request.user and not request.user.is_superuser:
+        return HttpResponseForbidden("No tienes permiso para editar este tema.")
+    # --- FIN CORRECCIÓN ---
+
+    if request.method == 'POST':
+        file = request.FILES.get('banner')
+        if not file:
+            return JsonResponse({'success': False, 'error': 'No se encontró ningún archivo.'}, status=400)
+        
+        form = TemaForm({'titulo': tema.titulo}, {'banner': file}, instance=tema)
+        if form.is_valid():
+            tema.banner = form.cleaned_data['banner']
+            tema.save(update_fields=['banner'])
+            return JsonResponse({'success': True, 'file_url': tema.banner.url})
+        else:
+            return JsonResponse({'success': False, 'error': form.errors.get('banner', ['Error de validación.'])[0]}, status=400)
+    
+    return JsonResponse({'success': False, 'error': 'Método no permitido.'}, status=405)

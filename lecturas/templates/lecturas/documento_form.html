@@ -5,6 +5,55 @@
     {% if object %}Editar Lectura{% else %}Subir Nueva Lectura{% endif %}
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    .custom-file-wrapper {
+        border: 2px dashed var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        transition: border-color 0.2s;
+    }
+    .custom-file-wrapper:hover {
+        border-color: var(--accent-color);
+    }
+    /* Estilos para la imagen (tanto la actual como la nueva) */
+    .file-preview-img {
+        display: block;
+        max-width: 150px;
+        max-height: 150px;
+        margin: 0 auto 1rem auto; /* Centrada y con espacio inferior */
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+    /* Estilos para el texto del archivo */
+    .file-preview-text {
+        margin: 0 0 1rem 0;
+        font-style: italic;
+        opacity: 0.8;
+        word-break: break-all; /* Evita desbordamientos con nombres largos */
+    }
+    .clear-file-checkbox {
+        display: block;
+        margin-bottom: 1rem;
+        font-size: 0.9em;
+    }
+    .custom-file-trigger-btn {
+        width: 100%;
+        padding: 0.8rem;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .custom-file-trigger-btn:hover {
+        background-color: var(--border-color);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-large">
     <div class="glass-card formulario-grande">
@@ -15,64 +64,61 @@
         <p>Completa los campos para compartir un nuevo recurso.</p>
         <hr>
 
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" 
+            id="documento-auto-save-form"
+            data-save-url="{% if object %}{% url 'lecturas:guardar_documento_ajax' pk=object.pk %}{% endif %}">
             {% csrf_token %}
-            
-            <!-- Título, Idioma, Grado -->
+            <!-- ... (resto del formulario que no cambia) ... -->
             <div class="form-group">{{ form.titulo.label_tag }}{{ form.titulo }}</div>
             <div class="form-grid-2">
                 <div class="form-group">{{ form.idioma.label_tag }}{{ form.idioma }}</div>
                 <div class="form-group">{{ form.grado.label_tag }}{{ form.grado }}</div>
             </div>
-
             <hr>
             <h4><i class="fas fa-book"></i> Detalles de la Obra</h4>
-            
-            <!-- Autor y Géneros (Renderizados con Select2) -->
             <div class="form-group">
                 <label for="{{ form.autor_principal.id_for_label }}"><i class="fas fa-user-edit"></i> {{ form.autor_principal.label }}</label>
                 {{ form.autor_principal }}
                 <small class="form-help">Escribe para buscar o crear un nuevo autor.</small>
             </div>
-            
             <div class="form-group">
                 <label for="{{ form.generos.id_for_label }}"><i class="fas fa-tags"></i> {{ form.generos.label }}</label>
                 {{ form.generos }}
                 <small class="form-help">Selecciona géneros o escribe nuevos y presiona Enter.</small>
             </div>
-
             <div class="form-group">{{ form.nivel_dificultad.label_tag }}{{ form.nivel_dificultad }}</div>
-            
             <hr>
             <h4><i class="fas fa-align-left"></i> Contenido</h4>
-
-            <!-- Descripción (CKEditor 5) -->
-            <div class="form-group">{{ form.descripcion }}</div>
-
-            <!-- SECCIÓN DE ADJUNTOS CORREGIDA -->
+            <div class="form-group">
+                {{ form.descripcion }}
+                {% if form.descripcion.help_text %}
+                    <small class="form-help" style="display: block; margin-top: 0.75rem; opacity: 0.8;">
+                        {{ form.descripcion.help_text }}
+                    </small>
+                {% endif %}
+            </div>
+            
+            <!-- SECCIÓN DE ADJUNTOS CON HTML LIMPIO -->
             <div class="form-grid-2">
                 <div class="form-group">
                     <label><i class="fas fa-file-pdf"></i> Adjuntar Documento</label>
-                    <div class="custom-file-wrapper" data-field-id="{{ form.adjunto.id_for_label }}">
+                    <div class="custom-file-wrapper" data-field-id="{{ form.adjunto.id_for_label }}" data-field-type="file">
                         {{ form.adjunto }}
-                        <div class="file-preview-container"></div>
                     </div>
                 </div>
-
                 <div class="form-group">
-                    <label><i class="fas fa-image"></i> Adjuntar Imagen</label>
-                    <div class="custom-file-wrapper" data-field-id="{{ form.imagen.id_for_label }}">
+                    <label><i class="fas fa-image"></i> Adjuntar Imagen de Portada</label>
+                    <div class="custom-file-wrapper" data-field-id="{{ form.imagen.id_for_label }}" data-field-type="image">
                         {{ form.imagen }}
-                        <div class="file-preview-container"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Errores y Botones (sin cambios) -->
             {% if form.non_field_errors %}
             <div class="error-box">{{ form.non_field_errors }}</div>
             {% endif %}
 
+            <!-- BOTONES -->
             <div style="display: flex; gap: 1rem; margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
                 <button type="submit" class="submit-btn">Guardar</button>
                 {% if object %}
@@ -86,79 +132,252 @@
 </div>
 {% endblock %}
 
+{% block body_end %}
+{% if object %} {# Solo mostrar si estamos editando #}
+<div id="save-status" class="save-status-floating" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999;">
+    <i class="fas fa-check-circle"></i> 
+    <span>Cambios guardados</span>
+</div>
+{% endif %}
+{% endblock %}
+
 {% block extra_js %}
-<!-- === SCRIPT FINAL, LIMPIO Y CORRECTO === -->
+<!-- === Script previsualización y guardado de adjuntos === -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    
-    // 1. SCRIPT PARA PERSONALIZAR WIDGETS DE ARCHIVO
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    const saveStatus = document.getElementById('save-status');
+
+    // Función para mostrar el estado de guardado
+    function setSaveStatus(status, text) {
+        if (!saveStatus) return;
+        saveStatus.className = `save-status-floating ${status}`;
+        const icon = saveStatus.querySelector('i');
+        const span = saveStatus.querySelector('span');
+        const icons = { saving: 'fa-spinner fa-spin', saved: 'fa-check-circle', error: 'fa-exclamation-circle' };
+        icon.className = `fas ${icons[status]}`;
+        span.textContent = text;
+        if (status === 'saved') {
+            setTimeout(() => saveStatus.classList.remove('saved'), 3000);
+        }
+    }
+
     document.querySelectorAll('.custom-file-wrapper').forEach(wrapper => {
         const fieldId = wrapper.dataset.fieldId;
         const djangoInput = document.getElementById(fieldId);
         if (!djangoInput) return;
-
-        djangoInput.style.display = 'none';
-        const isImage = djangoInput.accept.includes('image');
-        const previewContainer = wrapper.querySelector('.file-preview-container');
         
+        // ... (el código para crear los elementos dinámicos se mantiene igual)
+        djangoInput.style.display = 'none';
+        const currentFileDisplay = document.createElement('div');
+        const newFilePreviewContainer = document.createElement('div');
         const triggerButton = document.createElement('button');
         triggerButton.type = 'button';
-        triggerButton.className = 'custom-file-trigger';
+        triggerButton.className = 'custom-file-trigger-btn';
         triggerButton.innerHTML = `<i class="fas fa-upload"></i> <span>Seleccionar Archivo</span>`;
-        
-        wrapper.appendChild(triggerButton);
-        wrapper.appendChild(previewContainer);
-
         triggerButton.addEventListener('click', () => djangoInput.click());
-
-        djangoInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) {
-                previewContainer.innerHTML = '';
-                return;
-            }
-            triggerButton.querySelector('span').textContent = 'Cambiar Archivo';
-            previewContainer.innerHTML = '';
-            if (isImage) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = document.createElement('img');
-                    img.src = event.target.result;
-                    previewContainer.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                const p = document.createElement('p');
-                p.textContent = `Seleccionado: ${file.name}`;
-                previewContainer.appendChild(p);
-            }
-        });
-
-        const currentFileInfo = wrapper.querySelector('a');
+        
+        const currentFileLink = wrapper.querySelector('a');
         const clearCheckbox = wrapper.querySelector('input[type="checkbox"]');
-        if (currentFileInfo && clearCheckbox) {
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'current-file-info';
-            
-            if (isImage) {
-                const img = document.createElement('img');
-                img.src = currentFileInfo.href;
-                infoDiv.appendChild(img);
+        if (currentFileLink && clearCheckbox) {
+            if (wrapper.dataset.fieldType === 'image') {
+                currentFileDisplay.innerHTML = `<img src="${currentFileLink.href}" alt="Imagen actual" class="file-preview-img">`;
             } else {
-                infoDiv.innerHTML = `Actualmente: `;
-                infoDiv.appendChild(currentFileInfo);
+                currentFileDisplay.innerHTML = `<p class="file-preview-text">Actualmente: ${currentFileLink.outerHTML}</p>`;
             }
-            
             const clearLabel = document.createElement('label');
             clearLabel.className = 'clear-file-checkbox';
             clearLabel.appendChild(clearCheckbox);
             clearLabel.append(' Limpiar selección');
-            infoDiv.appendChild(clearLabel);
-            
-            wrapper.prepend(infoDiv);
+            currentFileDisplay.appendChild(clearLabel);
             triggerButton.querySelector('span').textContent = 'Cambiar Archivo';
         }
+        wrapper.appendChild(currentFileDisplay);
+        wrapper.appendChild(newFilePreviewContainer);
+        wrapper.appendChild(triggerButton);
+
+        // --- LÓGICA DE SUBIDA AUTOMÁTICA ---
+        djangoInput.addEventListener('change', async function(event) {
+            const file = event.target.files[0];
+            const fieldName = djangoInput.name;
+            const form = djangoInput.closest('form');
+            const saveUrl = form.dataset.saveUrl.replace('/guardar/', `/subir/${fieldName}/`); // Construimos la URL correcta
+
+            currentFileDisplay.style.display = 'none';
+            newFilePreviewContainer.innerHTML = '';
+            
+            if (!file) {
+                currentFileDisplay.style.display = 'block';
+                return;
+            }
+
+            // 1. Mostrar preview instantánea
+            if (wrapper.dataset.fieldType === 'image') {
+                const reader = new FileReader();
+                reader.onload = (e) => newFilePreviewContainer.innerHTML = `<img src="${e.target.result}" alt="Vista previa" class="file-preview-img">`;
+                reader.readAsDataURL(file);
+            } else {
+                newFilePreviewContainer.innerHTML = `<p class="file-preview-text">Seleccionado: ${file.name}</p>`;
+            }
+
+            // 2. Subir el archivo al servidor
+            setSaveStatus('saving', 'Subiendo archivo...');
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch(saveUrl, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    body: formData
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Error del servidor');
+                
+                setSaveStatus('saved', 'Archivo guardado');
+                console.log(`Archivo subido con éxito, URL: ${result.file_url}`);
+
+            } catch (error) {
+                setSaveStatus('error', `Error: ${error.message}`);
+                console.error('Error al subir archivo:', error);
+            }
+        });
     });
 });
 </script>
+{% if object %}
+<script>
+class AutoSaveForm {
+    constructor(formId) {
+        this.form = document.getElementById(formId);
+        if (!this.form) return;
+
+        this.saveUrl = this.form.dataset.saveUrl;
+        this.csrfToken = this.form.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        this.saveStatus = document.getElementById('save-status');
+        this.debounceTimeouts = new Map();
+        this.ckeditorInstance = null;
+
+        this.init();
+    }
+
+    init() {
+        if (!this.saveUrl) {
+            console.log("Autoguardado deshabilitado (no hay URL de guardado).");
+            return;
+        }
+        this.bindEvents();
+        this.initializeCKEditorListener();
+    }
+
+    bindEvents() {
+        this.form.querySelectorAll(
+            'input[type="text"], select:not(#id_autor_principal):not(#id_generos)'
+        ).forEach(input => {
+            const eventType = input.tagName.toLowerCase() === 'select' ? 'change' : 'input';
+            input.addEventListener(eventType, (e) => this.debounceSave(e.target.name, e.target.value));
+        });
+
+        $('#id_autor_principal, #id_generos').on('select2:select select2:unselect', (e) => {
+            const field = e.target;
+            setTimeout(() => this.debounceSave(field.name, $(field).val()), 100);
+        });
+    }
+    
+    // --- FUNCIÓN REEMPLAZADA CON LA LÓGICA DE 'COMUNICACIONES' ---
+    async initializeCKEditorListener() {
+        const textarea = this.form.querySelector('textarea[name="descripcion"]');
+        if (!textarea) {
+            console.error("No se encontró el textarea de descripción para CKEditor.");
+            return;
+        }
+
+        console.log("🔍 Buscando instancia de CKEditor (método 'Comunicaciones')...");
+
+        for (let i = 0; i < 20; i++) { // Intentará durante 10 segundos
+            // Método 1: Búsqueda directa en el objeto global (el más fiable si funciona)
+            if (window.CKEDITOR_5_INSTANCES && window.CKEDITOR_5_INSTANCES[textarea.id]) {
+                this.ckeditorInstance = window.CKEDITOR_5_INSTANCES[textarea.id];
+                console.log("✅ CKEditor encontrado vía MÉTODO 1 (Global Instances).");
+                break; // Salimos del bucle
+            }
+
+            // Método 2: Búsqueda en el DOM (el mejor fallback)
+            const ckEditableElement = this.form.querySelector('.ck-editor__editable');
+            if (ckEditableElement && ckEditableElement.ckeditorInstance) {
+                this.ckeditorInstance = ckEditableElement.ckeditorInstance;
+                console.log("✅ CKEditor encontrado vía MÉTODO 2 (DOM Instance).");
+                break; // Salimos del bucle
+            }
+            
+            // Si no se encuentra, esperamos 500ms antes del siguiente intento
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        if (this.ckeditorInstance) {
+            this.ckeditorInstance.model.document.on('change:data', () => {
+                this.debounceSave('descripcion', this.ckeditorInstance.getData());
+            });
+            console.log("👍 Listener de autoguardado para CKEditor activado.");
+        } else {
+            console.error("❌ No se pudo inicializar el listener de CKEditor. El autoguardado para la descripción no funcionará.");
+        }
+    }
+
+    debounceSave(fieldName, value) {
+        clearTimeout(this.debounceTimeouts.get(fieldName));
+        this.setSaveStatus('saving', 'Guardando...');
+
+        const timeoutId = setTimeout(() => {
+            this.saveData({ [fieldName]: value });
+        }, 1500);
+
+        this.debounceTimeouts.set(fieldName, timeoutId);
+    }
+
+    async saveData(data) {
+        try {
+            const response = await fetch(this.saveUrl, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.csrfToken
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Error del servidor');
+            
+            this.setSaveStatus('saved', 'Cambios guardados');
+        } catch (error) {
+            console.error('Error en autoguardado:', error);
+            this.setSaveStatus('error', `Error: ${error.message}`);
+        }
+    }
+
+    setSaveStatus(status, text) {
+        if (!this.saveStatus) return;
+        this.saveStatus.className = `save-status-floating ${status}`;
+        const icon = this.saveStatus.querySelector('i');
+        const span = this.saveStatus.querySelector('span');
+        const icons = { saving: 'fa-spinner fa-spin', saved: 'fa-check-circle', error: 'fa-exclamation-circle' };
+        icon.className = `fas ${icons[status]}`;
+        span.textContent = text;
+        
+        if (status === 'saved') {
+            setTimeout(() => {
+                if (this.saveStatus.classList.contains('saved')) {
+                     this.saveStatus.classList.remove('saved');
+                }
+            }, 3000);
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    new AutoSaveForm('documento-auto-save-form');
+});
+</script>
+{% endif %}
 {% endblock %}

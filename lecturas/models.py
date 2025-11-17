@@ -58,12 +58,20 @@ def ruta_imagenes_comentario(instance, filename):
     return f'{ruta_base_documento}/comentarios/images/{filename}'
 
 ELEGIR_GRADO = [
+        ('general', 'General'),
+        ('primero', 'Primero'),
+        ('segundo', 'Segundo'),
+        ('tercero', 'Tercero'),
+        ('cuarto', 'Cuarto'),
+        ('quinto', 'Quinto'),
         ('sexto', 'Sexto'),
         ('septimo', 'Séptimo'),
         ('octavo', 'Octavo'),
         ('noveno', 'Noveno'),
         ('decimo', 'Décimo'),
         ('once', 'Once'),
+        ('docentes', 'Profesores'),
+        ('directivos', 'Directivos'),
 ]
 
 ELEGIR_IDIOMA = [

@@ -14,4 +14,6 @@ urlpatterns = [
     path('respuesta/<int:pk_parent>/get-hijos/', views.get_hijos_respuesta_ajax, name='get_hijos_respuesta'),
     path('ajax/respuesta/<int:pk>/editar/', views.editar_respuesta_ajax, name='editar_respuesta_ajax'),
     path('ajax/respuesta/<int:pk>/borrar/', views.borrar_respuesta_ajax, name='borrar_respuesta_ajax'),
+    path('ajax/tema/<int:pk>/guardar/', views.guardar_tema_ajax, name='guardar_tema_ajax'),
+    path('ajax/tema/<int:pk>/subir-banner/', views.subir_banner_ajax, name='subir_banner_ajax'),
 ]

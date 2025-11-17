@@ -1,0 +1,29 @@
+<div class="image-controls-wrapper">
+    <div class="form-group">
+        <label>Tamaño de la Imagen</label>
+        <div class="image-size-selector">
+            {% for value, name in bloque.TAMANIO_IMAGEN %}
+            <div class="size-option {% if bloque.tamanio_imagen == value %}active{% endif %}" data-value="{{ value }}">
+                <span class="size-label">{{ name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Alineación</label>
+        <div class="image-alignment-selector">
+            {% for value, name in bloque.ALINEACION_IMAGEN %}
+            <button type="button" class="alignment-btn {% if bloque.alineacion_imagen == value %}active{% endif %}" data-value="{{ value }}">
+                <i class="fas fa-align-{{ value }}"></i> {{ name }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="caption-{{ bloque.pk }}">Descripción (Caption)</label>
+        <input type="text" id="caption-{{ bloque.pk }}" name="caption_imagen" 
+               class="image-caption-input block-input" 
+               value="{{ bloque.caption_imagen|default:'' }}" 
+               placeholder="Describe la imagen (opcional)">
+    </div>
+</div>

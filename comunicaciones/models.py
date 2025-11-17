@@ -53,9 +53,9 @@ class BloqueContenido(models.Model):
     ]
     
     TAMANIO_IMAGEN = [
-        ('small', 'Pequeño (400px)'),
-        ('medium', 'Mediano (600px)'),
-        ('large', 'Grande (800px)'),
+        ('small', 'Pequeño (30%)'),
+        ('medium', 'Mediano (50%)'),
+        ('large', 'Grande (70%)'),
         ('full', 'Ancho completo'),
     ]
     

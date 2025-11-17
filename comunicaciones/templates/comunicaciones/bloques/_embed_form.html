@@ -7,10 +7,336 @@
         <span class="drag-handle" title="Arrastrar para reordenar"><i class="fas fa-grip-vertical"></i></span>
         <button type="button" class="delete-block-btn btn-icon danger" title="Borrar bloque"><i class="fas fa-trash"></i></button>
     </div>
-    <div class="block-content">
-        <label for="id_bloque_embed_{{ bloque.pk }}">Código para Embeber</label>
-        <textarea id="id_bloque_embed_{{ bloque.pk }}" name="contenido_embed" class="block-textarea">{{ bloque.contenido_embed|default_if_none:'' }}</textarea>
-        <small class="form-help">Pega el código completo de YouTube, Vimeo, Instagram, Twitter, etc.</small>
-        {% if bloque.contenido_embed %}<div class="embed-preview" style="margin-top: 1rem;">{{ bloque.contenido_embed|safe }}</div>{% endif %}
+    <div class="block-content" style="pointer-events: auto;">
+        <label for="id_bloque_embed_{{ bloque.pk }}">Código Embed o URL</label>
+        
+        <!-- Recomendación destacada -->
+        <div class="embed-recommendation" style="margin-bottom: 0.75rem; padding: 0.75rem; background-color: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; border-radius: 6px;">
+            <p style="margin: 0; font-size: 0.9rem; color: var(--text-color); font-weight: 600;">
+                <i class="fas fa-lightbulb" style="color: #10b981;"></i> 
+                <strong>Método Recomendado:</strong> Usa el código embed directo
+            </p>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; color: var(--secondary-text-color);">
+                Busca el botón "Compartir" → "Insertar" o "Embed" en la plataforma original y copia todo el código HTML.
+                Esto garantiza la mejor compatibilidad.
+            </p>
+        </div>
+        
+        <!-- Indicador de tipo detectado -->
+        <div class="embed-type-indicator" id="embed-indicator-{{ bloque.pk }}" style="display: none; margin-bottom: 0.75rem; padding: 0.5rem; border-radius: 6px; font-size: 0.85rem;">
+            <i class="fas fa-info-circle"></i>
+            <span class="indicator-text"></span>
+        </div>
+        
+        <textarea id="id_bloque_embed_{{ bloque.pk }}" 
+                  name="contenido_embed" 
+                  class="block-textarea embed-input"
+                  placeholder="Método 1 (Recomendado): Pega el código embed completo (ej: <iframe src=...></iframe>)
+Método 2 (Alternativo): Pega solo la URL (ej: https://www.youtube.com/watch?v=...)"
+                  style="min-height: 120px;">{{ bloque.contenido_embed|default_if_none:'' }}</textarea>
+        
+        <small class="form-help" style="display: block; margin-top: 0.5rem;">
+            <strong>💡 Consejo:</strong> El código embed directo funciona mejor que las URLs simples.
+            <br>
+            <strong>Plataformas soportadas (URLs):</strong>
+            <span style="color: var(--accent-color);">YouTube, Canva, Google Slides, Vimeo, Instagram, Twitter</span>
+        </small>
+        
+        <!-- Vista previa del embed (SIEMPRE VISIBLE) -->
+        <div class="embed-preview-wrapper" style="margin-top: 1.5rem; {% if not bloque.contenido_embed %}display: block;{% endif %}">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <label style="margin: 0; font-weight: 600;">
+                    <i class="fas fa-eye"></i> Vista Previa
+                </label>
+                <button type="button" 
+                        class="refresh-preview-btn btn-icon" 
+                        data-bloque-id="{{ bloque.pk }}"
+                        title="Actualizar vista previa"
+                        style="background-color: var(--accent-color); color: white; padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s;">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
+            </div>
+            <div class="embed-preview" id="embed-preview-{{ bloque.pk }}" 
+                 style="border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; background-color: var(--bg-color-light); min-height: 100px;">
+                {% if bloque.contenido_embed %}
+                    {{ bloque.contenido_embed|safe }}
+                {% else %}
+                    <div style="text-align: center; padding: 2rem; color: var(--secondary-text-color);">
+                        <i class="fas fa-image" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;"></i>
+                        <p style="margin: 0;">Pega una URL arriba y haz clic en "Actualizar" para ver la vista previa</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+/* Estilos para indicadores de tipo de embed */
+.embed-type-indicator {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid #3b82f6;
+    color: var(--text-color);
+}
+
+.embed-type-indicator.success {
+    background-color: rgba(16, 185, 129, 0.1);
+    border-left-color: #10b981;
+}
+
+.embed-type-indicator.warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-left-color: #f59e0b;
+}
+
+.embed-type-indicator.error {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-left-color: #ef4444;
+}
+
+/* Estilos para el botón de refresh */
+.refresh-preview-btn {
+    padding: 0.5rem 1rem;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.refresh-preview-btn:hover:not(:disabled) {
+    background-color: var(--accent-color-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.refresh-preview-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.refresh-preview-btn i {
+    font-size: 1rem;
+}
+
+/* CRÍTICO: Estilos para el preview del embed */
+.embed-preview-wrapper {
+    animation: fadeIn 0.3s ease;
+    /* Permitir interacción dentro del preview */
+    pointer-events: auto;
+}
+
+.embed-preview {
+    /* Deshabilitar eventos de puntero SOLO en el contenedor de preview */
+    /* para que no interfiera con el drag and drop del bloque */
+    pointer-events: none;
+}
+
+/* Pero permitir interacción con elementos interactivos dentro del preview */
+.embed-preview iframe,
+.embed-preview textarea,
+.embed-preview input,
+.embed-preview button,
+.embed-preview a {
+    pointer-events: auto;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* IMPORTANTE: Asegurar que el textarea de embed no bloquee el drag */
+.block-type-embed .block-textarea {
+    /* El textarea debe permitir eventos normalmente */
+    pointer-events: auto;
+}
+
+/* Pero cuando se está arrastrando, deshabilitar temporalmente */
+.editor-block.sortable-chosen .embed-preview,
+.editor-block.sortable-drag .embed-preview {
+    pointer-events: none !important;
+    opacity: 0.5;
+}
+
+/* Mejorar la apariencia del drag handle en bloques embed */
+.block-type-embed .drag-handle {
+    cursor: grab;
+    z-index: 100;
+}
+
+.block-type-embed .drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Asegurar que el bloque completo sea draggable */
+.editor-block.block-type-embed {
+    cursor: move;
+    /* Importante: el bloque en sí debe capturar eventos de drag */
+    pointer-events: auto;
+}
+
+/* Pero el contenido interno no debe interferir con el drag */
+.editor-block.block-type-embed .block-content > *:not(.drag-handle) {
+    cursor: default;
+}
+</style>
+
+<script>
+(function() {
+    const bloqueId = '{{ bloque.pk }}';
+    const textarea = document.getElementById('id_bloque_embed_' + bloqueId);
+    const indicator = document.getElementById('embed-indicator-' + bloqueId);
+    const previewContainer = document.getElementById('embed-preview-' + bloqueId);
+    
+    if (!textarea) return;
+    
+    // Función para detectar el tipo de contenido
+    function detectarTipoEmbed(contenido) {
+        if (!contenido || !contenido.trim()) {
+            return { tipo: null, mensaje: '', clase: '' };
+        }
+        
+        contenido = contenido.trim();
+        
+        // Ya es código embed
+        if (contenido.includes('<iframe') || contenido.includes('<script') || contenido.includes('<blockquote')) {
+            return {
+                tipo: 'embed',
+                mensaje: '✅ Código embed detectado - ¡Perfecto!',
+                clase: 'success'
+            };
+        }
+        
+        // Es una URL
+        if (contenido.startsWith('http://') || contenido.startsWith('https://')) {
+            const plataformas = {
+                'canva.com': 'Canva',
+                'youtube.com': 'YouTube',
+                'youtu.be': 'YouTube',
+                'vimeo.com': 'Vimeo',
+                'docs.google.com/presentation': 'Google Slides',
+                'drive.google.com': 'Google Drive',
+                'instagram.com': 'Instagram',
+                'twitter.com': 'Twitter',
+                'x.com': 'X'
+            };
+            
+            for (const [dominio, nombre] of Object.entries(plataformas)) {
+                if (contenido.includes(dominio)) {
+                    return {
+                        tipo: 'url',
+                        mensaje: `🔄 URL de ${nombre} - Se convertirá automáticamente (Recomendación: usa código embed directo)`,
+                        clase: 'warning'
+                    };
+                }
+            }
+            
+            return {
+                tipo: 'url',
+                mensaje: '⚠️ URL no soportada - Usa el código embed de la plataforma para mejores resultados',
+                clase: 'warning'
+            };
+        }
+        
+        return {
+            tipo: 'texto',
+            mensaje: '❌ Debe ser un código embed HTML o una URL válida',
+            clase: 'error'
+        };
+    }
+    
+    // Actualizar indicador cuando el usuario escribe
+    textarea.addEventListener('input', function() {
+        const info = detectarTipoEmbed(this.value);
+        
+        if (info.tipo) {
+            indicator.style.display = 'block';
+            indicator.className = 'embed-type-indicator ' + info.clase;
+            indicator.querySelector('.indicator-text').textContent = info.mensaje;
+        } else {
+            indicator.style.display = 'none';
+        }
+    });
+    
+    // Detectar tipo inicial si hay contenido
+    if (textarea.value) {
+        const info = detectarTipoEmbed(textarea.value);
+        if (info.tipo) {
+            indicator.style.display = 'block';
+            indicator.className = 'embed-type-indicator ' + info.clase;
+            indicator.querySelector('.indicator-text').textContent = info.mensaje;
+        }
+    }
+    
+    // Botón para refrescar preview
+    const refreshBtn = document.querySelector('.refresh-preview-btn[data-bloque-id="' + bloqueId + '"]');
+    if (refreshBtn && previewContainer) {
+        refreshBtn.addEventListener('click', function() {
+            const contenido = textarea.value;
+            if (!contenido || !contenido.trim()) {
+                alert('Primero ingresa una URL o código embed');
+                return;
+            }
+            
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            this.disabled = true;
+            
+            // Actualizar el preview con el contenido actual
+            // En producción real, podrías hacer una llamada AJAX para procesar
+            // Pero para simplificar, mostramos directamente el contenido
+            
+            // Detectar si es URL o código
+            const esUrl = contenido.trim().startsWith('http://') || contenido.trim().startsWith('https://');
+            
+            if (esUrl && !contenido.includes('<iframe') && !contenido.includes('<script')) {
+                // Es una URL, mostrar mensaje de que se guardará como embed
+                previewContainer.innerHTML = `
+                    <div style="padding: 1rem; text-align: center; color: var(--secondary-text-color);">
+                        <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--accent-color);"></i>
+                        <p style="margin: 0.5rem 0;">Esta URL se convertirá automáticamente a embed cuando guardes.</p>
+                        <p style="margin: 0; font-size: 0.9rem;">
+                            <strong>URL detectada:</strong> ${contenido.length > 50 ? contenido.substring(0, 50) + '...' : contenido}
+                        </p>
+                        <p style="margin: 0.5rem 0 0 0; font-size: 0.85rem; opacity: 0.7;">
+                            Guarda el bloque para ver el embed renderizado
+                        </p>
+                    </div>
+                `;
+            } else {
+                // Ya es código embed, intentar mostrarlo
+                previewContainer.innerHTML = contenido;
+                
+                // Recargar widgets de redes sociales si existen
+                setTimeout(() => {
+                    if (typeof twttr !== 'undefined' && twttr.widgets) {
+                        twttr.widgets.load(previewContainer);
+                    }
+                    if (typeof instgrm !== 'undefined' && instgrm.Embeds) {
+                        instgrm.Embeds.process();
+                    }
+                }, 100);
+            }
+            
+            // Mostrar el contenedor de preview si estaba oculto
+            const previewWrapper = previewContainer.closest('.embed-preview-wrapper');
+            if (previewWrapper) {
+                previewWrapper.style.display = 'block';
+            }
+            
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                    this.disabled = false;
+                }, 1000);
+            }, 500);
+        });
+    }
+})();
+</script>

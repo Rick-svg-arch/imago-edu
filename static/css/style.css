@@ -34,6 +34,7 @@
 */
 @import url("pages/_class_form.css");
 @import url("pages/_home.css");
+@import url("pages/_publicacion_form.css");
 /*
  * 6. RESPONSIVE: Media queries. Siempre deben ir al final para que puedan
  * anular los estilos base en pantallas más pequeñas.

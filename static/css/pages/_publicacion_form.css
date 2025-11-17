@@ -1,0 +1,333 @@
+/* Estilos para el editor de bloques (sin cambios) */
+.block-editor-container {
+    min-height: 200px;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: var(--bg-color-light);
+}
+.editor-block {
+    position: relative;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--card-bg-color);
+    transition: all 0.2s ease;
+}
+.editor-block:last-child { margin-bottom: 0; }
+.editor-block:hover { border-color: var(--accent-color); }
+.block-controls {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: flex;
+    gap: 5px;
+    z-index: 10;
+}
+.drag-handle { cursor: grab; padding: 5px; color: var(--secondary-text-color); }
+.drag-handle:active { cursor: grabbing; }
+.block-controls .btn-icon { font-size: 0.9rem; padding: 5px; }
+.block-controls .btn-icon.danger { color: #ff4757; }
+.block-controls .btn-icon:hover { color: var(--accent-color); }
+.block-content label { display: block; font-weight: bold; margin-bottom: 0.5rem; }
+.block-content .block-textarea, .block-content .block-input { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-color); color: var(--text-color); resize: vertical; min-height: 80px; }
+.block-content .block-input { min-height: unset; }
+.add-block-panel { margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; text-align: center; }
+.add-block-buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
+.add-block-btn { background-color: var(--accent-color); color: white; padding: 0.75rem 1.5rem; border-radius: 8px; border: none; cursor: pointer; transition: background-color 0.2s ease; }
+.add-block-btn:hover { background-color: var(--accent-color-dark); }
+.add-block-btn i { margin-right: 0.5rem; }
+.ck-editor__editable_inline { border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem 1rem; min-height: 150px; background-color: var(--bg-color); }
+.save-status-floating { position: fixed; bottom: 30px; right: 30px; display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.5rem; border-radius: 12px; font-weight: 500; font-size: 0.95rem; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 9999; opacity: 0; transform: translateY(20px); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
+.save-status-floating.saving { opacity: 1; transform: translateY(0); background: rgba(59, 130, 246, 0.9); border: 1px solid rgba(59, 130, 246, 0.3); color: white; }
+.save-status-floating.saved { opacity: 1; transform: translateY(0); background: rgba(16, 185, 129, 0.9); border: 1px solid rgba(16, 185, 129, 0.3); color: white; }
+.save-status-floating.error { opacity: 1; transform: translateY(0); background: rgba(239, 68, 68, 0.9); border: 1px solid rgba(239, 68, 68, 0.3); color: white; }
+.save-status-floating i { font-size: 1.2rem; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.save-status-floating .fa-spinner { animation: spin 1s linear infinite; }
+.image-controls-wrapper { margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-color-light); }
+.image-controls-wrapper label { font-size: 0.9rem; color: var(--secondary-text-color); margin-bottom: 0.5rem; }
+.image-size-selector { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.5rem; margin-bottom: 1rem; }
+.size-option { padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 6px; text-align: center; cursor: pointer; transition: all 0.2s ease; background-color: var(--bg-color);
+    color: var(--text-color); /* <<< SOLUCIÓN 1 (PARTE A) */
+}
+.size-option:hover { border-color: var(--accent-color); background-color: var(--card-bg-color); }
+.size-option.active { border-color: var(--accent-color); background-color: var(--accent-color); color: white; }
+.size-option .size-label { font-weight: bold; font-size: 0.85rem; }
+.size-option .size-dimensions { font-size: 0.7rem; opacity: 0.7; }
+.image-alignment-selector { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.alignment-btn { flex: 1; padding: 0.5rem; border: 2px solid var(--border-color); border-radius: 6px; background-color: var(--bg-color); cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    color: var(--text-color); /* <<<style SOLUCIÓN 1 (PARTE B) */
+}
+.alignment-btn:hover { border-color: var(--accent-color); }
+.alignment-btn.active { border-color: var(--accent-color); background-color: var(--accent-color); color: white; }
+.image-caption-input { width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; background-color: var(--bg-color); color: var(--text-color); font-size: 0.9rem; }
+.file-preview-container { margin-top: 1rem; }
+.file-preview-container img { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border-color); }
+#publicacion-main-form .form-group input, #publicacion-main-form .form-group select { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-color); color: var(--text-color); font-size: 1rem; line-height: 1.5; }
+#publicacion-main-form .form-group input:focus, #publicacion-main-form .form-group select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px var(--accent-color-light); }
+/* Definimos los iconos como variables */
+:root {
+    --icon-calendar-dark: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23222" viewBox="0 0 16 16"><path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/></svg>');
+    --icon-clock-dark: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23222" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></svg>');
+
+    --icon-calendar-light: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23eee" viewBox="0 0 16 16"><path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/></svg>');
+    --icon-clock-light: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23eee" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></svg>');
+}
+
+/* Por defecto, usamos los iconos oscuros */
+input[type="datetime-local"] {
+    background-image: var(--icon-calendar-dark), var(--icon-clock-dark);
+    background-repeat: no-repeat;
+    background-position: right 1rem center, right 3rem center;
+    padding-right: 5rem;
+    color-scheme: var(--color-scheme);
+}
+
+/* En modo oscuro, cambiamos a los iconos claros */
+body.dark-mode input[type="datetime-local"] {
+    background-image: var(--icon-calendar-light), var(--icon-clock-light);
+}
+
+/* ============================================
+   FIX PARA DRAG & DROP EN BLOQUES EMBED
+   ============================================ */
+
+/* 1. Asegurar que los bloques embed sean draggables */
+.editor-block.block-type-embed {
+    /* El bloque debe permitir eventos de drag */
+    touch-action: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* 2. Pero permitir selección de texto en inputs y textareas */
+.editor-block.block-type-embed input,
+.editor-block.block-type-embed textarea {
+    touch-action: auto;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+/* 3. El drag handle debe ser siempre interactivo */
+.block-type-embed .drag-handle {
+    cursor: grab;
+    pointer-events: auto;
+    z-index: 10;
+}
+
+.block-type-embed .drag-handle:active {
+    cursor: grabbing;
+}
+
+/* 4. CRÍTICO: Durante el drag, ocultar el contenido del embed para evitar que capture el ratón */
+.sortable-ghost .embed-preview-wrapper,
+.sortable-drag .embed-preview-wrapper,
+.sortable-chosen .embed-preview-wrapper {
+    display: none !important;
+}
+
+/* 5. Mostrar un indicador visual de que se está arrastrando */
+.sortable-chosen::after,
+.sortable-drag::after {
+    content: '↕ Arrastrando...';
+    display: block;
+    text-align: center;
+    padding: 2rem;
+    color: var(--accent-color);
+    font-weight: bold;
+    opacity: 0.5;
+}
+
+/* 6. Deshabilitar también el textarea durante el drag */
+.block-type-embed textarea.embed-input {
+    /* Permitir eventos normalmente cuando NO se está arrastrando */
+    pointer-events: auto;
+}
+
+/* Pero durante el drag, deshabilitar */
+.sortable-chosen textarea.embed-input,
+.sortable-drag textarea.embed-input {
+    pointer-events: none !important;
+}
+
+/* 7. Estados visuales para el bloque durante la operación de drag and drop */
+.sortable-ghost {
+    opacity: 0.4;
+    background-color: var(--accent-color-light);
+    border: 2px dashed var(--accent-color);
+    cursor: grabbing !important;
+}
+
+.sortable-chosen {
+    opacity: 0.9;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transform: scale(1.02);
+    z-index: 1000;
+}
+
+.sortable-drag {
+    opacity: 0.7;
+    transform: rotate(2deg);
+    cursor: grabbing !important;
+}
+
+/* 8. Mejorar la experiencia táctil en móviles haciendo el handle más grande */
+@media (max-width: 768px) {
+    .drag-handle {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .drag-handle i {
+        font-size: 1.5rem;
+    }
+}
+
+/* 9. Prevenir selección accidental de texto en todo el bloque durante el drag */
+.sortable-chosen *,
+.sortable-drag * {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+}
+
+/* 10. Asegurar que los botones y controles sigan siendo interactivos */
+.block-type-embed .block-controls {
+    pointer-events: auto;
+    z-index: 20;
+}
+
+.block-type-embed .block-controls button {
+    pointer-events: auto;
+}
+
+/* 11. Deshabilitar eventos en elementos de solo lectura dentro del bloque */
+.block-type-embed .embed-recommendation,
+.block-type-embed .embed-type-indicator {
+    pointer-events: none;
+}
+
+/* Pero permitir interacción con enlaces dentro */
+.block-type-embed .embed-recommendation a,
+.block-type-embed .embed-type-indicator a {
+    pointer-events: auto;
+}
+
+/* 12. Placeholder visual para el espacio donde se soltará el bloque */
+.sortable-ghost.block-type-embed {
+    height: 150px;
+    border-style: dashed;
+}
+
+.sortable-ghost.block-type-embed * {
+    visibility: hidden;
+}
+
+.sortable-ghost.block-type-embed::before {
+    content: '↕ Suelta aquí';
+    visibility: visible;
+    display: block;
+    text-align: center;
+    padding-top: 60px;
+    font-size: 1.2rem;
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+/* 13. Mejorar el cursor en todo el body durante operaciones de drag */
+body.dragging,
+body.dragging * {
+    cursor: grabbing !important;
+}
+
+/* ============================================
+   ESTILOS PARA EL BLOQUE DE IMAGEN CON PREVIEW
+   ============================================ */
+
+/* Layout principal de dos columnas */
+.image-block-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr; /* Columna fija para preview, columna flexible para controles */
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+/* Área de subida y preview */
+.image-upload-area {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Contenedor de la preview */
+.file-preview-container {
+    width: 100%;
+    height: 180px; /* Altura fija para mantener el layout estable */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-color-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Asegura que la imagen cubra el área sin deformarse */
+}
+
+/* Placeholder para cuando no hay imagen */
+.image-placeholder, .controls-placeholder {
+    text-align: center;
+    color: var(--secondary-text-color);
+    font-size: 0.9rem;
+    padding: 1rem;
+}
+
+.image-placeholder i, .controls-placeholder i {
+    font-size: 2.5rem;
+    opacity: 0.3;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+/* Botón para seleccionar archivo */
+.custom-file-trigger {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+.custom-file-trigger:hover {
+    background-color: var(--border-color);
+    border-color: var(--accent-color);
+}
+.custom-file-trigger i {
+    margin-right: 0.5rem;
+}
+
+/* Ajustes para móviles */
+@media (max-width: 768px) {
+    .image-block-layout {
+        grid-template-columns: 1fr; /* Apila las columnas en pantallas pequeñas */
+    }
+    .file-preview-container {
+        height: 200px; /* Un poco más de altura en móvil */
+    }
+}

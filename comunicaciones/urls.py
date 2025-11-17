@@ -6,7 +6,8 @@ from .views import (
     PublicacionDeleteView,
     gestionar_bloque_ajax,
     anclar_publicacion_ajax,
-    editar_publicacion_ajax
+    editar_publicacion_ajax,
+    preview_embed_ajax,
 )
 
 app_name = 'comunicaciones'
@@ -18,9 +19,9 @@ urlpatterns = [
     path('<int:pk>/borrar/', PublicacionDeleteView.as_view(), name='borrar_publicacion'),
     path('ajax/publicacion/<int:pub_pk>/bloque/', gestionar_bloque_ajax, name='crear_bloque_ajax'),
     path('ajax/bloque/<int:bloque_pk>/', gestionar_bloque_ajax, name='gestionar_bloque_ajax'),
-    path('ajax/publicacion/<int:pub_pk>/reordenar/', gestionar_bloque_ajax, name='reordenar_bloques_ajax'),
     path('ajax/publicacion/<int:pub_pk>/titulo/', gestionar_bloque_ajax, name='guardar_titulo_ajax'),
     path('ajax/publicacion/<int:pk>/', editar_publicacion_ajax, name='editar_publicacion_ajax'),
     path('ajax/bloque/<int:bloque_pk>/upload-image/', gestionar_bloque_ajax, name='upload_bloque_image_ajax'),
     path('ajax/publicacion/<int:pk>/anclar/', anclar_publicacion_ajax, name='anclar_publicacion_ajax'),
+    path('ajax/embed/preview/', preview_embed_ajax, name='preview_embed_ajax'),
 ]

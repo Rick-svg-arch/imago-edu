@@ -1,5 +1,6 @@
 {% extends 'layout.html' %}
 {% load auth_extras %}
+{% load lecturas_extras %}
 {% load static %}
 
 {% block title %}{{ documento.titulo }}{% endblock %}
@@ -107,36 +108,12 @@
                 <img src="{{ documento.imagen.url }}" alt="Imagen del documento {{ documento.titulo }}">
             </div>
         {% endif %}
-
-        <!-- CONTENIDO PRINCIPAL -->
+        <!-- VISUALIZADOR DE ARCHIVOS -->
         <div class="contenido-post">
-            {{ documento.descripcion|safe }}
+            {% render_content_with_attachment documento %}
         </div>
 
-        <!-- Clearfix para el float -->
         <div style="clear: both;"></div>
-
-        <!-- VISUALIZADOR DE ARCHIVOS -->
-        {% if documento.adjunto %}
-            <div style="margin-top: 3rem; text-align: center;">
-                <h3>Documento Adjunto</h3>
-                {% with ext=documento.adjunto.name|lower %}
-                    {% if '.pdf' in ext %}
-                        <div style="position: relative; height: 600px; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; margin-top: 1rem;">
-                            <iframe src="{% url 'lecturas:serve_file' pk=documento.pk %}" 
-                                    style="width: 100%; height: 100%; border: none;"
-                                    title="Visualizador de PDF: {{ documento.titulo }}">
-                            </iframe>
-                        </div>
-                    {% else %}
-                        <a href="{% url 'lecturas:serve_file' pk=documento.pk %}" class="btn-subir-archivo" target="_blank" style="margin-top: 1rem;">
-                            <i class="fas fa-download"></i>
-                            Descargar {{ documento.adjunto.name|slice:"-30:" }}
-                        </a>
-                    {% endif %}
-                {% endwith %}
-            </div>
-        {% endif %}
     </article>
 
     <hr style="margin: 3rem 0;">
