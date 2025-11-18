@@ -10,6 +10,40 @@ class ForumSystem {
     init() {
         document.body.addEventListener('submit', e => this.handleFormSubmit(e));
         document.body.addEventListener('click', e => this.handleClick(e));
+        document.body.addEventListener('change', e => {
+            if (e.target.matches('input[type="file"][name="banner"]')) {
+                this.handleFilePreview(e.target);
+            }
+        });
+    }
+
+    handleFilePreview(fileInput) {
+        const form = fileInput.closest('form');
+        if (!form) return;
+        const previewContainer = form.querySelector('.selected-files-preview');
+        if (!previewContainer) return;
+
+        const file = fileInput.files[0];
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewContainer.innerHTML = `
+                    <div class="preview-item">
+                        <img src="${e.target.result}" alt="Vista previa" class="preview-image">
+                        <div class="preview-info">
+                            <span class="preview-name">${file.name}</span>
+                            <span class="preview-size">${(file.size / 1024).toFixed(1)} KB</span>
+                        </div>
+                        <button type="button" class="clear-preview-btn" title="Quitar imagen">&times;</button>
+                    </div>
+                `;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // Si el usuario cancela la selección de archivo, limpiamos la preview
+            previewContainer.innerHTML = '';
+        }
     }
 
     async handleFormSubmit(e) {
@@ -76,10 +110,12 @@ class ForumSystem {
             commentsSection.insertAdjacentHTML('afterbegin', data.html);
         }
         form.reset();
+        const previewContainer = form.querySelector('.selected-files-preview');
+        if (previewContainer) previewContainer.innerHTML = '';
+        
         const formContainer = form.closest('.reply-form-container');
         if (formContainer) formContainer.style.display = 'none';
         
-        // Limpiar CKEditor si es el formulario principal
         if (form.closest('.respuesta-principal-form')) {
             const editor = window.CKEDITOR_5_INSTANCES && window.CKEDITOR_5_INSTANCES['id_contenido'];
             if(editor) editor.setData('');
@@ -87,7 +123,20 @@ class ForumSystem {
     }
 
     handleClick(e) {
-        // Declaramos TODAS las posibles variables de botones al principio.
+        const clearPreviewBtn = e.target.closest('.clear-preview-btn');
+        if (clearPreviewBtn) {
+            e.preventDefault();
+            const form = clearPreviewBtn.closest('form');
+            if (form) {
+                const fileInput = form.querySelector('input[type="file"][name="banner"]');
+                const previewContainer = form.querySelector('.selected-files-preview');
+
+                if (fileInput) fileInput.value = ''; 
+                
+                if (previewContainer) previewContainer.innerHTML = '';
+            }
+            return;
+        }
         const replyBtn = e.target.closest('.reply-btn');
         const cancelEditBtn = e.target.closest('.cancel-edit-btn');
         const editBtn = e.target.closest('.edit-reply-btn');
@@ -95,12 +144,10 @@ class ForumSystem {
         const cancelReplyBtn = e.target.closest('.cancel-reply-btn');
         const toggleBtn = e.target.closest('.toggle-hijos-btn');
 
-        // La lógica ahora se ejecutará secuencialmente sin errores.
         if (replyBtn) {
             e.preventDefault();
             const formContainer = document.getElementById(`reply-form-${replyBtn.dataset.id}`);
             if (formContainer) {
-                // Alternar la visibilidad y cerrar otros
                 const isHidden = formContainer.style.display === 'none';
                 document.querySelectorAll('.reply-form-container').forEach(fc => fc.style.display = 'none');
                 formContainer.style.display = isHidden ? 'block' : 'none';
@@ -200,6 +247,7 @@ class ForumSystem {
             const response = await fetch(editBtn.dataset.url);
             const data = await response.json();
             wrapper.innerHTML = data.html;
+            this.initializeEditFormWidgets(wrapper.querySelector('.ajax-edit-form'));
         } catch (error) {
             wrapper.innerHTML = wrapper.dataset.originalHtml;
         }
@@ -223,6 +271,51 @@ class ForumSystem {
         } catch (error) {
             this.showMessage('No se pudo borrar la respuesta.', 'error');
         }
+    }
+
+    initializeEditFormWidgets(formElement) {
+        const respuestaId = formElement.action.match(/(\d+)/g).pop();
+        if (!respuestaId) return;
+
+        const widgetContainer = formElement.querySelector(`#django-banner-widget-container-${respuestaId}`);
+        if (!widgetContainer) return;
+
+        const fileInput = widgetContainer.querySelector('input[type="file"]');
+        const clearCheckbox = widgetContainer.querySelector('input[type="checkbox"]');
+        const currentLink = widgetContainer.querySelector('a');
+
+        const previewContainer = formElement.querySelector(`#banner-preview-container-${respuestaId}`);
+        const clearContainer = formElement.querySelector(`#banner-clear-container-${respuestaId}`);
+        const triggerBtn = formElement.querySelector(`#banner-trigger-btn-${respuestaId}`);
+        const btnText = formElement.querySelector(`#banner-btn-text-${respuestaId}`);
+
+        if (!fileInput || !previewContainer || !clearContainer || !triggerBtn || !btnText) return;
+
+        // Si ya hay un banner, mostramos la imagen actual y ajustamos el botón
+        if (currentLink && currentLink.href) {
+            previewContainer.innerHTML = `<img src="${currentLink.href}" alt="Banner actual" style="width: 100%; border-radius: 8px;">`;
+            btnText.textContent = 'Cambiar banner';
+        }
+
+        // Movemos el checkbox "Limpiar" para que sea visible
+        if (clearCheckbox) {
+            const clearLabel = document.createElement('label');
+            clearLabel.style.fontSize = '0.85rem';
+            clearLabel.style.opacity = '0.8';
+            clearLabel.appendChild(clearCheckbox);
+            clearLabel.append(' Eliminar banner actual');
+            clearContainer.appendChild(clearLabel);
+        }
+
+        // Conectamos nuestro botón personalizado al input de archivo real (que está oculto)
+        triggerBtn.addEventListener('click', () => fileInput.click());
+
+        // Cuando se selecciona un archivo nuevo, ocultamos el checkbox "Limpiar"
+        fileInput.addEventListener('change', () => {
+            if (clearContainer) {
+                clearContainer.style.display = 'none';
+            }
+        });
     }
     
     // ================== CÓDIGO CORREGIDO Y COMPLETO ==================

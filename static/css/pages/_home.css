@@ -1,7 +1,7 @@
 /* === ESTILOS PARA LA NUEVA LANDING PAGE === */
 .hero-section {
     position: relative;
-    height: 80vh; /* Ocupa el 80% de la altura de la pantalla */
+    height: 80vh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -10,124 +10,132 @@
 }
 .hero-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Superposición oscura para legibilidad */
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
 }
 .hero-content {
-    position: relative; /* Para que esté sobre el overlay */
-    z-index: 2;
-    max-width: 800px;
-    padding: 2rem;
+    position: relative; z-index: 2;
+    max-width: 800px; padding: 2rem;
 }
 .hero-content h1 {
-    font-size: 3.5rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
+    font-size: 3.5rem; font-weight: 700; margin-bottom: 1rem;
     text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
 }
 .hero-content p {
-    font-size: 1.25rem;
-    opacity: 0.9;
-    margin-bottom: 2rem;
+    font-size: 1.25rem; opacity: 0.9; margin-bottom: 2rem;
 }
-.accent-btn {
-    background-color: var(--accent-color);
-    color: white;
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
-    transform: scale(1.05);
-}
-.recommendation-section {
-    margin-bottom: 4rem;
-}
-.recommendation-section h2 {
-    font-size: 1.8rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 0.5rem;
-}
-.horizontal-scroll-container {
-    display: flex;
-    overflow-x: auto;
-    gap: 1.5rem;
-    padding-bottom: 1.5rem; /* Espacio para la barra de scroll */
-    /* Estilos para la barra de scroll (opcional pero recomendado) */
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-color) var(--bg-color);
-}
-.horizontal-scroll-container::-webkit-scrollbar {
-    height: 8px;
-}
-.horizontal-scroll-container::-webkit-scrollbar-track {
-    background: var(--bg-color);
-}
-.horizontal-scroll-container::-webkit-scrollbar-thumb {
-    background-color: var(--border-color);
-    border-radius: 10px;
-}
-.empty-state {
-    color: var(--secondary-text-color);
-    padding: 2rem;
-}
-@media (max-width: 768px) {
-    .hero-content h1 { font-size: 2.5rem; }
-}
-
-.recommendation-section {
-    padding: 4rem 0;
-}
-.recommendation-section:nth-of-type(odd) {
-    background-color: var(--card-bg-color); /* Fondo alterno para resaltar */
-}
+.recommendation-section { padding: 4rem 0; }
+.recommendation-section:nth-of-type(odd) { background-color: var(--card-bg-color); }
 .recommendation-section h2 {
     font-size: 1.8rem; margin-bottom: 2rem;
     padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);
 }
-
-/* Estilos para la nueva sección Parallax */
-.parallax-section {
-    position: relative;
-    padding: 6rem 2rem;
-    min-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    color: white;
-    background-attachment: fixed;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
+.horizontal-scroll-container {
+    display: flex; overflow-x: auto; gap: 1.5rem; padding-bottom: 1.5rem;
+    scrollbar-width: thin; scrollbar-color: var(--border-color) var(--bg-color);
 }
-.parallax-content {
-    position: relative; z-index: 2; max-width: 700px;
-    background: rgba(0,0,0,0.5); padding: 2rem; border-radius: 12px;
-}
-
-/* Estilos para las tarjetas de foros (reutilizados y adaptados) */
+.horizontal-scroll-container::-webkit-scrollbar { height: 8px; }
+.horizontal-scroll-container::-webkit-scrollbar-track { background: var(--bg-color); }
+.horizontal-scroll-container::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 10px; }
 .featured-forums .category-card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;
 }
 
 /* === ESTILOS PARA LAS ANIMACIONES DE SCROLL === */
-.js-scroll-fade-in {
-    opacity: 0;
-    transform: translateY(20px);
-}
+.js-scroll-fade-in { opacity: 0; transform: translateY(20px); }
 .js-scroll-fade-in.scrolled {
-    opacity: 1;
-    transform: translateY(0);
+    opacity: 1; transform: translateY(0);
     transition: opacity 0.8s ease-out, transform 0.8s ease-out;
 }
-/* Retrasos para un efecto escalonado */
 .hero-content h1.scrolled { transition-delay: 0.2s; }
 .hero-content p.scrolled { transition-delay: 0.4s; }
-.hero-content .submit-btn.scrolled { transition-delay: 0.6s; }
-.featured-forums .category-card.scrolled:nth-child(2) { transition-delay: 0.2s; }
-.featured-forums .category-card.scrolled:nth-child(3) { transition-delay: 0.4s; }
-.featured-forums .category-card.scrolled:nth-child(4) { transition-delay: 0.6s; }
+.hero-content .btn-dinamico.scrolled { transition-delay: 0.6s; }
+
+/* === ESTILOS PARA BLOQUES DINÁMICOS MEJORADOS === */
+.home-block--reflection {
+    background-color: var(--bg-color);
+    padding: 4rem 2rem;
+}
+.home-block--reflection .container { max-width: 800px; margin: 0 auto; }
+.home-block--reflection h2 {
+    font-size: 2.2rem; font-weight: 600; margin-bottom: 1rem; color: var(--text-color);
+}
+.home-block--reflection .content {
+    font-size: 1.1rem; line-height: 1.7; color: var(--secondary-text-color);
+    margin-bottom: 2rem;
+}
+/* REGLAS DE POSICIONAMIENTO PARA EL BLOQUE DE REFLEXIÓN */
+.home-block--reflection.home-block--pos-left { text-align: left; }
+.home-block--reflection.home-block--pos-center { text-align: center; }
+.home-block--reflection.home-block--pos-right { text-align: right; }
+.home-block--reflection.home-block--pos-right .button-container { justify-content: flex-end; }
+.home-block--reflection.home-block--pos-center .button-container { justify-content: center; }
+.home-block--reflection.home-block--pos-left .button-container { justify-content: flex-start; }
+
+
+/* Contenedor de Botones */
+.button-container {
+    margin-top: 2rem; display: flex; align-items: center;
+    gap: 1rem; flex-wrap: wrap;
+}
+
+/* === SISTEMA DE BOTONES UNIFICADO === */
+.btn-dinamico {
+    display: inline-flex; align-items: center;
+    padding: 0.8rem 1.8rem;
+    border-radius: 8px;
+    font-weight: 600; font-size: 1rem;
+    text-decoration: none; cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.btn-dinamico:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.btn-dinamico:active { transform: translateY(0); }
+
+/* Estilo Primario */
+.btn-primary {
+    background-color: var(--accent-color);
+    color: white; border-color: var(--accent-color);
+}
+.btn-primary:hover {
+    background-color: var(--bg-color);
+    border-color: var(--accent-color);
+    color: var(--text-color) !important;
+}
+/* Estilo Secundario */
+.btn-secondary {
+    background-color: transparent;
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+.btn-secondary:hover { background-color: var(--accent-color); color: white; }
+
+/* ... Estilos de Bloques con Fondo y Parallax sin cambios ... */
+.home-block--image-bg-static, .parallax-section {
+    position: relative; padding: 6rem 4rem; min-height: 500px; display: flex; align-items: center;
+    background-position: center; background-repeat: no-repeat; background-size: cover; color: white;
+}
+.home-block--image-bg-static { background-attachment: scroll; }
+.parallax-section { background-attachment: fixed; }
+.home-block--pos-left { justify-content: flex-start; }
+.home-block--pos-center { justify-content: center; }
+.home-block--pos-right { justify-content: flex-end; }
+.overlay-content, .parallax-content {
+    position: relative; z-index: 2; background: rgba(0, 0, 0, 0.65); padding: 2.5rem;
+    border-radius: 12px; flex-basis: 50%; max-width: 650px; text-align: left;
+}
+.home-block--pos-center .overlay-content, .home-block--pos-center .parallax-content { text-align: center; }
+.home-block--pos-center .button-container { justify-content: center; }
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+    .hero-content h1 { font-size: 2.5rem; }
+    .home-block--image-bg-static, .parallax-section {
+        padding: 4rem 1.5rem; justify-content: center;
+    }
+    .overlay-content, .parallax-content { flex-basis: 100%; }
+}

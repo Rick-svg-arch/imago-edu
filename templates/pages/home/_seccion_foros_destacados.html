@@ -1,0 +1,21 @@
+<section class="recommendation-section featured-forums">
+    <div class="container-large">
+        <h2 class="js-scroll-fade-in"><i class="fas fa-comments"></i> Foros Más Activos</h2>
+        <div class="category-card-grid">
+            {% for categoria in foros_destacados %}
+            <a href="{% url 'posts:lista_temas' slug_categoria=categoria.slug %}" class="category-card js-scroll-fade-in">
+                <div class="card-icon"><i class="fas fa-folder-open"></i></div>
+                <div class="card-content">
+                    <h3>{{ categoria.nombre }}</h3>
+                    <p>{{ categoria.descripcion|truncatechars:80 }}</p>
+                </div>
+                <div class="card-footer">
+                    <span><i class="fas fa-file-alt"></i> {{ categoria.temas.count }} Temas</span>
+                </div>
+            </a>
+            {% empty %}
+            <p class="empty-state">Aún no se han creado categorías en el foro.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>

@@ -11,8 +11,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY', 'una-clave-secreta-de-desarrollo-insegura')
-# DEBUG = os.getenv('DEBUG', 'False') == 'True'
-DEBUG = 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
+# DEBUG = 'True'
 ALLOWED_HOSTS = [
     'imago-edu-1002890573313.us-central1.run.app',
     '.us-central1.run.app',
@@ -42,11 +42,13 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'comunicaciones.apps.ComunicacionesConfig',
     'lecturas.apps.LecturasConfig',
+    'home',
     'taggit',
     'storages',
     'django_select2',
     'django_ckeditor_5',
     'django_cleanup.apps.CleanupConfig',
+    'adminsortable2',
 ]
 
 MIDDLEWARE = [
@@ -81,74 +83,74 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'imago.wsgi.application'
 
-DATABASES = {
-'default': {
-'ENGINE': 'django.db.backends.sqlite3', # Specifies SQLite as the database engine
-'NAME': BASE_DIR / 'db.sqlite3', # Path to the SQLite database file
-}
-}
+# DATABASES = {
+# 'default': {
+# 'ENGINE': 'django.db.backends.sqlite3', # Specifies SQLite as the database engine
+# 'NAME': BASE_DIR / 'db.sqlite3', # Path to the SQLite database file
+# }
+# }
 
 # ====================
 # CONFIGURACIÓN DE BASE DE DATOS
 # ====================
 # Detectar si estamos en Cloud Run o en desarrollo local
-# USE_CLOUD_SQL_AUTH_PROXY = os.getenv('USE_CLOUD_SQL_AUTH_PROXY', 'False') == 'True'
-# FORCE_CLOUD_SQL = os.getenv('FORCE_CLOUD_SQL', 'False') == 'True'
-# CLOUD_RUN_ENVIRONMENT = (
-#     os.getenv('K_SERVICE') is not None or 
-#     os.getenv('K_CONFIGURATION') is not None or
-#     FORCE_CLOUD_SQL
-# )
+USE_CLOUD_SQL_AUTH_PROXY = os.getenv('USE_CLOUD_SQL_AUTH_PROXY', 'False') == 'True'
+FORCE_CLOUD_SQL = os.getenv('FORCE_CLOUD_SQL', 'False') == 'True'
+CLOUD_RUN_ENVIRONMENT = (
+    os.getenv('K_SERVICE') is not None or 
+    os.getenv('K_CONFIGURATION') is not None or
+    FORCE_CLOUD_SQL
+)
 
-# print("\n" + "="*60)
-# print("CONFIGURACIÓN DE BASE DE DATOS")
-# print("="*60)
+print("\n" + "="*60)
+print("CONFIGURACIÓN DE BASE DE DATOS")
+print("="*60)
 
-# if CLOUD_RUN_ENVIRONMENT:
-#     # Producción en Cloud Run - usar socket de Cloud SQL
-#     print("✓ Modo: CLOUD RUN (Socket de Cloud SQL)")
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': 'imago_prod',
-#             'USER': 'postgres',
-#             'PASSWORD': os.getenv('DB_PASSWORD'),
-#             'HOST': '/cloudsql/imago-edu:us-central1:imago-db',
-#             'PORT': '5432',
-#         }
-#     }
-# elif USE_CLOUD_SQL_AUTH_PROXY:
-#     # Desarrollo local con Cloud SQL Auth Proxy
-#     print("✓ Modo: DESARROLLO LOCAL (Cloud SQL Auth Proxy)")
-#     print("  Conectando a: localhost:5432")
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': 'imago_prod',
-#             'USER': 'postgres',
-#             'PASSWORD': os.getenv('DB_PASSWORD', ''),
-#             'HOST': '127.0.0.1',
-#             'PORT': '5432',
-#         }
-#     }
-# else:
-#     # Desarrollo local con base de datos local
-#     print("✓ Modo: DESARROLLO LOCAL (Base de datos local)")
-#     print("  Conectando a: localhost:5432 / imago_dev")
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': os.getenv('LOCAL_DB_NAME', 'imago_dev'),
-#             'USER': os.getenv('LOCAL_DB_USER', 'postgres'),
-#             'PASSWORD': os.getenv('LOCAL_DB_PASSWORD', 'postgres'),
-#             'HOST': os.getenv('LOCAL_DB_HOST', 'localhost'),
-#             'PORT': os.getenv('LOCAL_DB_PORT', '5432'),
-#         }
-#     }
+if CLOUD_RUN_ENVIRONMENT:
+    # Producción en Cloud Run - usar socket de Cloud SQL
+    print("✓ Modo: CLOUD RUN (Socket de Cloud SQL)")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'imago_prod',
+            'USER': 'postgres',
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': '/cloudsql/imago-edu:us-central1:imago-db',
+            'PORT': '5432',
+        }
+    }
+elif USE_CLOUD_SQL_AUTH_PROXY:
+    # Desarrollo local con Cloud SQL Auth Proxy
+    print("✓ Modo: DESARROLLO LOCAL (Cloud SQL Auth Proxy)")
+    print("  Conectando a: localhost:5432")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'imago_prod',
+            'USER': 'postgres',
+            'PASSWORD': os.getenv('DB_PASSWORD', ''),
+            'HOST': '127.0.0.1',
+            'PORT': '5432',
+        }
+    }
+else:
+    # Desarrollo local con base de datos local
+    print("✓ Modo: DESARROLLO LOCAL (Base de datos local)")
+    print("  Conectando a: localhost:5432 / imago_dev")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('LOCAL_DB_NAME', 'imago_dev'),
+            'USER': os.getenv('LOCAL_DB_USER', 'postgres'),
+            'PASSWORD': os.getenv('LOCAL_DB_PASSWORD', 'postgres'),
+            'HOST': os.getenv('LOCAL_DB_HOST', 'localhost'),
+            'PORT': os.getenv('LOCAL_DB_PORT', '5432'),
+        }
+    }
 
-# print(f"  Database: {DATABASES['default']['NAME']}")
-# print(f"  Host: {DATABASES['default']['HOST']}")
-# print("="*60 + "\n")
+print(f"  Database: {DATABASES['default']['NAME']}")
+print(f"  Host: {DATABASES['default']['HOST']}")
+print("="*60 + "\n")
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -171,52 +173,52 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS Y MEDIA
 # ====================
 
-# GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME')
+GS_BUCKET_NAME = os.getenv('GS_BUCKET_NAME')
 
-# print("="*60)
-# print("CONFIGURACIÓN DE STORAGE")
-# print("="*60)
+print("="*60)
+print("CONFIGURACIÓN DE STORAGE")
+print("="*60)
 
-# if GS_BUCKET_NAME:
-#     print(f"✓ Modo: GOOGLE CLOUD STORAGE")
-#     print(f"  Bucket: {GS_BUCKET_NAME}")
+if GS_BUCKET_NAME:
+    print(f"✓ Modo: GOOGLE CLOUD STORAGE")
+    print(f"  Bucket: {GS_BUCKET_NAME}")
     
-#     # SOLO para archivos media usar Google Cloud Storage
-#     STORAGES = {
-#         "default": {
-#             "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
-#         },
-#         "staticfiles": {
-#             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-#         },
-#     }
+    # SOLO para archivos media usar Google Cloud Storage
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
     
-#     # Configuración de Google Cloud Storage (SOLO para media)
-#     GS_PROJECT_ID = 'imago-edu'
-#     GS_CREDENTIALS = None
-#     GS_FILE_OVERWRITE = False
-#     GS_MAX_MEMORY_SIZE = 10485760  # 10MB
-#     GS_QUERYSTRING_AUTH = False
-#     GS_LOCATION = ''
+    # Configuración de Google Cloud Storage (SOLO para media)
+    GS_PROJECT_ID = 'imago-edu'
+    GS_CREDENTIALS = None
+    GS_FILE_OVERWRITE = False
+    GS_MAX_MEMORY_SIZE = 10485760  # 10MB
+    GS_QUERYSTRING_AUTH = False
+    GS_LOCATION = ''
     
-#     # URL base para archivos media
-#     MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
+    # URL base para archivos media
+    MEDIA_URL = f'https://storage.googleapis.com/{GS_BUCKET_NAME}/'
 
     
-# else:
-#     print("✓ Modo: ALMACENAMIENTO LOCAL")
+else:
+    print("✓ Modo: ALMACENAMIENTO LOCAL")
     
-#     STORAGES = {
-#         "default": {
-#             "BACKEND": "django.core.files.storage.FileSystemStorage",
-#         },
-#         "staticfiles": {
-#             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-#         },
-#     }
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
     
-#     MEDIA_URL = '/media/'
-#     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CONFIGURACIÓN DE STATIC FILES (SIEMPRE REQUERIDA)
 STATIC_URL = '/static/'

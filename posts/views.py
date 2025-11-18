@@ -114,7 +114,8 @@ def detalle_tema(request, pk):
             return redirect(url_final)
         else:
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'errors': respuesta_form.errors}, status=400)
+                error_message = next(iter(respuesta_form.errors.values()))[0]
+                return JsonResponse({'success': False, 'error': error_message}, status=400)
     
     else:
         respuesta_form = RespuestaForm()
@@ -195,9 +196,8 @@ def editar_respuesta_ajax(request, pk):
             }, request=request)
             return JsonResponse({'success': True, 'html': html})
         else:
-            # Devolvemos el formulario con errores
-            form_html = render_to_string('posts/_form_respuesta_ajax.html', {'form': form}, request=request)
-            return JsonResponse({'success': False, 'form_html': form_html}, status=400)
+            error_message = next(iter(form.errors.values()))[0]
+            return JsonResponse({'success': False, 'error': error_message}, status=400)
     else:
         # Petición GET: devolver el formulario de edición
         form = RespuestaEditForm(instance=respuesta)

@@ -1,0 +1,11 @@
+{% if block.imagen_fondo %}
+<section class="home-block home-block--image-bg-static home-block--pos-{{ block.posicion_contenido }}" style="background-image: url('{{ block.imagen_fondo.url }}');">
+    <div class="overlay-content">
+        <h2>{{ block.titulo }}</h2>
+        <div class="content">
+            {{ block.contenido|safe }}
+        </div>
+        {% include 'home_blocks/_buttons.html' with block=block %}
+    </div>
+</section>
+{% endif %}

@@ -39,18 +39,18 @@
 
         <!-- ACCIONES: RESPONDER, EDITAR, BORRAR -->
         <div class="respuesta-acciones-compactas">
-        <a href="#" class="reply-btn" data-id="{{ respuesta.pk }}">
-            <i class="fas fa-reply"></i> Responder
-        </a>
-        {% if user == respuesta.autor or user.is_superuser or user|has_group:"Administrativo" %}
-            <a href="#" class="edit-reply-btn" data-url="{% url 'posts:editar_respuesta_ajax' pk=respuesta.pk %}">
-                <i class="fas fa-edit"></i> Editar
+            <a href="#" class="reply-btn" data-id="{{ respuesta.pk }}">
+                <i class="fas fa-reply"></i> Responder
             </a>
-            <a href="#" class="delete-reply-btn" data-url="{% url 'posts:borrar_respuesta_ajax' pk=respuesta.pk %}">
-                <i class="fas fa-trash"></i> Borrar
-            </a>
-        {% endif %}
-    </div>
+            {% if user == respuesta.autor or user.is_superuser or user|has_group:"Administrativo" %}
+                <a href="#" class="edit-reply-btn" data-url="{% url 'posts:editar_respuesta_ajax' pk=respuesta.pk %}">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+                <a href="#" class="delete-reply-btn" data-url="{% url 'posts:borrar_respuesta_ajax' pk=respuesta.pk %}">
+                    <i class="fas fa-trash"></i> Borrar
+                </a>
+            {% endif %}
+        </div>
     </div>
 
     <!-- FORMULARIO DE RESPUESTA (OCULTO) - AHORA CON CKEDITOR Y MEJOR ESTILO -->
@@ -87,6 +87,7 @@
                     </button>
                 </div>
             </div>
+            <div class="selected-files-preview" style="margin-top: 1rem;"></div>
         </form>
     </div>
 

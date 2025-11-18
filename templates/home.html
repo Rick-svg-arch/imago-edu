@@ -7,90 +7,52 @@
 
 {% block content %}
 
-<!-- SECCIÓN HERO INMERSIVA -->
-<section class="hero-section">
+{% if hero_config %}
+<section class="hero-section" style="background-image: url('{{ hero_config.imagen_fondo.url }}');">
     <div class="hero-overlay"></div>
     <div class="hero-content">
-        <!-- "Ganchos" para la animación de scroll -->
-        <h1 class="js-scroll-fade-in">Descubre, Comparte y Aprende</h1>
-        <p class="js-scroll-fade-in">Tu portal de lecturas colaborativas. Explora recursos, participa en foros y enriquece tu conocimiento.</p>
-        <a href="{% url 'lecturas:lista_documentos_base' %}" class="submit-btn accent-btn js-scroll-fade-in">Explorar la Biblioteca</a>
+        <h1 class="js-scroll-fade-in">{{ hero_config.titulo }}</h1>
+        {% if hero_config.subtitulo %}
+            <p class="js-scroll-fade-in">{{ hero_config.subtitulo }}</p>
+        {% endif %}
+        {% if hero_config.texto_boton and hero_config.enlace_boton %}
+            <a href="{{ hero_config.enlace_boton }}" class="btn-dinamico btn-primary js-scroll-fade-in">{{ hero_config.texto_boton }}</a>
+        {% endif %}
     </div>
 </section>
+{% else %}
+    <!-- Mensaje para administradores si el Hero no está configurado -->
+    <div style="padding: 4rem 2rem; text-align:center; background-color: #f86874ff; color: var(--secondary-text-color);">
+        <h2>Sección Hero no configurada.</h2>
+        <p>Por favor, ve al panel de administración y crea la "Configuración de la Sección Hero".</p>
+    </div>
+{% endif %}
 
-<!-- CONTENIDO PRINCIPAL DE LA PÁGINA -->
 <main class="landing-content">
 
-    <!-- SECCIÓN: LECTURAS MEJOR VALORADAS -->
-    <section class="recommendation-section">
-        <div class="container-large">
-            <h2 class="js-scroll-fade-in"><i class="fas fa-star"></i> Lecturas Mejor Valoradas</h2>
-            <div class="horizontal-scroll-container">
-                {% for doc in mejor_valoradas %}
-                    {% include 'lecturas/_documento_card_snippet.html' with doc=doc %}
-                {% empty %}
-                    <p class="empty-state">Aún no hay lecturas valoradas.</p>
-                {% endfor %}
-            </div>
-        </div>
-    </section>
+    <!-- ====================================================== -->
+    <!--     SISTEMA ÚNICO DE BLOQUES DE CONTENIDO DINÁMICOS    -->
+    <!-- ====================================================== -->
+    {% for block in bloques_home %}
+        {# Bloques de contenido simple #}
+        {% if block.tipo_bloque == 'reflexion' %}
+            {% include 'home_blocks/_block_reflexion.html' with block=block %}
+        {% elif block.tipo_bloque == 'texto_fondo' %}
+            {% include 'home_blocks/_block_texto_fondo.html' with block=block %}
+        {% elif block.tipo_bloque == 'parallax' %}
+            {% include 'home_blocks/_block_parallax.html' with block=block %}
 
-    <!-- ======================= NUEVA SECCIÓN PARALLAX ======================= -->
-    <section class="parallax-section">
-        <div class="parallax-content">
-            <h2 class="js-scroll-fade-in">Únete a la Conversación</h2>
-            <p class="js-scroll-fade-in">Nuestros foros son el lugar perfecto para debatir ideas, resolver dudas y conectar con otros estudiantes y profesores.</p>
-        </div>
-    </section>
+        {# Bloques que renderizan secciones enteras #}
+        {% elif block.tipo_bloque == 'seccion_valoradas' %}
+            {% include 'pages/home/_seccion_mejor_valoradas.html' %}
+        {% elif block.tipo_bloque == 'seccion_recientes' %}
+            {% include 'pages/home/_seccion_recientes.html' %}
+        {% elif block.tipo_bloque == 'seccion_foros' %}
+            {% include 'pages/home/_seccion_foros_destacados.html' %}
+        {% endif %}
+    {% endfor %}
 
-    <!-- ======================= NUEVA SECCIÓN FOROS DESTACADOS ======================= -->
-    <section class="recommendation-section featured-forums">
-        <div class="container-large">
-            <h2 class="js-scroll-fade-in"><i class="fas fa-comments"></i> Foros Más Activos</h2>
-            <div class="category-card-grid">
-                {% for categoria in foros_destacados %}
-                <a href="{% url 'posts:lista_temas' slug_categoria=categoria.slug %}" class="category-card js-scroll-fade-in">
-                    <div class="card-icon"><i class="fas fa-folder-open"></i></div>
-                    <div class="card-content">
-                        <h3>{{ categoria.nombre }}</h3>
-                        <p>{{ categoria.descripcion|truncatechars:80 }}</p>
-                    </div>
-                    <div class="card-footer">
-                        <span><i class="fas fa-file-alt"></i> {{ categoria.temas.count }} Temas</span>
-                    </div>
-                </a>
-                {% empty %}
-                <p class="empty-state">Aún no se han creado categorías en el foro.</p>
-                {% endfor %}
-            </div>
-        </div>
-    </section>
-
-    <!-- SECCIÓN: NOVEDADES RECIENTES -->
-    <section class="recommendation-section">
-        <div class="container-large">
-            <h2 class="js-scroll-fade-in"><i class="fas fa-history"></i> Novedades Recientes</h2>
-            <div class="horizontal-scroll-container">
-                {% for doc in recientes %}
-                    {% include 'lecturas/_documento_card_snippet.html' with doc=doc %}
-                {% empty %}
-                    <p class="empty-state">Aún no se han subido lecturas.</p>
-                {% endfor %}
-            </div>
-        </div>
-    </section>
 </main>
-{% endblock %}
-
-{% block extra_css %}
-    <style>
-        .hero-section {
-            background-image: url("{% static 'images/hero-background.jpg' %}");
-        }
-        .parallax-section {
-            background-image: url("{% static 'images/parallax-bg.jpg' %}");
-        }
-    </style>
 {% endblock %}
 
 {% block extra_js %}

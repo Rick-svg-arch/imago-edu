@@ -15,7 +15,8 @@ class TemaForm(forms.ModelForm):
     def clean_banner(self):
         banner = self.cleaned_data.get('banner')
         if hasattr(banner, 'name'):
-            return validate_file(banner, ['.jpg', '.jpeg', '.png', '.webp'], 3)
+            extensiones_permitidas = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif']
+            return validate_file(banner, extensiones_permitidas, 3)
         return banner
 
 class RespuestaForm(forms.ModelForm):
@@ -32,7 +33,8 @@ class RespuestaForm(forms.ModelForm):
     def clean_banner(self):
         banner = self.cleaned_data.get('banner')
         if hasattr(banner, 'name'):
-            return validate_file(banner, ['.jpg', '.jpeg', '.png', '.webp'], 3)
+            extensiones_permitidas = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif']
+            return validate_file(banner, extensiones_permitidas, 3)
         return banner
     
 class RespuestaEditForm(forms.ModelForm):
@@ -47,5 +49,6 @@ class RespuestaEditForm(forms.ModelForm):
     def clean_banner(self):
         banner = self.cleaned_data.get('banner')
         if hasattr(banner, 'name'):
-            return validate_file(banner, ['.jpg', '.jpeg', '.png', '.webp'], 3)
+            extensiones_permitidas = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif']
+            return validate_file(banner, extensiones_permitidas, 3)
         return banner

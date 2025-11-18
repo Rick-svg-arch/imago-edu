@@ -1,0 +1,16 @@
+<div class="button-container">
+    {% if block.enlace_texto_1 and block.enlace_url_1 %}
+        <a href="{{ block.enlace_url_1 }}" 
+           class="btn-dinamico btn-{{ block.enlace_estilo_1 }}"
+           {% if block.enlace_nueva_pestana_1 %} target="_blank" rel="noopener noreferrer"{% endif %}>
+            {{ block.enlace_texto_1 }}
+        </a>
+    {% endif %}
+    {% if block.enlace_texto_2 and block.enlace_url_2 %}
+        <a href="{{ block.enlace_url_2 }}" 
+           class="btn-dinamico btn-{{ block.enlace_estilo_2 }}"
+           {% if block.enlace_nueva_pestana_2 %} target="_blank" rel="noopener noreferrer"{% endif %}>
+            {{ block.enlace_texto_2 }}
+        </a>
+    {% endif %}
+</div>

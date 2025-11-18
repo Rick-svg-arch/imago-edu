@@ -66,7 +66,7 @@ class DocumentoForm(forms.ModelForm):
     def clean_imagen(self):
         imagen = self.cleaned_data.get('imagen')
         if hasattr(imagen, 'name'):
-            return validate_file(imagen, ['.jpg', '.jpeg', '.png', '.webp'], 3)
+            return validate_file(imagen, ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'], 3)
         return imagen
     
     def clean(self):
@@ -104,7 +104,7 @@ class ComentarioForm(forms.ModelForm):
         imagen = self.cleaned_data.get('imagen_comentario')
         if imagen:
             try:
-                return validate_file(imagen, ['.jpg', '.jpeg', '.png', '.webp'], 3)
+                return validate_file(imagen, ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'], 3)
             except ValidationError as e:
                 raise ValidationError(
                     "Tipo de imagen no válida. Solo se permiten: JPG, JPEG, PNG, WEBP (máx. 3MB)."
@@ -135,7 +135,7 @@ class ComentarioEditForm(forms.ModelForm):
         imagen = self.cleaned_data.get('imagen_comentario')
         if imagen:
             try:
-                return validate_file(imagen, ['.jpg', '.jpeg', '.png', '.webp'], 3)
+                return validate_file(imagen, ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'], 3)
             except ValidationError as e:
                 raise ValidationError(
                     "Tipo de imagen no válida. Solo se permiten: JPG, JPEG, PNG, WEBP (máx. 3MB)."

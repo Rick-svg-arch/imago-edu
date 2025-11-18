@@ -1,0 +1,12 @@
+<section class="recommendation-section">
+    <div class="container-large">
+        <h2 class="js-scroll-fade-in"><i class="fas fa-star"></i> Lecturas Mejor Valoradas</h2>
+        <div class="horizontal-scroll-container">
+            {% for doc in mejor_valoradas %}
+                {% include 'lecturas/_documento_card_snippet.html' with doc=doc %}
+            {% empty %}
+                <p class="empty-state">Aún no hay lecturas valoradas.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>

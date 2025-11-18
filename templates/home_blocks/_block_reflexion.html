@@ -1,0 +1,9 @@
+<section class="content-section home-block--reflection home-block--pos-{{ block.posicion_contenido }}">
+    <div class="container-large">
+        <h2>{{ block.titulo }}</h2>
+        <div class="content">
+            {{ block.contenido|safe }}
+        </div>
+        {% include 'home_blocks/_buttons.html' with block=block %}
+    </div>
+</section>

@@ -1,0 +1,12 @@
+<section class="recommendation-section">
+    <div class="container-large">
+        <h2 class="js-scroll-fade-in"><i class="fas fa-history"></i> Novedades</h2>
+        <div class="horizontal-scroll-container">
+            {% for doc in recientes %}
+                {% include 'lecturas/_documento_card_snippet.html' with doc=doc %}
+            {% empty %}
+                <p class="empty-state">Aún no se han subido lecturas.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
